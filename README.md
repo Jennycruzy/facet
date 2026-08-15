@@ -8,7 +8,7 @@ each other or to you.
 
 Built on STRK20 **shadow accounts** — a primitive that is deployed on mainnet,
 supported by the official SDK, named in the sprint's judging criteria, documented
-nowhere, and on which no real dapp interaction has ever been executed.
+nowhere, and which has never once interacted with a DeFi protocol.
 
 > **Status: in development.** Built during the [STRK20 Private Sprint](https://strk20.starknet.io),
 > 14–31 August 2026. Nothing here is audited. Do not route funds you cannot afford to
@@ -98,9 +98,15 @@ It is not a claim of exclusivity: of 326 compute-path calls on mainnet, 287 went
 other custom anonymizers built by other teams. Others are competent in this territory
 — they rolled their own rather than using the shadow account contract.
 
-The claim made here is narrow and checkable: **this primitive has never executed a real
-dapp call on mainnet.** Facet aims to be the first, and to leave behind the SDK and the
-documentation that would let anyone else do it too.
+Nor is it a claim that nobody has funded a shadow account — seven `transfer_from`
+transactions have. The difference is that their method needs a public `approve` from a
+funded address, naming the shadow account as spender, which links a real identity to
+the facet.
+
+The claim made here is narrow and checkable: **all 39 invocations target the STRK token
+contract, and no shadow account has ever interacted with a DeFi protocol.** Facet aims
+to be the first, and to leave behind the SDK and the documentation that would let
+anyone else do it too.
 
 ## Documentation
 
