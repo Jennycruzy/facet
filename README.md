@@ -49,21 +49,35 @@ The contract shipped. The product did not.
 - A shadow account anonymizer has been live on mainnet since **23 July 2026**
   (`0x4f33230dc57855c6e7eabe66dfa0fde82c5458fd0e54827cdb7cb4c474888a7`, deployed at
   block 12,199,879).
-- It has been invoked **39 times**. Every one of those invocations is the same smoke
-  test: a single `balance_of` call against STRK — a read — followed by one open-note
-  settlement. **No real dapp interaction has ever run through a shadow account on
-  mainnet.**
+- It has been invoked **39 times**, and all 39 were decoded. Every single one issues one
+  call against the same contract — the STRK token. Thirty-two are `balance_of` reads;
+  seven use `transfer_from` to pull pre-approved funds into the shadow account.
+  **No shadow account has ever interacted with a DeFi protocol.**
 - The official docs contain no coverage of it whatsoever. Across the full 121 KB
   documentation dump: `shadow` 0 occurrences, `stealth` 0, `identity_key` 0,
   `identity commitment` 0, `invoke_with_computation` 0.
 
-There is a concrete reason nobody has gone further, and it is documented in
-[`docs/FINDINGS.md`](docs/FINDINGS.md): `privacy_invoke_with_computation` never
-receives funds. It resolves or deploys the shadow account, snapshots balances, runs
-the calls, and collects — but nothing puts tokens in. A read needs no capital, so the
-smoke tests never hit the wall.
+There is a concrete reason, documented in [`docs/FINDINGS.md`](docs/FINDINGS.md):
+`privacy_invoke_with_computation` never receives funds. It resolves or deploys the
+shadow account, snapshots balances, runs the calls, and collects — but nothing puts
+tokens in. Anything requiring capital has to be funded first.
 
-Closing that gap is what Facet is for.
+The seven `transfer_from` invocations are a workaround for exactly this: an external
+account pre-approves the shadow account, and the shadow account's first call pulls the
+funds in. It works — and it leaks. Granting that allowance takes a public `approve`
+from a funded, non-private address naming the shadow account as spender, which ties a
+real identity to the facet and defeats the purpose.
+
+Facet funds the shadow account from a shielded note instead, at its deterministic
+address, inside the same transaction:
+
+```
+UseNote           spend a shielded note
+Withdraw          send tokens to the shadow account's predicted address
+ComputeAndInvoke  deploy it there, run the dapp calls, settle to an open note
+```
+
+No public approval, no funded address linked to the facet.
 
 ## What is actually verified
 
