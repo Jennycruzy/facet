@@ -32,3 +32,20 @@ pub const OBSERVED_BALANCE_OF_SELECTOR: felt252 =
 /// `Call.selector` seen in the 7 funding invocations. FINDINGS §6.5.
 pub const OBSERVED_TRANSFER_FROM_SELECTOR: felt252 =
     0x3704ffe8fba161be0e994951751a5033b1462b918ff785c0a636be718dfdb68;
+
+/// Class hash the anonymizer deploys shadow accounts from, read from the live mainnet
+/// deployment via `get_shadow_account_class_hash`. Declared on Sepolia as well as mainnet.
+pub const SHADOW_ACCOUNT_CLASS_HASH: felt252 =
+    0x346e143e3b353473a0d6f681c31ffcf2866537898008027fb3b57335bad7b5f;
+
+/// `OpenNote.note_id` at slot 9 of the decoded invocation. FINDINGS §6.4.
+pub const OBSERVED_NOTE_ID: felt252 =
+    0x2eaf46931e13473c9d55554b322394b36e0774d98f21b4abc5741c85a85062f;
+
+/// The `CollectPolicy::Exact` payload at slot 12 — 0.5 STRK. FINDINGS §6.4.
+pub const OBSERVED_EXACT_AMOUNT: felt252 = 0x6f05b59d3b20000;
+
+/// The privacy pool on Sepolia, v2.0, named in the official SDK documentation. Its class hash
+/// differs from the mainnet pool's, so action encodings must not be assumed identical.
+pub const SEPOLIA_POOL: felt252 =
+    0x0254a6b2997ef52e9f830ce1f543f6b29768295e8d17e2267d672c552cfe0d91;

@@ -344,6 +344,31 @@ STRK mainnet token address confirmed as
 `starknet_traceTransaction` is unavailable on the public endpoints tested, so the decode
 above was reconstructed from raw calldata against the source Serde layouts.
 
+**The decode is now confirmed by replay, not by reading** —
+`packages/contracts/tests/decoded_invocation.cairo`. The eleven felts are fed back to real
+anonymizer bytecode through `call_contract_syscall`, with no typed dispatcher in between:
+a dispatcher would serialise the arguments itself and prove nothing, whereas a raw
+syscall only succeeds if the felts deserialise exactly as the table above claims. The
+payload executes, and the returned `OpenNoteDeposit` carries the `note_id` of slot 9, the
+token of slot 10, and the amount of slot 12 — so each slot is confirmed by the effect it
+describes, not merely by the absence of a revert.
+
+A control test guards against the obvious failure mode. Shifting slot 11's
+`CollectPolicy` discriminant from `Exact` (2) to `All` (0) leaves the amount felt trailing
+as a stray argument, and the payload stops deserialising. Without that control, a payload
+that happened to execute for unrelated reasons would read as a confirmed decode.
+
+The caller check is satisfied without a proving service by deploying a **fresh anonymizer
+from the on-chain class hash** and naming the caller as its privacy contract — the same
+escape hatch a self-deployed anonymizer gives Facet in production. This is what made the
+question answerable at zero cost, and it is why the answer arrived before any fee was
+spent.
+
+**Open question 1 is therefore answered in substance.** What remains is confirmation on a
+live chain, which is a formality by comparison: `scripts/sepolia-replay.sh` runs the same
+sequence for real, and `decoded_payload_replays_on_sepolia` already runs it against
+Sepolia state at no cost.
+
 ### 6.5 What the 39 invocations actually do
 
 **All 39** were decoded, not sampled. An earlier five-transaction sample suggested they
@@ -695,8 +720,35 @@ equal the selectors decoded in §6.5, confirming that attribution independently.
 **What these tests still do not prove.** They impersonate the pool rather than reaching
 the anonymizer through it, so the proved-execution half of §6.6 — `UseNote`, `Withdraw`,
 and the `ClientAction` → `ServerAction` translation of §4 — is not exercised and cannot
-be in a fork test. The §6.4 decode remains reconstructed. **Sepolia is still the next
-step**, and it is now the only remaining way to close that gap.
+be in a fork test. That gap is now the only one left; the §6.4 decode was closed
+separately by the replay recorded there.
+
+### 6.13 Sepolia carries the classes but no anonymizer, and no public prover
+
+Established by direct RPC probing, since none of it is documented:
+
+| Thing | Sepolia | Note |
+|---|---|---|
+| Privacy pool | `0x0254a6b2…0d91` | v2.0, named in the SDK docs. Class hash `0x56ab118a…23b2` — **different from the mainnet pool's**, so action encodings must not be assumed identical across the two. |
+| Anonymizer class | Declared | Same class hash as mainnet, `0x7ffaf4f4…f5e6`. |
+| Shadow account class | Declared | `0x346e143e…b5f`, read from the live mainnet anonymizer via `get_shadow_account_class_hash`. |
+| Anonymizer **instance** | **None found** | Neither mainnet address holds code on Sepolia, and nothing in the SDK, the docs dump, or the demo configuration names one. |
+| Proving service / indexer | **No public URL** | Every reference in the SDK, docs and demo env files is a placeholder (`prover.example.com`, `localhost:3000`). |
+
+Two consequences worth carrying forward:
+
+1. **A Sepolia dry run of the full §6.6 sequence is not available on public infrastructure.**
+   `apply_actions` needs a proof, proofs need a proving service, and no public one is
+   documented for either network. This is a harder blocker than the decode ever was.
+2. **Self-deploying the anonymizer is not just a privacy choice, it is the only way to
+   exercise the primitive without StarkWare's backend.** The constructor takes
+   `privacy_contract` as a parameter, so any address — including an ordinary account —
+   can be named the authorised caller.
+
+Also recorded for reproducibility: the bare `api.cartridge.gg/x/starknet/sepolia` host
+serves RPC 0.9.0, which snforge 0.59.0 rejects outright. The versioned path
+`…/sepolia/rpc/v0_10` serves 0.10.2 and works. Nethermind's free endpoint returned
+nothing, Lava's testnet endpoint returned a provider error, and Blast is retired.
 
 ---
 

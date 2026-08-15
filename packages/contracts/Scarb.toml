@@ -30,3 +30,11 @@ test = "snforge test"
 name = "MAINNET"
 url = "https://api.cartridge.gg/x/starknet/mainnet"
 block_id.number = "13329863"
+
+# Sepolia carries the same anonymizer and shadow account classes as mainnet, so the decoded
+# payload can be replayed there before it is replayed with real fees.
+[[tool.snforge.fork]]
+name = "SEPOLIA"
+# The versioned path matters: the bare host serves RPC 0.9.0, which snforge 0.59.0 rejects.
+url = "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10"
+block_id.number = "13518500"
