@@ -360,7 +360,142 @@ This cuts two ways and both matter:
 - Nobody has proven a *real* dapp interaction works end to end on mainnet. Whoever does
   it first meets the unknowns first.
 
-### 6.6 SDK support exists
+### 6.6 The funding gap, and the pattern that closes it — VERIFIED
+
+**`privacy_invoke_with_computation` never receives funds.**
+`shadow_account_anonymizer.cairo:308-324`, in full:
+
+```cairo
+fn privacy_invoke_with_computation(
+    ref self: ContractState,
+    identity_commitment: IdentityCommitment,
+    calls: Array<Call>,
+    open_notes: Span<OpenNote>,
+) -> Span<OpenNoteDeposit> {
+    assert(get_caller_address() == self.privacy_contract.read(), errors::UNAUTHORIZED_CALLER);
+    let shadow_account = self.get_or_deploy_shadow_account(:identity_commitment);
+    let note_balance_snapshots = snapshot_open_notes(
+        shadow_account: shadow_account.contract_address, :open_notes,
+    );
+    shadow_account.execute(calls);
+    self.collect_open_notes(:shadow_account, :note_balance_snapshots)
+}
+```
+
+It asserts the caller, resolves or deploys the shadow account, snapshots balances,
+executes the calls, and collects. **No step moves tokens into the shadow account.**
+Any interaction requiring capital must have the account funded beforehand.
+
+This is the direct explanation for §6.5: a `balance_of` read needs no capital, so the
+39 smoke tests never met this wall.
+
+Three facts close the gap.
+
+**(a) A withdrawal may target any address.** `actions.cairo:184-203`:
+
+```cairo
+pub struct WithdrawInput {
+    pub to_addr: ContractAddress,
+    pub token: ContractAddress,
+    pub amount: u128,
+    pub random: felt252,
+}
+```
+
+`WithdrawInputValid::assert_valid` asserts only `to_addr.is_non_zero()`
+(`ZERO_TO_ADDR`), alongside non-zero token, amount, and random. **Nothing requires the
+destination to belong to the withdrawing user.**
+
+**(b) The shadow account's address is computable before it exists.**
+`get_shadow_accounts` resolves undeployed nonces via:
+
+```cairo
+calculate_contract_address_from_deploy_syscall(
+    salt: commitment,
+    :class_hash,
+    constructor_calldata: array![].span(),
+    :deployer_address,   // = get_contract_address(), the anonymizer
+)
+```
+
+and `get_or_deploy_shadow_account` (`:384-402`) deploys with exactly matching
+parameters — `contract_address_salt: identity_commitment`, `calldata: array![].span()`,
+`deploy_from_zero: false`. **The prediction and the eventual deployment agree by
+construction.**
+
+ERC-20 balances are storage in the token contract keyed by address, so tokens can be
+sent to that address before any code is deployed there.
+
+**(c) Withdraw precedes invoke.** `WITHDRAW_PHASE` is 6, `INVOKE_PHASE` is 7
+(`actions.cairo:277-284`).
+
+**Therefore, within a single transaction:**
+
+```
+UseNote        (phase 4)  spend a shielded note
+Withdraw       (phase 6)  send tokens to the predicted shadow account address
+ComputeAndInvoke (phase 7) deploy that account at that address, run the dapp
+                           calls with the funds present, settle to an open note
+```
+
+No mainnet transaction has ever done this. It is the pattern the product is built on.
+
+**Unverified until executed.** The reasoning is sound and every constituent fact is
+confirmed in source, but nothing here has been run on-chain. Reproducing it on Sepolia
+is the first build task and the only thing that converts this from analysis to fact.
+
+### 6.7 What the funding pattern costs in privacy — NEW
+
+The funding leg is **public**, and this constrains the product's honest claims.
+
+`Withdrawal` (`events.cairo:17-27`) carries `#[key] to_addr` and a plaintext `amount`.
+Funding a facet therefore publishes, in the clear:
+
+- the shadow account's address
+- the token and the exact amount sent to it
+- the block it happened in
+
+An observer can then watch `ExternalContractInvoked` and see that same shadow account
+transact. So the link **facet ↔ its funding** is public, as is the link
+**facet ↔ its dapp activity**.
+
+What stays hidden is the link **facet ↔ user**: `enc_user_addr` on the withdrawal is
+auditor-only, and `identity_key` is derived inside the proved execution from
+`user_private_key`, which never reaches public data (§4, §6.2).
+
+The correct claim is therefore: *facets are unlinkable to the person behind them, and
+unlinkable to each other provided the user does not correlate them by behaviour.*
+It is **not** "the funding is invisible."
+
+Two consequences that must reach the threat model and the UI:
+
+- **Amount correlation across facets is the obvious attack.** Funding facet A with
+  137.42 STRK and facet B with 137.42 STRK links them by amount, exactly as it would
+  in any pool. Round, common denominations are the mitigation.
+- **Timing correlation is the second.** Funding several facets in one block, or in a
+  tight window, groups them.
+
+This is the strongest argument for the identity-hygiene advisor: unlinkable identities
+are trivially relinkable through careless use, and the protocol cannot prevent it.
+
+### 6.8 The anonymizer is upgradeable — NEW
+
+The constructor (`shadow_account_anonymizer.cairo:~292-298`) runs:
+
+```cairo
+self.common_roles.initialize(:governance_admin);
+self.replaceability.initialize(upgrade_delay: Zero::zero());
+```
+
+`ReplaceabilityComponent` with an upgrade delay of **zero**. Whoever holds
+`governance_admin` can replace the implementation immediately, with no timelock.
+
+This applies to the officially deployed anonymizer at `0x4f33230d…888a7` as much as to
+any self-deployed one, and it is a trust assumption every user of this primitive
+inherits. It must be stated plainly in the threat model rather than discovered by a
+reader of the source.
+
+### 6.9 SDK support exists
 
 Contrary to any "wallet and SDK support are still landing" claim:
 
@@ -373,7 +508,7 @@ Contrary to any "wallet and SDK support are still landing" claim:
 The client-side path is present in the monorepo. The gap is documentation and product,
 not plumbing.
 
-### 6.7 Documentation coverage is zero
+### 6.10 Documentation coverage is zero
 
 Term frequency across the complete `https://strk20-by-example.org/llms-full.txt`
 (121,245 bytes):
