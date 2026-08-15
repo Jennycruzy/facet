@@ -1,0 +1,39 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!*.pub
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Cairo / Scarb
+target/
+.snfoundry_cache/
+
+# Build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Test and coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
