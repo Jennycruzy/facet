@@ -733,13 +733,31 @@ Established by direct RPC probing, since none of it is documented:
 | Anonymizer class | Declared | Same class hash as mainnet, `0x7ffaf4f4…f5e6`. |
 | Shadow account class | Declared | `0x346e143e…b5f`, read from the live mainnet anonymizer via `get_shadow_account_class_hash`. |
 | Anonymizer **instance** | **None found** | Neither mainnet address holds code on Sepolia, and nothing in the SDK, the docs dump, or the demo configuration names one. |
-| Proving service / indexer | **No public URL** | Every reference in the SDK, docs and demo env files is a placeholder (`prover.example.com`, `localhost:3000`). |
+| Proving service / indexer | **URL not published anywhere reachable** | Every reference in the SDK, the docs dump and all three demo env files is a placeholder (`prover.example.com`, `localhost:3000`). See the correction below — this is an access problem, not an absence. |
+
+**Correction, same day.** An earlier draft of this section said no public proving service
+exists "for either network" and concluded the §6.6 sequence "cannot be exercised on any
+chain by anyone outside StarkWare." That generalised from the repositories to the world,
+which is the identical mistake §6.5 records. Two pieces of evidence contradict it:
+
+- `strk20-hackathon/docs/MAINNET-DAY-0.md:29` states the starter kit ships **hosted
+  Sepolia endpoints** for both prover and indexer, that the mainnet equivalents "come from
+  StarkWare", and invites teams to open an issue if they need mainnet proving early. The
+  starter kit as published does not in fact contain them — it carries no privacy SDK
+  dependency at all — but the sprint organisers plainly consider hosted endpoints to be
+  available.
+- §5 records **287 compute-path calls to six custom anonymizers** built by other teams, on
+  mainnet. Those calls required proofs. Other teams have working proving today.
+
+The accurate statement is narrower: **the proving service URL is not published in any
+source available here, and must be requested.** It is a credential problem with a known
+owner, not a technical wall.
 
 Two consequences worth carrying forward:
 
-1. **A Sepolia dry run of the full §6.6 sequence is not available on public infrastructure.**
-   `apply_actions` needs a proof, proofs need a proving service, and no public one is
-   documented for either network. This is a harder blocker than the decode ever was.
+1. **The proving service is the critical path, and obtaining it has lead time.**
+   `apply_actions` needs a proof and nothing in this repository can produce one. Asking is
+   the action; it should not wait behind build work.
 2. **Self-deploying the anonymizer is not just a privacy choice, it is the only way to
    exercise the primitive without StarkWare's backend.** The constructor takes
    `privacy_contract` as a parameter, so any address — including an ordinary account —

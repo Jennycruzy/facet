@@ -118,11 +118,15 @@ The `UseNote → Withdraw → ComputeAndInvoke` sequence is therefore sound as d
 
 Carried forward until answered from a primary source or by the user.
 
-1. **Where does a proof come from?** `apply_actions` requires one, and no public proving
-   service or indexer URL is documented for either network (`FINDINGS.md` §6.13) — every
-   reference in the SDK, docs and demo config is a placeholder. Until this is answered the
-   full §6.6 sequence cannot be exercised anywhere, on any chain. This is now the single
-   largest blocker in the project, and it is larger than the decode ever was.
+1. **Where does a proof come from?** `apply_actions` requires one, and the proving service
+   and indexer URLs are not published in the SDK, the docs dump, the demo config or the
+   starter kit (`FINDINGS.md` §6.13). They are not absent, only unpublished: the sprint's
+   `MAINNET-DAY-0.md` refers to hosted Sepolia endpoints and invites teams to ask for
+   mainnet access, and 287 mainnet compute-path calls to other teams' anonymizers prove
+   the capability is reachable. **This is the critical path and it has lead time — the
+   action is to ask the organisers, and it should not queue behind build work.** An
+   earlier version of this entry claimed no prover existed anywhere; that was the §6.5
+   error repeated and is corrected in §6.13.
 2. **Who holds `governance_admin` on a self-deployed anonymizer?** The contract embeds
    `ReplaceabilityComponent` and `CommonRolesComponent` with `upgrade_delay: 0`
    (`FINDINGS.md` §6.8), so the holder can replace the implementation with no timelock.
