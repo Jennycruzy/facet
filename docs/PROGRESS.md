@@ -9,14 +9,21 @@ Sprint window: 14–31 August 2026. Submissions close 31 August, 23:59 UTC.
 
 ## Registration
 
+**Complete, 15 August 2026.**
+
 | Item | State | Evidence |
 |---|---|---|
-| Push authentication working | **BLOCKED** | Verified absent: `git push --dry-run` against an existing repo returns `remote: No anonymous write access. fatal: Authentication failed`. No credential helper, no stored credentials, no token in environment, no registered SSH key. Deploy keypair generated at `/root/.ssh/passage_deploy`; public half awaiting installation on the repository. |
-| Repository public with a pushed commit | Not started | Blocked on push authentication. |
-| `strk20.json` at repository root | Done | `strk20.json`, empty arrays, valid JSON. |
-| Registry entry appended, nothing else touched | Not started | Blocked on push authentication. |
-| Registration pull request opened | Not started | Blocked on the above. |
-| Project visible on the hub | Not started | Hub polls every 30 minutes once a commit exists. |
+| Push authentication working | Done | Repo-scoped ed25519 deploy key. GitHub requires deploy keys to be globally unique, so a second key was needed for the registry fork. |
+| Repository public with a pushed commit | Done | `github.com/Jennycruzy/facet`, three commits at time of registration. |
+| `strk20.json` at repository root | Done | Empty arrays, valid JSON, CI check pending. |
+| Registry entry appended, nothing else touched | Done | Diff was **+10 / −0**, one file. Slug `facet` confirmed unique against every derived slug in the registry before submission. |
+| Registration pull request opened | Done | [starkience/strk20-hackathon#45](https://github.com/starkience/strk20-hackathon/pull/45). |
+| Entry live in upstream `main` | Done | Applied by `strk20-sprint-bot` as `588c8d0`, "chore: register jennycruzy/facet (#45)". Verified by reading `registry.json` from upstream `main` directly. Registry at 38 entries. |
+| Project visible on the hub | Pending | Follows automatically within one 30-minute polling cycle. |
+
+The PR closed rather than merged. That is the designed flow: the bot rebuilds the entry on top of whatever landed while the PR was open, which is why `CONTRIBUTING.md` forbids hand-resolving the conflict.
+
+**Field growth:** 35 registered projects at the start of 15 August, 38 by midday. Three arrived within hours.
 
 **Name availability, checked 15 August 2026:**
 
