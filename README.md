@@ -114,7 +114,6 @@ anyone else do it too.
 |---|---|
 | [`docs/FINDINGS.md`](docs/FINDINGS.md) | Everything verified from source and chain data |
 | [`docs/PROGRESS.md`](docs/PROGRESS.md) | Gate-by-gate record with evidence |
-| [`docs/HANDOFF.md`](docs/HANDOFF.md) | Current state, access, and next actions |
 
 ## License
 

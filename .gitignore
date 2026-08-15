@@ -37,3 +37,6 @@ Thumbs.db
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+# Internal working notes, not for the public repo
+docs/HANDOFF.md
