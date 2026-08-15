@@ -60,8 +60,10 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | Fork harness against live mainnet | Done | `[[tool.snforge.fork]]` MAINNET pinned to block 13,329,863 — the block the findings are measured against — over `api.cartridge.gg`. Reproducible, no key, no fee. |
 | Fork tests passing | Done | `snforge test` — **10 passed, 0 failed**. Recorded as `FINDINGS.md` §6.12. |
 | §6.6 funding pattern exercised against deployed bytecode | Done, proof half excluded | Predicted address funded before deployment, account deploys exactly where predicted, full balance collects to the note, pool approved for the total. The `UseNote`/`Withdraw` legs run inside the proved execution and cannot be reached from a fork test. |
-| Sepolia reproduction of the §6.4 shape | Not done | The only remaining way to close open question 1. |
-| First funded mainnet interaction | Not done | Blocked behind Sepolia. `strk20.json.transactions` still empty. |
+| §6.4 payload replayed against real bytecode | Done | `decoded_invocation.cairo` — the eleven felts fed back through `call_contract_syscall`, no dispatcher in between, plus a control that breaks the decode by shifting slot 11. Answers open question 1 in substance. |
+| Same replay against Sepolia state | Done | `decoded_payload_replays_on_sepolia`, forked at block 13,518,500. A free dry run of the live transaction. |
+| Live Sepolia transaction | **Blocked — needs a funded Sepolia account** | `scripts/sepolia-replay.sh` is written and syntax-checked. Needs ~2 STRK on Sepolia (0.5 to collect, the rest fees). Faucet funds are sufficient; no mainnet value is involved. |
+| First funded mainnet interaction | Not done | `strk20.json.transactions` still empty. |
 
 ---
 
@@ -80,6 +82,17 @@ the one path where a real user loses money. Neither half is the feared case:
   deployed and emptied account still sweeps a later top-up in full.
 
 Both were verified against the deployed mainnet contract, not a local redeployment.
+
+**The §6.4 decode — confirmed by replay, 15 August 2026.** Recorded as `FINDINGS.md` §6.4.
+The eleven felts were fed back to real anonymizer bytecode through `call_contract_syscall`
+rather than a typed dispatcher, which is the only form of the test that says anything
+about the layout. It executes, and the returned deposit carries the note id, token and
+amount from slots 9, 10 and 12 — each slot confirmed by the effect it describes. A control
+test shifts slot 11's `CollectPolicy` discriminant and the decode breaks, as it must.
+
+This was expected to require Sepolia and a funded key. It did not: deploying a fresh
+anonymizer that names the caller as its privacy contract satisfies the caller check
+without a proving service, so the whole question was settled at zero cost.
 
 **The funding gap and the pattern that closes it — verified in source, 15 August 2026.**
 Recorded as `FINDINGS.md` §6.6. All three legs confirmed:
@@ -105,8 +118,11 @@ The `UseNote → Withdraw → ComputeAndInvoke` sequence is therefore sound as d
 
 Carried forward until answered from a primary source or by the user.
 
-1. **Does the decode in `FINDINGS.md` §6.4 actually execute?** It is a careful reading,
-   not a proven fact. Reproducing the smoke-test shape on Sepolia settles it for free.
+1. **Where does a proof come from?** `apply_actions` requires one, and no public proving
+   service or indexer URL is documented for either network (`FINDINGS.md` §6.13) — every
+   reference in the SDK, docs and demo config is a placeholder. Until this is answered the
+   full §6.6 sequence cannot be exercised anywhere, on any chain. This is now the single
+   largest blocker in the project, and it is larger than the decode ever was.
 2. **Who holds `governance_admin` on a self-deployed anonymizer?** The contract embeds
    `ReplaceabilityComponent` and `CommonRolesComponent` with `upgrade_delay: 0`
    (`FINDINGS.md` §6.8), so the holder can replace the implementation with no timelock.
