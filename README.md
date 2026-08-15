@@ -90,6 +90,12 @@ Everything asserted above is recorded with a file:line reference or a block heig
 - a field-by-field decode of a real mainnet shadow-account invocation
 - the one-invoke-per-transaction constraint and the phase ordering that follows from it
 
+The funding pattern above is also exercised as a test suite against the **live deployed
+anonymizer**, forked at mainnet block 13,329,863 — a predicted address is funded before
+any code exists at it, and the shadow account deploys exactly there and collects the
+balance. `snforge test` in `packages/contracts`, 10 tests. What those tests cannot cover,
+and what remains unproven, is stated in `FINDINGS.md` §6.12.
+
 ## Honest positioning
 
 Facet is not a new privacy protocol. It uses StarkWare's, unmodified.

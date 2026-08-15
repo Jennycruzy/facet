@@ -611,7 +611,8 @@ overflow, nonce-range bounds, address prediction
 not failure mid-interaction.
 
 **The stranded-funds question is therefore untested upstream as well as unexecuted on
-mainnet.** It remains the highest-risk open question in this project.
+mainnet.** It was the highest-risk open question in this project until §6.12 answered it
+with fork tests against the live contract.
 
 ### 6.11 Documentation coverage is zero
 
@@ -631,6 +632,71 @@ Term frequency across the complete `https://strk20-by-example.org/llms-full.txt`
 Two bare selector mentions and nothing else. There is no guide, no example, and no
 walkthrough for a primitive that is deployed, working, SDK-supported, and named in the
 sprint's own judging rubric.
+
+### 6.12 Fork tests against the live contract — the funding pattern holds
+
+`packages/contracts/tests/fork_shadow_account.cairo`, 269 lines, 10 tests. These execute
+the **real deployed bytecode** at mainnet block 13,329,863 — the block every measurement
+in this document is taken against — so each assertion is a statement about the contract
+users actually interact with, not about a local redeployment. They need no key and cost
+no fees.
+
+```
+$ snforge test
+Tests: 10 passed, 0 failed, 0 ignored, 0 filtered out
+```
+
+Funding is sourced by impersonating the pool (`start_cheat_caller_address` on STRK, then
+`transfer`), so the tokens arrive at the shadow account from the same address the real
+`Withdraw` leg pays from.
+
+**(a) The anonymizer half of §6.6 executes.** `prefunded_predicted_address_deploys_and_collects`
+runs the pattern end to end, minus the proof:
+
+| Step | Asserted |
+|---|---|
+| Predict | A fresh commitment reports `is_deployed == false` and a non-zero address |
+| Fund | STRK transferred to that address **while no code exists there** |
+| Invoke | Empty `calls` array, one `OpenNote` with `CollectPolicy::All` |
+| Deploy | `get_shadow_account(commitment)` returns **exactly the predicted address** |
+| Collect | Deposit `amount` equals the funded amount; account balance returns to 0 |
+| Settle | Anonymizer approves the pool for the full collected amount |
+
+Prediction-then-funding is confirmed against live code, not just read from source.
+
+**(b) The stranded-funds question — ANSWERED.** Both halves, and neither is the bad case:
+
+- `a_reverting_dapp_call_reverts_the_whole_invoke` — a call the shadow account cannot
+  satisfy takes the **entire invoke** down. The pool applies actions through
+  `call_contract_syscall(...).unwrap_syscall()` (`privacy.cairo:982-985`), so the panic
+  propagates out of `apply_actions` and the `Withdraw` in the same transaction reverts
+  with it. In the single-transaction sequence of §6.6 there is nothing to strand: either
+  the funds arrive and are spent, or the note is never consumed.
+- `an_already_deployed_account_sweeps_a_later_top_up` — the case that *can* leave funds
+  sitting is funding and invoking in **separate** transactions. That exposure is
+  recoverable. A commitment resolves to the same address forever, so an account that has
+  already deployed and emptied still collects a later top-up in full, with no redeploy.
+
+The failure mode that would have cost a user their money does not exist on the intended
+path, and the adjacent one is recoverable.
+
+**(c) The §6.10 corrections reproduce against live code.**
+`one_invoke_runs_several_calls_as_the_shadow_account` passes two transfers in one
+`Array<Call>`; both execute and the remainder settles to the note. The upstream finding
+was not an artefact of the mock harness.
+
+**(d) Supporting assertions.** `get_privacy_contract()` returns the pool of §1;
+`OBSERVED_COMMITMENT` resolves on chain to `OBSERVED_SHADOW_ACCOUNT` (§6.5);
+`privacy_compute` matches the local two-stage derivation of §6.2 exactly, which is what
+off-chain account discovery depends on; `privacy_invoke_with_computation` panics for any
+caller other than the pool; and `selector!("balance_of")` / `selector!("transfer_from")`
+equal the selectors decoded in §6.5, confirming that attribution independently.
+
+**What these tests still do not prove.** They impersonate the pool rather than reaching
+the anonymizer through it, so the proved-execution half of §6.6 — `UseNote`, `Withdraw`,
+and the `ClientAction` → `ServerAction` translation of §4 — is not exercised and cannot
+be in a fork test. The §6.4 decode remains reconstructed. **Sepolia is still the next
+step**, and it is now the only remaining way to close that gap.
 
 ---
 
