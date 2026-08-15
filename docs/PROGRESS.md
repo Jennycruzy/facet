@@ -45,6 +45,28 @@ Sprint window: 14–31 August 2026. Submissions close 31 August, 23:59 UTC.
 
 ---
 
+## Resolved
+
+**The funding gap and the pattern that closes it — verified in source, 15 August 2026.**
+Recorded as `FINDINGS.md` §6.6. All three legs confirmed:
+
+- `privacy_invoke_with_computation` (`shadow_account_anonymizer.cairo:308-324`) moves no
+  tokens into the shadow account. It asserts the caller, resolves or deploys, snapshots,
+  executes, collects — nothing more.
+- `WithdrawInput.to_addr` (`actions.cairo:184-203`) is validated only as non-zero. A
+  withdrawal may target any address.
+- The shadow account address is derivable before deployment.
+  `get_shadow_accounts` predicts it with
+  `calculate_contract_address_from_deploy_syscall(salt: commitment, class_hash, [], deployer)`
+  and `get_or_deploy_shadow_account` (`:384-402`) deploys with identical parameters, so
+  prediction and deployment agree by construction.
+- `WITHDRAW_PHASE` (6) precedes `INVOKE_PHASE` (7).
+
+The `UseNote → Withdraw → ComputeAndInvoke` sequence is therefore sound as designed.
+**It remains unexecuted.** Running it on Sepolia is the first build task.
+
+---
+
 ## Open questions
 
 Carried forward until answered from a primary source or by the user.
@@ -56,5 +78,11 @@ Carried forward until answered from a primary source or by the user.
    This is the most likely way a real user loses money and it must be answered before
    the product touches anyone else's funds.
 3. **Who holds `governance_admin` on a self-deployed anonymizer?** The contract embeds
-   `ReplaceabilityComponent` and `CommonRolesComponent`, so the holder can upgrade it.
-   Requires a deliberate decision and a threat-model entry.
+   `ReplaceabilityComponent` and `CommonRolesComponent` with `upgrade_delay: 0`
+   (`FINDINGS.md` §6.8), so the holder can replace the implementation with no timelock.
+   This is true of the official deployment too, and every user of the primitive inherits
+   it. Requires a deliberate decision and a threat-model entry.
+4. **How should facet funding amounts be chosen?** The funding leg is public
+   (`FINDINGS.md` §6.7): the shadow account address, token, and exact amount are all in
+   the clear. Distinctive or repeated amounts relink facets to each other. Defaults need
+   deliberate design, not an arbitrary choice left to the user.
