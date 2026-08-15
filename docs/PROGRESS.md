@@ -43,7 +43,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | Two-tier action model established | Done | `FINDINGS.md` §4. `apply_actions` takes `Span<ServerAction>`; `ClientAction`s execute inside the proved virtual OS execution. |
 | Real invocation decoded | Done, unproven | `FINDINGS.md` §6.4. Reconstructed from raw calldata against source Serde layouts — `starknet_traceTransaction` is unavailable on public endpoints. **Must be confirmed by executing the same shape on Sepolia before it is treated as fact.** |
 | Toolchain pinned | Done | scarb 2.17.0 (aa8740944 2026-04-09), cairo 2.17.0, sierra 1.8.0 — matching `starknet-privacy`. |
-| starknet-foundry installed | Not done | `snfoundryup` is on PATH; `snfoundryup -v 0.59.0` not yet run. |
+| starknet-foundry installed | Done | `snforge 0.59.0` at `/root/.local/bin/snforge`, matching the pool's pin. |
 | Full shadow anonymizer source and test suite read | Partial | Interface, identity derivation, `OpenNote`, `CollectPolicy` read. The 733-line test suite is not yet read in full. |
 | Existing SDK shadow support catalogued | Partial | Confirmed present: `sdk/src/internal/shadow-accounts.ts` (98 lines, `ShadowAccountsBuilderImpl`), `ShadowAccountAnonymizerABI` exported at `index.ts:4`, plus references in `interfaces.ts`, `factory.ts`, `internal/builders.ts`, `internal/anonymizer-abi.ts`, `testing/mocknet.ts`. What each one does is not yet catalogued. |
 | Prior-art check | Done | Nothing in the hackathon README, `IDEAS.md`, or `projects.json` mentions shadow or stealth accounts. Field at 35 projects; three have mainnet transactions recorded (cutout 4, redpocket 3, veilpass 1). |
@@ -52,7 +52,34 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 
 ---
 
+## Build
+
+| Item | State | Evidence |
+|---|---|---|
+| `packages/contracts` scaffolded | Done | `facet_contracts` 0.1.0, edition `2024_07`, pinned `starknet 2.17.0` / `snforge_std 0.59.0`. Anonymizer and ERC20 bindings plus `mainnet.cairo`, which carries every verified address as a documented constant. |
+| Fork harness against live mainnet | Done | `[[tool.snforge.fork]]` MAINNET pinned to block 13,329,863 — the block the findings are measured against — over `api.cartridge.gg`. Reproducible, no key, no fee. |
+| Fork tests passing | Done | `snforge test` — **10 passed, 0 failed**. Recorded as `FINDINGS.md` §6.12. |
+| §6.6 funding pattern exercised against deployed bytecode | Done, proof half excluded | Predicted address funded before deployment, account deploys exactly where predicted, full balance collects to the note, pool approved for the total. The `UseNote`/`Withdraw` legs run inside the proved execution and cannot be reached from a fork test. |
+| Sepolia reproduction of the §6.4 shape | Not done | The only remaining way to close open question 1. |
+| First funded mainnet interaction | Not done | Blocked behind Sepolia. `strk20.json.transactions` still empty. |
+
+---
+
 ## Resolved
+
+**The stranded-funds question — answered by fork test, 15 August 2026.**
+Recorded as `FINDINGS.md` §6.12(b). This was the highest-risk unknown in the project and
+the one path where a real user loses money. Neither half is the feared case:
+
+- A dapp call that reverts takes the whole invoke down with it. The pool applies actions
+  through `call_contract_syscall(...).unwrap_syscall()` (`privacy.cairo:982-985`), so the
+  panic propagates out of `apply_actions` and the `Withdraw` in the same transaction
+  reverts too. On the single-transaction path of §6.6 there is nothing to strand.
+- Funding and invoking in *separate* transactions can leave a balance sitting, but it is
+  recoverable: a commitment resolves to the same address permanently, so an already
+  deployed and emptied account still sweeps a later top-up in full.
+
+Both were verified against the deployed mainnet contract, not a local redeployment.
 
 **The funding gap and the pattern that closes it — verified in source, 15 August 2026.**
 Recorded as `FINDINGS.md` §6.6. All three legs confirmed:
@@ -80,16 +107,12 @@ Carried forward until answered from a primary source or by the user.
 
 1. **Does the decode in `FINDINGS.md` §6.4 actually execute?** It is a careful reading,
    not a proven fact. Reproducing the smoke-test shape on Sepolia settles it for free.
-2. **Where do funds go if a dapp call reverts mid-interaction?** Withdrawal lands tokens
-   in the shadow account before the call runs. If the call reverts, are they stranded?
-   This is the most likely way a real user loses money and it must be answered before
-   the product touches anyone else's funds.
-3. **Who holds `governance_admin` on a self-deployed anonymizer?** The contract embeds
+2. **Who holds `governance_admin` on a self-deployed anonymizer?** The contract embeds
    `ReplaceabilityComponent` and `CommonRolesComponent` with `upgrade_delay: 0`
    (`FINDINGS.md` §6.8), so the holder can replace the implementation with no timelock.
    This is true of the official deployment too, and every user of the primitive inherits
    it. Requires a deliberate decision and a threat-model entry.
-4. **How should facet funding amounts be chosen?** The funding leg is public
+3. **How should facet funding amounts be chosen?** The funding leg is public
    (`FINDINGS.md` §6.7): the shadow account address, token, and exact amount are all in
    the clear. Distinctive or repeated amounts relink facets to each other. Defaults need
    deliberate design, not an arbitrary choice left to the user.
