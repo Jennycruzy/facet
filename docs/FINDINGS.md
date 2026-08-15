@@ -553,7 +553,67 @@ Contrary to any "wallet and SDK support are still landing" claim:
 The client-side path is present in the monorepo. The gap is documentation and product,
 not plumbing.
 
-### 6.10 Documentation coverage is zero
+### 6.10 The test suite corrects two assumptions — IMPORTANT
+
+`packages/shadow_account_anonymizer/src/tests/test_shadow_account_anonymizer.cairo`,
+733 lines, 29 tests. It is the only substantive documentation this primitive has, and
+two of its tests overturn assumptions that would otherwise have shaped the build wrongly.
+
+**(a) One invoke action can carry many calls.**
+`test_multiple_invokes_run_in_one_call` (`:216-247`) passes two calls in a single
+`Array<Call>`; both execute as the shadow account and their outputs combine into one
+`OpenNoteDeposit`:
+
+```cairo
+calls: array![
+    transfer_to_caller_call(components.mock_dapp, token, first),
+    transfer_to_caller_call(components.mock_dapp, token, second),
+],
+...
+assert_eq!(amount, first + second);
+```
+
+The one-invoke-per-transaction rule (§4, `actions.cairo:304`) limits **invoke-phase
+actions**, not dapp calls. A multi-step flow — approve, swap, deposit — fits in a single
+transaction as one `ComputeAndInvoke` carrying an array of calls.
+
+The constraint that genuinely remains: one `ComputeAndInvoke` carries exactly one
+`identity_commitment`, so **acting as two different facets still requires two
+transactions.** That is the real limit, and it is much weaker than "one dapp call per
+transaction."
+
+**(b) Pre-funding a shadow account is an anticipated, tested pattern.**
+`test_collects_full_balance_including_preexisting` (`:309-347`):
+
+```cairo
+// Deploy the shadow account (empty invoke) so we can give it a pre-existing balance.
+components.invoke(:identity_commitment, calls: array![], open_notes: array![].span());
+let shadow_account = shadow_account_info(components.anonymizer, 1).address;
+components.token.supply(address: shadow_account, amount: preexisting);
+```
+
+Three things follow:
+
+- **An empty `calls` array is valid** and deploys the shadow account without doing
+  anything else — a cheap way to materialise the address.
+- **Funding the account before the interaction is expected behaviour**, not a hack.
+  `CollectPolicy::All` sweeps pre-existing balance plus interaction gain
+  (`assert_eq!(amount, preexisting + AMOUNT)`). This is upstream validation of the §6.6
+  approach.
+- On settlement the anonymizer approves the privacy contract for the full collected
+  amount: `assert_eq!(components.token.allowance(components.anonymizer, PRIVACY), total)`.
+
+**(c) What the suite does not cover.** No test exercises a dapp call that *reverts*
+after the shadow account has been funded. The 29 tests cover access control
+(`test_invoke_only_privacy_contract`), all three collect policies, zero balance,
+overflow, nonce-range bounds, address prediction
+(`test_get_shadow_accounts_computed_address_matches_deploy`), and account reuse — but
+not failure mid-interaction.
+
+**The stranded-funds question is therefore untested upstream as well as unexecuted on
+mainnet.** It remains the highest-risk open question in this project.
+
+### 6.11 Documentation coverage is zero
 
 Term frequency across the complete `https://strk20-by-example.org/llms-full.txt`
 (121,245 bytes):
