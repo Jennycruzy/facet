@@ -344,21 +344,66 @@ STRK mainnet token address confirmed as
 `starknet_traceTransaction` is unavailable on the public endpoints tested, so the decode
 above was reconstructed from raw calldata against the source Serde layouts.
 
-### 6.5 All 39 invocations are smoke tests
+### 6.5 What the 39 invocations actually do
 
-Five of the 39 transactions were decoded (samples at positions 1, 5, 15, 25 and 35 of
-the sorted set). **Every one is identical in shape:** exactly one `Call`, targeting the
-STRK token, with selector `balance_of` — a no-op read — followed by a single open-note
-settlement.
+**All 39** were decoded, not sampled. An earlier five-transaction sample suggested they
+were uniformly `balance_of` reads; that was wrong, and the full pass corrected it. The
+lesson is recorded here rather than quietly fixed: a sample of five out of thirty-nine
+produced a confident and false generalisation.
 
-No real dapp interaction has ever been executed through a shadow account on mainnet.
-The path is validated only for a trivial read call.
+Every one of the 39 issues exactly one `Call`, and **every one targets the same
+contract — the STRK token** (`0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d`).
+No invocation has ever touched a DeFi protocol. Two selectors appear:
 
-This cuts two ways and both matter:
+| Selector | Name | Count |
+|---|---|---|
+| `0x35a73cd311a05d46deda634c5ee045db92f811b4e74bca4437fcb5302b7af33` | `balance_of` | 32 |
+| `0x3704ffe8fba161be0e994951751a5033b1462b918ff785c0a636be718dfdb68` | `transfer_from` | 7 |
 
-- The primitive is genuinely unused. There is no product built on it.
-- Nobody has proven a *real* dapp interaction works end to end on mainnet. Whoever does
-  it first meets the unknowns first.
+The 32 `balance_of` calls are no-op reads.
+
+**The 7 `transfer_from` calls are a working funding workaround**, and they matter.
+Decoding `0x319b9de82e1704ba861283d26b4e03356a5a3cc948ce8ad752366f1f8bf7883`:
+
+| Offset | Value | Meaning |
+|---|---|---|
+| 2 | `0x666db4d6…ffb1c` | `identity_commitment` |
+| 3 | `0x1` | `calls.len` |
+| 4 | `0x4718f5a0…c938d` | `Call.to` — STRK |
+| 5 | `0x3704ffe8…db68` | `Call.selector` — `transfer_from` |
+| 6 | `0x4` | `Call.calldata.len` |
+| 7 | `0x46e978c45ab856377819018ef872314ddaf8f58d9c1dcd5dfcb2265cdcd464c` | `from` |
+| 8 | `0x344e658822ac3b5a48e69dbdd5a428d5298c4d3924ffa0b2e8b367554896e4` | `to` |
+| 9–10 | `0xde0b6b3a7640000`, `0x0` | 1 STRK (u256) |
+| 11 | `0x1` | `open_notes.len` |
+| 12 | `0x1874d0f42c03501e246c5c53654984a05476fad74ad7342785c5fe9e381d6ec` | `note_id` |
+| 13 | `0x4718f5a0…c938d` | `OpenNote.token` |
+| 14 | `0x1` | `CollectPolicy::Diff` |
+
+`get_shadow_account(0x666db4d6…ffb1c)` returns `0x344e658822ac3b5a48e69dbdd5a428d5298c4d3924ffa0b2e8b367554896e4`
+— **the `transfer_from` recipient is the shadow account itself.**
+
+So the pattern is: an external account pre-approves the shadow account, the shadow
+account's first call pulls 1 STRK from it, and `CollectPolicy::Diff` settles the gained
+balance into an open note. **Funding is solved, and it has been done on mainnet seven
+times.**
+
+This does not invalidate §6.6 — `privacy_invoke_with_computation` still receives no
+funds, which is exactly why a funding call has to be smuggled in as the first `Call`.
+It does mean two claims must be stated carefully:
+
+- **False:** "nobody has funded a shadow account." Seven transactions have.
+- **True and checkable:** all 39 invocations target the STRK token contract. **No shadow
+  account has ever interacted with a DeFi protocol.**
+
+**The pre-approval method carries a privacy cost that the withdraw pattern does not.**
+Granting an allowance requires a public `approve` transaction sent from a funded
+external account, naming the shadow account as spender. That publicly ties a real,
+funded, non-private address to the facet — which defeats the point. Sourcing the funds
+from a shielded note instead (§6.6) has no such leak.
+
+That contrast is the product's sharpest argument, and it is stronger than a claim of
+novelty would have been.
 
 ### 6.6 The funding gap, and the pattern that closes it — VERIFIED
 
