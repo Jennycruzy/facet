@@ -723,7 +723,7 @@ and the `ClientAction` → `ServerAction` translation of §4 — is not exercise
 be in a fork test. That gap is now the only one left; the §6.4 decode was closed
 separately by the replay recorded there.
 
-### 6.13 Sepolia carries the classes but no anonymizer, and no public prover
+### 6.13 Sepolia carries the classes but no anonymizer; hosted prover URL is not published
 
 Established by direct RPC probing, since none of it is documented:
 
@@ -733,7 +733,7 @@ Established by direct RPC probing, since none of it is documented:
 | Anonymizer class | Declared | Same class hash as mainnet, `0x7ffaf4f4…f5e6`. |
 | Shadow account class | Declared | `0x346e143e…b5f`, read from the live mainnet anonymizer via `get_shadow_account_class_hash`. |
 | Anonymizer **instance** | **None found** | Neither mainnet address holds code on Sepolia, and nothing in the SDK, the docs dump, or the demo configuration names one. |
-| Proving service / indexer | **URL not published anywhere reachable** | Every reference in the SDK, the docs dump and all three demo env files is a placeholder (`prover.example.com`, `localhost:3000`). See the correction below — this is an access problem, not an absence. |
+| Proving service / indexer | **No hosted URL found in checked sources** | The SDK, docs dump and demo configurations expose placeholders or local defaults. The official transaction prover is a public container and self-hosting is confirmed working — the published amd64 build needs recompiling for the host CPU, see below. |
 
 **Correction, same day.** An earlier draft of this section said no public proving service
 exists "for either network" and concluded the §6.6 sequence "cannot be exercised on any
@@ -749,15 +749,95 @@ which is the identical mistake §6.5 records. Two pieces of evidence contradict 
 - §5 records **287 compute-path calls to six custom anonymizers** built by other teams, on
   mainnet. Those calls required proofs. Other teams have working proving today.
 
-The accurate statement is narrower: **the proving service URL is not published in any
-source available here, and must be requested.** It is a credential problem with a known
-owner, not a technical wall.
+The accurate statement is narrower: **this repository does not identify a hosted proving
+endpoint. That does not block proving.** The official [transaction-prover README](https://github.com/starkware-libs/sequencer/blob/avi/privacy/configmap-docs/crates/starknet_transaction_prover/README.md)
+documents the public image named in the [starknet-privacy compatibility matrix](https://github.com/starkware-libs/starknet-privacy#readme),
+the local JSON-RPC quickstart, and the `starknet_proveTransaction` method. Run that service
+locally with `RPC_URL` set to a v0.10 Starknet RPC, validate `starknet_specVersion`, then
+prove a known finalized Invoke V3 transaction before wiring the SDK to `http://localhost:3000`.
+
+**Self-hosting is not hardware-neutral — tested, 15 August.** The published `linux/amd64`
+binary aborts with SIGILL (exit 132) on `--help` alone, before it reads any config or opens a
+socket. The failure was isolated: a shell inside the same image runs and reports `x86_64`, so
+the pull and the image are healthy and it is the binary that faults. Both version-appropriate
+tags — `PRIVACY-0.14.3-RC.2` and `PRIVACY-0.14.2-RC.8-screening-v2` — fail identically. The
+host is an AMD EPYC 7532 (Zen 2) carrying avx, avx2, bmi2, adx and sha_ni but **no AVX-512**.
+
+Two explanations were open at that point, with different fallbacks: either the Dockerfile's
+`TARGET_CPU` build arg (its README example passes `znver5`) had been set at publish time, in
+which case a rebuild fixes it; or Stwo uses explicit AVX-512 intrinsics, in which case a
+portable amd64 rebuild fails too.
+
+**Resolved the same evening: it is the build flag.** The identical upstream revision
+`e6b6fd2e9932909107833579e5b6efd6c75fa0af` was rebuilt for `linux/amd64` with
+`TARGET_CPU=znver2` on a standard CI runner, in 19m 11s. On the same EPYC 7532 host that
+kills the official image, the rebuild's `--help` exits 0 while the official
+`PRIVACY-0.14.3-RC.2` exits 132 — run back to back, reconfirmed 15 August. The rebuilt image
+reports `amd64` and carries the upstream revision as an OCI label.
+
+**The published amd64 workflow used `TARGET_CPU=znver5`; that image is incompatible with this
+Zen 2 host.** Rebuilding the same revision with `TARGET_CPU=znver2` fixed startup and, in the
+Gate 2 test below, completed an entire proof on that host. This establishes that AVX-512 is
+not required for the tested proving path; it does not establish compatibility with every CPU.
+
+An `arm64` image is also published. The x86 instruction-set choice cannot exist in an aarch64
+build, so Apple Silicon should run the official image unmodified — still reasoning rather than
+verification, since this host has no qemu, but the amd64 result makes it very likely.
+
+**Memory floor, measured.** Startup precomputation was OOM-killed (exit 137, `OOMKilled=true`)
+with ~1.1 GiB available and no swap. With a temporary 16 GiB swapfile the service started and
+settled at **~2.29 GiB resident**. The successful Gate 2 proof peaked at **7,064,956,928 bytes
+(~6.58 GiB)** in the prover cgroup and drove host swap usage to roughly 12 GiB while sharing
+the 7.8 GiB host with other services. The OOM killer is therefore a live risk to unrelated
+production services — do not start the prover here without swap in place and headroom checked.
+
+Running service, verified: `starknet_specVersion` returns `0.10.3-rc.2`, which is the value
+the pinned upstream README documents. An earlier expectation of `0.10.0` in the internal
+handoff was wrong. For reference the mainnet RPC this was pointed at, `api.cartridge.gg`,
+reports `0.10.2` on both its bare and `/rpc/v0_10` paths — unlike the Sepolia host noted at
+the end of this section, the bare mainnet path is not version-degraded.
+
+**Historical replay is not a usable Gate 2 fixture.** Two finalized Argent Invoke V3
+transactions — `0x62252938…20ea0` (block 12,397,335) and `0x319b9de8…f7883` (block
+12,713,881) — were replayed against their parent blocks and both failed account validation
+with `argent/invalid-owner-sig`. Zeroing the fee prices and tip changes the signed transaction
+hash and invalidates the signature, as expected; but preserving the original fee fields under
+`SKIP_FEE_FIELD_VALIDATION=true` failed identically, which it should not have.
+`USE_LATEST_VERSIONED_CONSTANTS=false` changed nothing, and the runner always executes the
+account's `__validate__` — there is no bypass. **Root cause remains unconfirmed.** The fetched
+requests retained `paymaster_data`, `account_deployment_data`, and both data-availability
+modes, so attributing the failure to dropped V3 fields is unsupported.
+
+The fixture that avoids the question entirely is a **freshly signed, never-broadcast** Invoke
+V3: pick a finalized block, read the account's nonce at that block, build a harmless call,
+zero every `max_price_per_unit` and `tip` while keeping `l2_gas.max_amount` non-zero, sign
+those exact fields for `SN_MAIN`, and submit to `starknet_proveTransaction`. The proof request
+broadcasts nothing and spends no funds, but its signer must already exist in the selected
+mainnet state (a newly created account therefore needs one funded deployment first). This also
+matches how Facet will really operate — the
+§6.6 sequence always signs its own transactions, so replay was only ever a convenience.
+
+**Gate 2 completed, 16 August.** A fresh OpenZeppelin account signed an unbroadcast Invoke V3
+calling STRK `balance_of`, with all gas prices and tip zero and `l2_gas.max_amount` set to
+100,000,000. Against `block_id: "latest"`, the `znver2` prover returned a populated
+306,508-character base64 proof and eight proof-fact felts in **485 seconds (8m 05s)**. The
+response was 306,890 bytes (SHA-256
+`03c759e7e814f64ed923d9d4948a43cea13c44052bb0d617d0a941f8491c5edc`); there were no
+L2-to-L1 messages. The transaction was never broadcast.
+
+Provider compatibility matters. Cartridge's endpoint returned code 42 for numbered blocks
+40 or more blocks behind the head because it no longer served their storage proofs. Lava
+served historical proofs but its RPC 0.8.1 block response lacked `state_diff_commitment`.
+The successful run used `https://rpc.vauban.tech/rpc/v0_10`, which reported RPC
+`0.10.3-rc.0`, together with `block_id: "latest"` to stay inside the proof-retention window.
 
 Two consequences worth carrying forward:
 
-1. **The proving service is the critical path, and obtaining it has lead time.**
-   `apply_actions` needs a proof and nothing in this repository can produce one. Asking is
-   the action; it should not wait behind build work.
+1. **Local prover validation is complete; SDK integration is now the critical path.**
+   `apply_actions` needs a proof, and the self-hosted service has now returned both a populated
+   proof and proof facts for a freshly signed Invoke V3. Next point the SDK's
+   `ProvingServiceProofProvider` at the local service and exercise the flow on Sepolia before
+   spending mainnet funds. A hosted endpoint is optional; do not block on an unpublished URL.
 2. **Self-deploying the anonymizer is not just a privacy choice, it is the only way to
    exercise the primitive without StarkWare's backend.** The constructor takes
    `privacy_contract` as a parameter, so any address — including an ordinary account —
