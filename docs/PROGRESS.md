@@ -118,15 +118,25 @@ The `UseNote → Withdraw → ComputeAndInvoke` sequence is therefore sound as d
 
 Carried forward until answered from a primary source or by the user.
 
-1. **Where does a proof come from?** `apply_actions` requires one, and the proving service
-   and indexer URLs are not published in the SDK, the docs dump, the demo config or the
-   starter kit (`FINDINGS.md` §6.13). They are not absent, only unpublished: the sprint's
-   `MAINNET-DAY-0.md` refers to hosted Sepolia endpoints and invites teams to ask for
-   mainnet access, and 287 mainnet compute-path calls to other teams' anonymizers prove
-   the capability is reachable. **This is the critical path and it has lead time — the
-   action is to ask the organisers, and it should not queue behind build work.** An
-   earlier version of this entry claimed no prover existed anywhere; that was the §6.5
-   error repeated and is corrected in §6.13.
+1. **Wire the validated local transaction prover into the SDK.** `apply_actions` requires a proof, but
+   no hosted prover URL is published in the SDK, docs dump, demo configuration, or starter
+   kit (`FINDINGS.md` §6.13). That is not a missing credential and does not require waiting
+   for the organisers: the official [transaction-prover README](https://github.com/starkware-libs/sequencer/blob/avi/privacy/configmap-docs/crates/starknet_transaction_prover/README.md)
+   documents a public container image and a local JSON-RPC service on `http://localhost:3000`.
+   **Self-hosting is confirmed through full proof generation** (`FINDINGS.md` §6.13): the published `linux/amd64`
+   image is compiled for a CPU newer than this host and aborts with SIGILL, but rebuilding the
+   identical upstream revision for the host CPU fixes it, and the running service answers
+   `starknet_specVersion` with `0.10.3-rc.2`. A freshly signed, never-broadcast Invoke V3 then
+   returned a populated proof and eight proof-fact felts in **485 seconds (8m 05s)**, peaking
+   at **~6.58 GiB** in the prover cgroup. This proves the tested path works on Zen 2 without
+   AVX-512; it is not a claim about every host CPU. Replay of historical Argent transactions
+   still fails account validation for reasons not pinned down, but no longer blocks progress.
+   Point the SDK's `ProvingServiceProofProvider` at the local service next. A hosted URL is
+   optional and should not be treated as the build blocker.
+
+   The measured 2-vCPU / 7.8-GiB host is suitable for development only with swap: idle usage
+   is ~2.29 GiB, a proof peaked at ~6.58 GiB, and host swap rose to roughly 12 GiB while other
+   services remained running. The production recommendation remains 48 vCPU / 96 GB.
 2. **Who holds `governance_admin` on a self-deployed anonymizer?** The contract embeds
    `ReplaceabilityComponent` and `CommonRolesComponent` with `upgrade_delay: 0`
    (`FINDINGS.md` §6.8), so the holder can replace the implementation with no timelock.
