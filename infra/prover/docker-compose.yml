@@ -1,0 +1,34 @@
+# STRK20 transaction prover, run locally.
+#
+# One proof peaked at ~6.58 GiB on the reference host and startup precomputation alone will
+# OOM on a small machine. The memory limit below is a guard, not a target: if the host shares
+# work with anything you care about, provision swap first and keep the limit under your free
+# memory. See docs/PROVER.md.
+#
+#   RPC_URL=https://<node>/rpc/v0_10 docker compose up -d
+#   curl -s localhost:3000 -H 'content-type: application/json' \
+#     -d '{"jsonrpc":"2.0","id":1,"method":"starknet_specVersion","params":[]}'
+
+services:
+  prover:
+    # Prebuilt for Zen 2 and newer AMD. On any other CPU, run ./build.sh and use its tag.
+    image: ${PROVER_IMAGE:-ghcr.io/jennycruzy/facet-prover:znver2}
+    container_name: facet-prover
+    restart: unless-stopped
+    # Loopback only. This service is unauthenticated and every request costs minutes of CPU.
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      RPC_URL: ${RPC_URL:?set RPC_URL to a Starknet RPC v0.10 endpoint}
+    mem_limit: ${PROVER_MEM_LIMIT:-7g}
+    # The image ships no curl and no wget, so this is a TCP liveness probe via bash, not an
+    # RPC call. It answers the question that actually matters here: has the long startup
+    # precomputation finished and opened the port. Give it a generous start_period — the
+    # service is unresponsive for minutes before it listens, and on a small host it may be
+    # OOM-killed during that window rather than ever becoming healthy.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/3000"]
+      interval: 30s
+      timeout: 10s
+      start_period: 300s
+      retries: 3
