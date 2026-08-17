@@ -131,8 +131,13 @@ that matter — loopback binding, a memory limit, and a health check that waits 
 startup:
 
 ```bash
-RPC_URL=https://<your-starknet-rpc>/rpc/v0_10 docker compose -f infra/prover/docker-compose.yml up -d
+cd infra/prover
+cp .env.example .env      # then set RPC_URL in it
+docker compose up -d
 ```
+
+`RPC_URL` is a required variable, so set it in `.env` rather than exporting it — otherwise
+`docker compose down` and `logs` fail to parse the file too, not just `up`.
 
 Or by hand:
 
