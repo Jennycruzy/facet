@@ -93,8 +93,38 @@ Everything asserted above is recorded with a file:line reference or a block heig
 The funding pattern above is also exercised as a test suite against the **live deployed
 anonymizer**, forked at mainnet block 13,329,863 — a predicted address is funded before
 any code exists at it, and the shadow account deploys exactly there and collects the
-balance. `snforge test` in `packages/contracts`, 10 tests. What those tests cannot cover,
-and what remains unproven, is stated in `FINDINGS.md` §6.12.
+balance. `snforge test` in `packages/contracts` runs **14 tests, all passing**: ten against
+mainnet state, four replaying the decoded invocation with a control that breaks the decode
+as it must. What those tests cannot cover, and what remains unproven, is stated in
+`FINDINGS.md` §6.12.
+
+## Running the prover yourself
+
+`apply_actions` needs a proof, and we could not find a hosted proving endpoint published
+anywhere — every reference in the SDK, the docs dump and the demo configuration is a
+placeholder. The transaction prover is a public container, so the answer is to run it. The
+catch is that **the published `linux/amd64` image aborts with SIGILL on older AMD hosts**,
+before it reads any configuration, in a way that looks like a broken pull.
+
+It is a build flag: the published image is compiled for Zen 5. Rebuilding the same upstream
+revision for your own target fixes it.
+
+[`docs/PROVER.md`](docs/PROVER.md) is the whole thing written down — the diagnosis, the fix,
+the measured memory floor, the request format, the historical-replay trap that costs a day,
+and which RPC providers actually serve the storage proofs the prover needs. Alongside it:
+
+| | |
+|---|---|
+| [`infra/prover/build.sh`](infra/prover/build.sh) | Builds for any CPU target and verifies the binary starts |
+| [`infra/prover/docker-compose.yml`](infra/prover/docker-compose.yml) | Loopback binding, memory limit, working health check |
+| `ghcr.io/jennycruzy/facet-prover:znver2` | Prebuilt for Zen 2 and newer AMD, if you would rather not build |
+
+Two proofs generated on a 2 vCPU host, **355s and 485s**, peaking at 6.6 GiB. Neither is a
+benchmark — the same request on the same machine varied by 27%, which is itself worth
+knowing before you size anything.
+
+None of this is specific to Facet. If you are building on STRK20 and hit the same wall, take
+it.
 
 ## Honest positioning
 
@@ -114,12 +144,32 @@ contract, and no shadow account has ever interacted with a DeFi protocol.** Face
 to be the first, and to leave behind the SDK and the documentation that would let
 anyone else do it too.
 
+## What exists today
+
+Claims in this README are traceable to a source reference, a block height or a test run.
+What is not built is listed as plainly as what is.
+
+| | |
+|---|---|
+| Research | `docs/FINDINGS.md` — pool, anonymizer, identity derivation, all 39 invocations decoded |
+| Contracts | `packages/contracts` — 14 fork tests against live mainnet and Sepolia state, all passing |
+| Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
+| SDK | **not built** |
+| Application | **not built** |
+| Mainnet interaction | **none yet** — no shadow account has touched a DeFi protocol, including ours |
+
+The `UseNote → Withdraw → ComputeAndInvoke` sequence has never been executed by anyone. The
+anonymizer half is covered by the fork tests; the proved half is not, and cannot be reached
+from a fork test. That is the next thing to prove, and until it lands nothing here claims
+otherwise.
+
 ## Documentation
 
 | Document | Contents |
 |---|---|
 | [`docs/FINDINGS.md`](docs/FINDINGS.md) | Everything verified from source and chain data |
-| [`docs/PROGRESS.md`](docs/PROGRESS.md) | Gate-by-gate record with evidence |
+| [`docs/PROVER.md`](docs/PROVER.md) | Self-hosting the transaction prover, start to finish |
+| [`docs/PROGRESS.md`](docs/PROGRESS.md) | Dated record of what was established, and when |
 
 ## License
 
