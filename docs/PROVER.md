@@ -12,7 +12,8 @@ the diagnosis, the fix, the measured resource floor, and the request format — 
 had to work out by hand.
 
 Every number here was measured on an **AMD EPYC 7532 (Zen 2), 2 vCPU, 7.8 GiB**, which is far
-below the hardware StarkWare recommends. Treat the timings as an upper bound, not a spec.
+below the hardware StarkWare recommends. Treat the timings as an upper bound, not a spec —
+two runs of the same request on that host differed by 27%.
 
 ---
 
@@ -174,7 +175,7 @@ ssh -L 3000:localhost:3000 <prover-host>
 |---|---|
 | Startup, no swap, ~1.1 GiB available | OOM-killed, exit 137, `OOMKilled=true` |
 | Idle at steady state | ~2.29 GiB resident |
-| Peak during one proof | 7,064,956,928 bytes (~6.58 GiB) |
+| Peak during one proof | 6.58–6.67 GiB across two runs |
 | Host swap consumed during that proof | roughly 12 GiB |
 
 Startup performs a precomputation that is itself enough to trigger the OOM killer on a small
@@ -234,19 +235,44 @@ behaves, since it always signs its own transactions.
 ### Result on the reference host
 
 An Invoke V3 calling STRK `balance_of`, nonce `0x1`, all gas prices and tip zero,
-`l2_gas.max_amount = 0x5f5e100`, against `block_id: "latest"`:
+`l2_gas.max_amount = 0x5f5e100`, against `block_id: "latest"`. The identical request, run
+twice about half a day apart:
 
-| | |
-|---|---|
-| Wall time | 485 seconds (8m 05s) |
-| Peak memory | ~6.58 GiB |
-| Proof | present, 306,508 base64 characters |
-| Proof facts | present, 8 felts |
-| L2-to-L1 messages | 0 |
-| Response size | 306,890 bytes |
+| | Run 1 | Run 2 |
+|---|---|---|
+| Wall time | 485s (8m 05s) | **355s (5m 55s)** |
+| Peak memory | ~6.58 GiB | ~6.67 GiB |
+| Proof | 306,508 base64 chars | 315,144 base64 chars |
+| Proof facts | 8 felts | 8 felts |
+| L2-to-L1 messages | 0 | 0 |
+
+Same host, same request, **27% apart**. Budget for the slower number and do not read a single
+timing as a benchmark.
 
 Block ID is not part of the transaction signature, so switching from a numbered block to
 `latest` is free and avoids retention problems — see below.
+
+### What changes between runs, and what does not
+
+Against `block_id: "latest"` the proof is anchored to whatever block is current, so two runs
+of a byte-identical request return different proofs. Comparing the eight proof facts across
+the two runs above shows exactly which parts move:
+
+| Fact | Run 1 | Run 2 | |
+|---|---|---|---|
+| 1 | `0x50524f4f4631` | same | `PROOF1` tag |
+| 2 | `0x5649525455414c5f534e4f53` | same | `VIRTUAL_SNOS` tag |
+| 3 | `0x53f6c9fc…6daa1` | same | program hash |
+| 4 | `0x5649525455414c5f534e4f5330` | same | `VIRTUAL_SNOS0` tag |
+| 5 | `0xcc74e9` | `0xccdf90` | **block number** — 13,399,273 → 13,426,576 |
+| 6 | `0x1d29c43b…4752` | `0x2cd92179…5bcd` | **state commitment at that block** |
+| 7 | `0x5b3bc83b…2d7a` | same | transaction commitment |
+| 8 | `0x0` | same | |
+
+So do not treat a response hash as a reproducibility check — it will never match. Facts 5 and
+6 are block-dependent by construction; everything else is invariant for a given transaction.
+If facts 1, 2, 3, 4, 7 or 8 change between runs of the same request, something is genuinely
+wrong.
 
 ### Error codes
 
