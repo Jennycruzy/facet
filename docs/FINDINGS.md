@@ -850,6 +850,26 @@ nothing, Lava's testnet endpoint returned a provider error, and Blast is retired
 
 ---
 
+### 6.14 Live Sepolia confirmation — 18 August 2026
+
+The decoded §6.4 invocation was executed on Starknet Sepolia using a fresh account and a
+self-deployed anonymizer. Signing stayed local; no mainnet funds were used.
+
+| Item | Result |
+|---|---|
+| Sepolia account | `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` |
+| Account deployment | `0x17600d9f07f92a4f684bafd468a45a314035a1677f8bee1b86deab6d9623199` |
+| Anonymizer | `0x041521155e2fac699bba66200c77c80e6186693a3ae0923aeb51dc51b34a1bc9` |
+| Anonymizer deployment | `0x014eb1f86482ae09c32d5784d604115b9e8ab24c3c6f9349308028e6d5a3ab29` |
+| Shadow-account materialisation | `0x0719c8ddafc64eebaea496f84d0ec4ccbee46d561a227422d94e5f0be874e9b7` |
+| Derived shadow account | `0x2f394a36cec15b11de15243d9049d871a7b81621e27f98803976f3744c99065` |
+| 0.5 STRK funding | `0x067c272692c0afe9f95535504a81352b0ec664c4b09eb8ccbe0c5ae84a571193` |
+| Eleven-felt replay | `0x01278bd9634d952da1502118c3bf6f8578b5e4148da6ab992384aeca110675cf` |
+
+The anonymizer's privacy contract resolved to the Sepolia account. After the replay, the
+derived shadow account's STRK balance was zero, confirming that the exact `CollectPolicy::Exact`
+amount from slot 12 was collected. The replay accepted on chain without contradiction.
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:
