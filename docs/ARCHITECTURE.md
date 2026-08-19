@@ -29,11 +29,14 @@ without changing its value.
 ## Preflight status
 
 The confirmed Sepolia account was checked read-only against
-`https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10`. It held
-`0.055896839199782920 STRK` and `0 ETH`, which is below the planned 0.5 STRK private
-note plus fees. No transaction was sent. The account must receive Sepolia STRK before
-the Gate A deployment and proof rehearsal; Mainnet funds are not interchangeable with
-Sepolia funds.
+`https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10`. The first check found
+`0.055896839199782920 STRK` and `0 ETH`; a later check observed
+`0.979993890349582920 STRK` after the faucet top-up. No transaction was sent. Mainnet
+funds are not interchangeable with Sepolia funds.
+
+The account is retired from signing after a local secret-handling incident during
+preflight inspection. No secret is stored in this repository. Gate A must use a fresh
+Sepolia account; only its public address may enter project records.
 
 ## Prover trust boundary
 
