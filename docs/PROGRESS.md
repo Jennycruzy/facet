@@ -15,7 +15,8 @@ stored here.
 
 | Item | Record |
 |---|---|
-| Sepolia rehearsal account | `facet-sepolia`, `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` |
+| Sepolia Gate A account | `facet-sepolia-gate-a`, `0x0397ca8056ff3e65790b4f85b58c7e6590055b2e94ae8800025214ba5351b904` |
+| Retired Sepolia account | `facet-sepolia`, `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5`; historical replay account, no longer signs |
 | Sepolia purpose | Gate A `UseNote → Withdraw → ComputeAndInvoke` rehearsal |
 | Initial Sepolia target | 0.5 STRK private note, plus transaction fees |
 | Total owner-approved ceiling | Up to 30 STRK for the end-to-end work; this is a ceiling, not an instruction to spend it all |
@@ -40,10 +41,9 @@ Read-only balance checks against the versioned Sepolia RPC on 19 August 2026 ret
 No transaction was sent. A later read-only check observed `0.979993890349582920 STRK`
 after the faucet top-up; Mainnet funds cannot be used as Sepolia funds.
 
-**Security status:** the account is now retired from signing. A local secret-handling
-incident occurred during preflight inspection; no secret is recorded in the repository,
-and no rehearsal transaction was sent after the top-up. Gate A must use a newly created
-Sepolia account. Only its public address may be added here.
+**Security status:** the original account is retired from signing after a local
+secret-handling incident; no secret is recorded in the repository, and no rehearsal
+transaction was sent after its top-up. Gate A now uses the newly created account above.
 
 ---
 

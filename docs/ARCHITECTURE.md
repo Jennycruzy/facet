@@ -10,7 +10,8 @@ real Sepolia transaction settles and is independently verified.
 
 | Account | Network | Role |
 |---|---|---|
-| `facet-sepolia` — `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` | Sepolia | Gate A signer and fee payer |
+| `facet-sepolia-gate-a` — `0x0397ca8056ff3e65790b4f85b58c7e6590055b2e94ae8800025214ba5351b904` | Sepolia | Current Gate A signer and fee payer; deployment pending |
+| `facet-sepolia` — `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` | Sepolia | Retired historical replay account; must not sign |
 | `starknet-gate2` — `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` | Mainnet | Funded deployment account for later Facet work |
 | Ready X — `0x0470c4cca0dd62caecaeb3f9bf047aa3e65fc2f6aa64c6c06ca85929306714fa` | Mainnet | Separate eligibility shield wallet |
 
@@ -28,11 +29,12 @@ without changing its value.
 
 ## Preflight status
 
-The confirmed Sepolia account was checked read-only against
+The current Gate A Sepolia account was checked read-only against
 `https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10`. The first check found
 `0.055896839199782920 STRK` and `0 ETH`; a later check observed
-`0.979993890349582920 STRK` after the faucet top-up. No transaction was sent. Mainnet
-funds are not interchangeable with Sepolia funds.
+`100 STRK` after the faucet top-up. Its reported account-deployment fee is
+`0.092555872811068264 STRK`, so the balance covers deployment. No transaction was sent
+from this new account yet. Mainnet funds are not interchangeable with Sepolia funds.
 
 The account is retired from signing after a local secret-handling incident during
 preflight inspection. No secret is stored in this repository. Gate A must use a fresh
