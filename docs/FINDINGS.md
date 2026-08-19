@@ -898,7 +898,8 @@ The accounts used in this project are deliberately separated by network and purp
 
 | Account | Network | Purpose |
 |---|---|---|
-| `facet-sepolia` — `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` | Sepolia | Gate A rehearsal signer and fee payer |
+| `facet-sepolia-gate-a` — `0x0397ca8056ff3e65790b4f85b58c7e6590055b2e94ae8800025214ba5351b904` | Sepolia | Current Gate A rehearsal signer and fee payer; deployment pending |
+| `facet-sepolia` — `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` | Sepolia | Retired historical replay signer; no longer authorized |
 | `starknet-gate2` — `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` | Mainnet | Funded deployment account reserved for later Facet/Mainnet work |
 | Ready X — `0x0470c4cca0dd62caecaeb3f9bf047aa3e65fc2f6aa64c6c06ca85929306714fa` | Mainnet | Eligibility shield wallet; not the Facet deployment account |
 
@@ -917,7 +918,7 @@ separate transaction before being counted.
 
 The owner confirmed the following operational authorization on 19 August 2026:
 
-- use the Sepolia `facet-sepolia` account for Gate A;
+- use the newly created Sepolia `facet-sepolia-gate-a` account for Gate A;
 - target 0.5 STRK for the initial private note, plus fees;
 - treat 30 STRK as the maximum total exposure for the end-to-end work, not as a
   requirement to spend the full amount;
@@ -935,6 +936,11 @@ low and `0x0` high for STRK, equal to **0.055896839199782920 STRK**. The account
 balance was `0x0` low and `0x0` high. No transaction was sent. This is insufficient for
 the planned 0.5 STRK note plus fees, so Gate A waits for a Sepolia STRK top-up; Mainnet
 funds do not satisfy this preflight.
+
+The replacement Gate A account `0x0397ca8056ff3e65790b4f85b58c7e6590055b2e94ae8800025214ba5351b904`
+was then checked read-only and returned **100 STRK**. Its account-creation output quoted
+an estimated deployment fee of `0.092555872811068264 STRK`. The account is funded but
+not yet deployed; no transaction has been sent from it.
 
 ---
 
