@@ -26,6 +26,15 @@ without changing its value.
 - No Mainnet DeFi transaction is authorized until Gate A passes and its amount is
   confirmed separately.
 
+## Preflight status
+
+The confirmed Sepolia account was checked read-only against
+`https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10`. It held
+`0.055896839199782920 STRK` and `0 ETH`, which is below the planned 0.5 STRK private
+note plus fees. No transaction was sent. The account must receive Sepolia STRK before
+the Gate A deployment and proof rehearsal; Mainnet funds are not interchangeable with
+Sepolia funds.
+
 ## Prover trust boundary
 
 The trusted prover is VPS `38.49.216.59`, running the self-hosted transaction prover on

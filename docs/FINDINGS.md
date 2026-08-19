@@ -929,6 +929,13 @@ The current SDK proof invocation places the viewing key in the proof input sent 
 prover, so wallet signing material and viewing-key derivation remain outside the repo and
 must never be logged or committed.
 
+The first read-only Sepolia preflight, using the versioned RPC endpoint
+`https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10`, returned `0x5589683b1ad782c20`
+low and `0x0` high for STRK, equal to **0.055896839199782920 STRK**. The account's ETH
+balance was `0x0` low and `0x0` high. No transaction was sent. This is insufficient for
+the planned 0.5 STRK note plus fees, so Gate A waits for a Sepolia STRK top-up; Mainnet
+funds do not satisfy this preflight.
+
 ---
 
 ## 7. Toolchain
