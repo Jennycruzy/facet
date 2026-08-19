@@ -28,6 +28,18 @@ The Mainnet account is not the Sepolia account. Starknet permits omitted leading
 so `0x033ce…` and `0x33ce…` refer to the same Mainnet address. The public funding
 transaction is recorded in `FINDINGS.md` §6.16.
 
+### Sepolia preflight
+
+Read-only balance checks against the versioned Sepolia RPC on 19 August 2026 returned:
+
+| Asset | Balance | Status |
+|---|---:|---|
+| STRK | `0.055896839199782920` | Below the planned 0.5 STRK note plus fees |
+| ETH | `0` | No ETH fee balance |
+
+No transaction was sent. Gate A is waiting for a Sepolia STRK top-up to the confirmed
+account; Mainnet funds cannot be used as Sepolia funds.
+
 ---
 
 ## Registration
