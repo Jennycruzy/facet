@@ -37,8 +37,13 @@ Read-only balance checks against the versioned Sepolia RPC on 19 August 2026 ret
 | STRK | `0.055896839199782920` | Below the planned 0.5 STRK note plus fees |
 | ETH | `0` | No ETH fee balance |
 
-No transaction was sent. Gate A is waiting for a Sepolia STRK top-up to the confirmed
-account; Mainnet funds cannot be used as Sepolia funds.
+No transaction was sent. A later read-only check observed `0.979993890349582920 STRK`
+after the faucet top-up; Mainnet funds cannot be used as Sepolia funds.
+
+**Security status:** the account is now retired from signing. A local secret-handling
+incident occurred during preflight inspection; no secret is recorded in the repository,
+and no rehearsal transaction was sent after the top-up. Gate A must use a newly created
+Sepolia account. Only its public address may be added here.
 
 ---
 
