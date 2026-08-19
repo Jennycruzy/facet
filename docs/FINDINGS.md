@@ -870,6 +870,28 @@ The anonymizer's privacy contract resolved to the Sepolia account. After the rep
 derived shadow account's STRK balance was zero, confirming that the exact `CollectPolicy::Exact`
 amount from slot 12 was collected. The replay accepted on chain without contradiction.
 
+### 6.15 First funded mainnet interaction — 19 August 2026
+
+The eligibility shield was completed through Ready X. The transaction was checked against the
+mainnet receipt: it succeeded, touched the deployed STRK20 pool, and transferred 7 STRK from the
+Ready wallet into the pool. This is an eligibility transaction only; no Facet shadow account has
+yet interacted with a DeFi protocol.
+
+| Item | Result |
+|---|---|
+| Ready X Starknet Mainnet wallet | `0x0470c4cca0dd62caecaeb3f9bf047aa3e65fc2f6aa64c6c06ca85929306714fa` |
+| STRK token | `0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d` |
+| Pool | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
+| Shield amount | 7 STRK |
+| Transaction | `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a` |
+| Block | 13,538,709 |
+| Status | `SUCCEEDED`, `ACCEPTED_ON_L2` |
+| Explorer | <https://voyager.online/tx/0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a> |
+
+The receipt contains the expected pool event. The remaining work for eligibility is two more
+successful mainnet transactions touching the pool; the product work remains wiring the SDK's
+proving path and executing the §6.6 shadow-account sequence.
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:

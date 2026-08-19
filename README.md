@@ -156,7 +156,7 @@ What is not built is listed as plainly as what is.
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
 | SDK | **not built** |
 | Application | **not built** |
-| Mainnet interaction | **none yet** — no shadow account has touched a DeFi protocol, including ours |
+| Mainnet interaction | **eligibility shield complete** — one 7 STRK Ready X shield touched the STRK20 pool; no shadow account has touched a DeFi protocol |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence has never been executed by anyone. The
 anonymizer half is covered by the fork tests; the proved half is not, and cannot be reached
