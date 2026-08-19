@@ -7,6 +7,29 @@ Sprint window: 14–31 August 2026. Submissions close 31 August, 23:59 UTC.
 
 ---
 
+## Phase A authorization and account separation
+
+Confirmed by the owner on 19 August 2026. This records authorization and public
+operational context; no private key, seed phrase, password, signature, or viewing key is
+stored here.
+
+| Item | Record |
+|---|---|
+| Sepolia rehearsal account | `facet-sepolia`, `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` |
+| Sepolia purpose | Gate A `UseNote → Withdraw → ComputeAndInvoke` rehearsal |
+| Initial Sepolia target | 0.5 STRK private note, plus transaction fees |
+| Total owner-approved ceiling | Up to 30 STRK for the end-to-end work; this is a ceiling, not an instruction to spend it all |
+| Mainnet funded account | `starknet-gate2`, `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` |
+| Mainnet purpose | Later Facet/Mainnet work; distinct from the Sepolia account and the Ready X eligibility wallet |
+| Trusted prover host | VPS `38.49.216.59` (`jennycruzy`), prover bound to the trusted host rather than exposed publicly |
+| Mainnet spend gate | No Mainnet DeFi transaction until Sepolia Gate A passes and the per-transaction amount is confirmed |
+
+The Mainnet account is not the Sepolia account. Starknet permits omitted leading zeroes,
+so `0x033ce…` and `0x33ce…` refer to the same Mainnet address. The public funding
+transaction is recorded in `FINDINGS.md` §6.16.
+
+---
+
 ## Registration
 
 **Complete, 15 August 2026.**
@@ -64,6 +87,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | Same replay against Sepolia state | Done | `decoded_payload_replays_on_sepolia`, forked at block 13,518,500. A free dry run of the live transaction. |
 | Live Sepolia transaction | **Done, 18 August 2026** | Account `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5`; anonymizer deploy `0x014eb1f86482ae09c32d5784d604115b9e8ab24c3c6f9349308028e6d5a3ab29`; materialisation `0x0719c8ddafc64eebaea496f84d0ec4ccbee46d561a227422d94e5f0be874e9b7`; funding `0x067c272692c0afe9f95535504a81352b0ec664c4b09eb8ccbe0c5ae84a571193`; replay `0x01278bd9634d952da1502118c3bf6f8578b5e4148da6ab992384aeca110675cf`. Exact 0.5 STRK was collected; derived shadow balance is 0. |
 | First funded mainnet interaction | **Done, 19 August 2026** | Ready X shielded 7 STRK into the mainnet STRK20 pool; transaction `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, block 13,538,709, accepted on L2. |
+| Phase A owner authorization | **Confirmed, 19 August 2026** | Owner approved the Sepolia account above, trusted VPS prover `38.49.216.59`, an initial 0.5 STRK rehearsal target plus fees, and a maximum total exposure of 30 STRK. The proved §6.6 sequence remains pending. |
 
 ---
 

@@ -892,6 +892,45 @@ The receipt contains the expected pool event. The remaining work for eligibility
 successful mainnet transactions touching the pool; the product work remains wiring the SDK's
 proving path and executing the §6.6 shadow-account sequence.
 
+### 6.16 Account separation, funding provenance, and Phase A authorization — 19 August 2026
+
+The accounts used in this project are deliberately separated by network and purpose:
+
+| Account | Network | Purpose |
+|---|---|---|
+| `facet-sepolia` — `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` | Sepolia | Gate A rehearsal signer and fee payer |
+| `starknet-gate2` — `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` | Mainnet | Funded deployment account reserved for later Facet/Mainnet work |
+| Ready X — `0x0470c4cca0dd62caecaeb3f9bf047aa3e65fc2f6aa64c6c06ca85929306714fa` | Mainnet | Eligibility shield wallet; not the Facet deployment account |
+
+The Sepolia and Mainnet deployment accounts are different addresses. Starknet addresses
+may omit leading zeroes, so the Mainnet account may also appear as
+`0x33ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b`.
+
+The public Mainnet funding transaction supplied for that account is
+[`0x047052e30cbb17f8f7f284d673a431788a8a9e41c56c39eb109501b27304e751`](https://voyager.online/tx/0x047052e30cbb17f8f7f284d673a431788a8a9e41c56c39eb109501b27304e751).
+Its sender is `0x069a7818562b608ce8c5d0039e7f6d1c6ee55f36978f633b151858d85c022d2f`,
+and its calldata names the Mainnet account above as the recipient. The transfer amount
+encoded in the receipt is **70.28 STRK** (`0x3cf54b7a3fe740000`), not 76 STRK; the
+owner's earlier 76 STRK description is retained as an unverified wallet-level report,
+while the chain value is authoritative. Any additional funding must be verified as a
+separate transaction before being counted.
+
+The owner confirmed the following operational authorization on 19 August 2026:
+
+- use the Sepolia `facet-sepolia` account for Gate A;
+- target 0.5 STRK for the initial private note, plus fees;
+- treat 30 STRK as the maximum total exposure for the end-to-end work, not as a
+  requirement to spend the full amount;
+- trust VPS `38.49.216.59` as the prover host.
+
+This is authorization to proceed, not evidence that Gate A has passed. The prover remains
+trusted infrastructure and must not be exposed as an unauthenticated public endpoint.
+The current SDK proof invocation places the viewing key in the proof input sent to the
+prover, so wallet signing material and viewing-key derivation remain outside the repo and
+must never be logged or committed.
+
+---
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:
