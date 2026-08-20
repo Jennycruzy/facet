@@ -23,6 +23,17 @@ pub const IDENTITY_KEY_TAG: felt252 = 'IDENTITY_KEY_TAG:V1';
 /// Upper bound on the nonce range a single `get_shadow_accounts` call may resolve.
 pub const MAX_SCAN_RANGE: u64 = 1024;
 
+pub mod errors {
+    pub const UNAUTHORIZED_CALLER: felt252 = 'UNAUTHORIZED_CALLER';
+    pub const ZERO_BALANCE: felt252 = 'ZERO_BALANCE';
+    pub const NEGATIVE_DIFF: felt252 = 'NEGATIVE_DIFF';
+    pub const INSUFFICIENT_BALANCE: felt252 = 'INSUFFICIENT_BALANCE';
+    pub const AMOUNT_OVERFLOW: felt252 = 'AMOUNT_OVERFLOW';
+    pub const RANGE_TOO_LARGE: felt252 = 'RANGE_TOO_LARGE';
+    pub const INVALID_RANGE: felt252 = 'INVALID_RANGE';
+    pub const ZERO_ADDRESS: felt252 = 'ZERO_ADDRESS';
+}
+
 #[derive(Serde, Copy, Drop, PartialEq, Debug)]
 pub struct ShadowAccountInfo {
     pub nonce: u64,
