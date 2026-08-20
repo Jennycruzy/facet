@@ -15,6 +15,19 @@ nowhere, and which has never once interacted with a DeFi protocol.
 > lose. Claims in this README are traceable to a source reference or a transaction
 > hash; anything not yet done is marked as such.
 
+## Quick validation
+
+The fork-backed contract checks can be run locally from the repository root:
+
+```bash
+cd packages/contracts
+snforge test
+```
+
+The suite currently covers 14 tests against recorded mainnet and Sepolia state. It
+does not prove the full transaction path; the remaining limits are documented in
+[`docs/FINDINGS.md`](docs/FINDINGS.md).
+
 ---
 
 ## The primitive
