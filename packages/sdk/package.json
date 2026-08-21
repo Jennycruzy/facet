@@ -1,0 +1,28 @@
+{
+  "name": "@facet/sdk",
+  "version": "0.1.0",
+  "description": "Facet's dapp-facing action builder over the Starknet privacy client",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "check": "npm run build && npm test"
+  },
+  "peerDependencies": {
+    "@starkware-libs/starknet-privacy-client": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  }
+}
