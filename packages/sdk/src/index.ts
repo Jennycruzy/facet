@@ -1,6 +1,8 @@
 export {
   buildGateAActionSet,
+  supportsRegistration,
   toHexFelt,
+  GATE_A_REGISTRATION_OPTIONS,
   type BuildGateAActionSetOptions,
   type GateAActionSet,
   type GateAShadowAccount,
@@ -8,6 +10,7 @@ export {
   type PrivacyClientLike,
   type PrivacyBuilderLike,
   type PrivacyCall,
+  type RegistrableBuilderLike,
   type CollectPolicy,
   type CollectPolicyInput,
 } from "./gate-a.js";

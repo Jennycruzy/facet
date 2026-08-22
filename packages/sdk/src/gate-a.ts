@@ -5,6 +5,14 @@
  * queues an OPEN settlement note, a withdrawal to the authoritative predicted address, and the
  * shadow-account invoke in one client operation. CorePrivateTransfersProver resolves the existing
  * UseNote from its persisted registry when it compiles that withdrawal.
+ *
+ * A sender that has never set a viewing key is not in the pool's registry, and the pool rejects
+ * the whole transaction with SENDER_NOT_REGISTERED — inside the prover, after minutes of work.
+ * Registration is `SetViewingKey`, ACCOUNT_PHASE 0, so it belongs in this same action set rather
+ * than in a separate transaction. Two upstream paths express it, and this builder supports both:
+ * core's explicit `register()`, and the core execute options `autoRegister`/`autoSetup`, which
+ * only inject it when the sender has no channel public key. The client-layer builder exposes
+ * neither, so this builder refuses rather than silently queueing a set that cannot register.
  */
 
 export type FeltLike = bigint | number | string;
@@ -53,6 +61,33 @@ export interface PrivacyBuilderLike {
   shadowAccounts(dappName: string): PrivacyInvokeBuilderLike;
 }
 
+/**
+ * Core's `PrivateTransfersBuilder` also exposes `register()`, which queues `SetViewingKey`. The
+ * client-layer `PrivacyBuilder` does not, so this is an optional structural capability.
+ */
+export interface RegistrableBuilderLike {
+  register(): unknown;
+}
+
+/**
+ * The core execute options that register a sender implicitly.
+ *
+ * `autoRegister` adds `SetViewingKey` only when the sender has no channel public key, and
+ * `autoSetup` opens the self-channel that a newly registering sender cannot already have. Pass
+ * these to core's `transfers.build(...)`; the client-layer `build()` takes no options at all.
+ */
+export const GATE_A_REGISTRATION_OPTIONS = Object.freeze({
+  autoRegister: true,
+  autoSetup: true,
+});
+
+/** Does this builder expose core's `register()`? */
+export function supportsRegistration(
+  builder: PrivacyBuilderLike
+): builder is PrivacyBuilderLike & RegistrableBuilderLike {
+  return typeof (builder as Partial<RegistrableBuilderLike>).register === "function";
+}
+
 /** Structural seam for @starkware-libs/starknet-privacy-client's PrivacyClient. */
 export interface PrivacyClientLike {
   build(): PrivacyBuilderLike;
@@ -71,6 +106,13 @@ export interface BuildGateAActionSetOptions {
   calls: PrivacyCall[];
   /** How the shadow account's balance settles into the open note. Defaults to all. */
   collectPolicy?: CollectPolicyInput;
+  /**
+   * Queue `SetViewingKey` ahead of the sequence for a sender that has never registered.
+   *
+   * Requires a builder exposing core's `register()`. Callers on the core path may instead build
+   * with {@link GATE_A_REGISTRATION_OPTIONS} and leave this unset.
+   */
+  register?: boolean;
 }
 
 export interface GateAActionSet {
@@ -81,6 +123,8 @@ export interface GateAActionSet {
   token: string;
   amount: string;
   nonce: bigint;
+  /** Whether `SetViewingKey` was queued ahead of the sequence. */
+  registered: boolean;
 }
 
 /** Normalize a felt-like value to the canonical Starknet hex form. */
@@ -132,6 +176,19 @@ export async function buildGateAActionSet(
   const collectPolicy = normalizePolicy(options.collectPolicy);
 
   const builder = client.build();
+
+  // SetViewingKey is ACCOUNT_PHASE 0, so it is queued before every other action in the set.
+  const register = options.register ?? false;
+  if (register) {
+    if (!supportsRegistration(builder)) {
+      throw new TypeError(
+        "register was requested but this builder exposes no register(); build on the core " +
+          "PrivateTransfersBuilder, or use GATE_A_REGISTRATION_OPTIONS on the core path"
+      );
+    }
+    builder.register();
+  }
+
   const shadowAccounts = builder.shadowAccounts(options.dappName);
   const accounts = await shadowAccounts.addresses({
     start: nonce.numeric,
@@ -152,5 +209,5 @@ export async function buildGateAActionSet(
     collectPolicy,
   });
 
-  return { builder, shadowAccount, token, amount, nonce: nonce.bigint };
+  return { builder, shadowAccount, token, amount, nonce: nonce.bigint, registered: register };
 }
