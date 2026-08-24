@@ -2,7 +2,8 @@ import { hash, num } from "starknet";
 
 const PAYMASTER_URL = process.env.FACET_PAYMASTER_URL ?? "https://sepolia.paymaster.avnu.fi";
 const API_KEY = process.env.FACET_PAYMASTER_API_KEY;
-const POOL = "0x0254a6b2997ef52e9f830ce1f543f6b29768295e8d17e2267d672c552cfe0d91";
+const POOL = process.env.FACET_POOL_ADDRESS
+  ?? "0x0254a6b2997ef52e9f830ce1f543f6b29768295e8d17e2267d672c552cfe0d91";
 const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 const ACCOUNT = "0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135";
 const AMOUNT = 500_000_000_000_000_000n;

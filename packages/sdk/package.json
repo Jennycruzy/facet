@@ -18,6 +18,8 @@
     "check": "npm run build && npm test",
     "gate-a:preflight": "node scripts/gate-a-avnu-preflight.mjs",
     "gate-a:run": "node scripts/gate-a-sepolia.mjs",
+    "gate-a:selfhost:preflight": "node scripts/gate-a-selfhost.mjs preflight",
+    "gate-a:selfhost:run": "node scripts/gate-a-selfhost.mjs run",
     "gate-a:test-pool": "node scripts/gate-a-test-pool-setup.mjs",
     "gate-a:paymaster-setup": "node scripts/gate-a-selfhost-paymaster-setup.mjs"
   },
@@ -28,6 +30,10 @@
     "@starkware-libs/starknet-privacy-sdk": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.8.0",
+    "starknet": "10.5.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

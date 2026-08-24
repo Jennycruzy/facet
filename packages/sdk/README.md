@@ -57,3 +57,5 @@ npm run gate-a:run
 A keystore. For the isolated self-hosted path, configure `FACET_PAYMASTER_URL` and
 `FACET_USE_TEST_POOL=1`. Setup scripts are exposed as `gate-a:test-pool` and
 `gate-a:paymaster-setup`; do not repeat deployments when their mode-0600 profiles already exist.
+For an existing self-hosted profile, use `npm run gate-a:selfhost:preflight` and then
+`npm run gate-a:selfhost:run`; the wrapper loads the API key without printing it.
