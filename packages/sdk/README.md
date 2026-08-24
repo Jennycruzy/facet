@@ -41,3 +41,19 @@ set.registered; // whether SetViewingKey was queued
 The client-layer `PrivacyBuilder` exposes neither — its `build()` takes no options and it has no
 `register()`. Asking for `register: true` there throws rather than queueing a set that cannot
 register; use `supportsRegistration` to check first, or build on the core path.
+
+## Sepolia Gate A runner
+
+The operational Gate A scripts live in this package so the project owns its integration code while
+consuming the Starknet privacy SDK as a dependency. They never store the Gate account private key
+in the repository.
+
+```bash
+npm run gate-a:preflight
+npm run gate-a:run
+```
+
+`gate-a:run` requires `FACET_PAYMASTER_API_KEY`, a tunnel to the trusted prover, and the local Gate
+A keystore. For the isolated self-hosted path, configure `FACET_PAYMASTER_URL` and
+`FACET_USE_TEST_POOL=1`. Setup scripts are exposed as `gate-a:test-pool` and
+`gate-a:paymaster-setup`; do not repeat deployments when their mode-0600 profiles already exist.

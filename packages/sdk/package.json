@@ -15,7 +15,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
-    "check": "npm run build && npm test"
+    "check": "npm run build && npm test",
+    "gate-a:preflight": "node scripts/gate-a-avnu-preflight.mjs",
+    "gate-a:run": "node scripts/gate-a-sepolia.mjs",
+    "gate-a:test-pool": "node scripts/gate-a-test-pool-setup.mjs",
+    "gate-a:paymaster-setup": "node scripts/gate-a-selfhost-paymaster-setup.mjs"
   },
   "peerDependencies": {
     "@starkware-libs/starknet-privacy-sdk": "^0.14.3-rc.5"
