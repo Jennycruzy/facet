@@ -1,7 +1,7 @@
 # `@facet/sdk`
 
 This package is the Facet-specific action builder over
-`@starkware-libs/starknet-privacy-client`.
+`@starkware-libs/starknet-privacy-sdk`.
 
 `buildGateAActionSet` performs the read-only address lookup and queues the first Facet operation:
 
@@ -13,9 +13,9 @@ The function does not prove or broadcast. The upstream core prover selects the p
 when it compiles the withdrawal. This keeps note selection in the privacy SDK registry while making
 the funding target and action order explicit and testable.
 
-The upstream client is a peer dependency because its package is currently published from the
+The upstream SDK is a peer dependency because its package is currently published from the
 Starknet privacy monorepo rather than the public npm registry. The API is intentionally structural,
-so the wrapper remains compatible with the client without copying its source tree.
+so the wrapper remains compatible without copying the upstream source tree.
 
 ## Registering the sender
 
