@@ -21,7 +21,8 @@
     "gate-a:selfhost:preflight": "node scripts/gate-a-selfhost.mjs preflight",
     "gate-a:selfhost:run": "node scripts/gate-a-selfhost.mjs run",
     "gate-a:test-pool": "node scripts/gate-a-test-pool-setup.mjs",
-    "gate-a:paymaster-setup": "node scripts/gate-a-selfhost-paymaster-setup.mjs"
+    "gate-a:paymaster-setup": "node scripts/gate-a-selfhost-paymaster-setup.mjs",
+    "paymaster:refresh": "node scripts/gate-a-selfhost-paymaster-refresh.mjs"
   },
   "peerDependencies": {
     "@starkware-libs/starknet-privacy-sdk": "^0.14.3-rc.5"

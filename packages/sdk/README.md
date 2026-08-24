@@ -63,3 +63,6 @@ A keystore. For the isolated self-hosted path, configure `FACET_PAYMASTER_URL` a
 `gate-a:paymaster-setup`; do not repeat deployments when their mode-0600 profiles already exist.
 For an existing self-hosted profile, use `npm run gate-a:selfhost:preflight` and then
 `npm run gate-a:selfhost:run`; the wrapper loads the API key without printing it.
+If the paymaster reports a missing private forwarder entrypoint, run `npm run paymaster:refresh`
+once. It declares the current forwarder class and writes separate `*-v2` profiles, leaving the
+old profile recoverable.

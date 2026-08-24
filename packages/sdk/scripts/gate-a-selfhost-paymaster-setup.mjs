@@ -2,7 +2,7 @@ import { createDecipheriv, randomBytes, scryptSync, timingSafeEqual } from "node
 import { spawn } from "node:child_process";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { keccak_256 } from "@noble/hashes/sha3";
-import { ec } from "starknet";
+import { Account, RpcProvider, Signer, ec, hash } from "starknet";
 
 const RPC_URL = process.env.FACET_RPC_URL
   ?? "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10";
@@ -10,8 +10,16 @@ const SECRET_DIR = "/Users/user/.facet-secrets/starknet-gate-a-new";
 const ACCOUNT_FILE = `${SECRET_DIR}/account.json`;
 const KEYSTORE_FILE = `${SECRET_DIR}/keystore.json`;
 const TEST_POOL_FILE = `${SECRET_DIR}/test-pool.json`;
-const PROFILE_FILE = `${SECRET_DIR}/selfhost-paymaster.json`;
-const CLIENT_FILE = `${SECRET_DIR}/selfhost-paymaster-client.json`;
+const PROFILE_FILE = process.env.FACET_PAYMASTER_PROFILE
+  ?? `${SECRET_DIR}/selfhost-paymaster.json`;
+const CLIENT_FILE = process.env.FACET_PAYMASTER_CLIENT
+  ?? `${SECRET_DIR}/selfhost-paymaster-client.json`;
+const FORCE_SETUP = process.env.FACET_PAYMASTER_FORCE_SETUP === "1";
+const FORWARDER_CLASS_FILE = process.env.FACET_FORWARDER_CLASS_FILE
+  ?? "/Users/user/.facet-tools/avnu-paymaster/contracts/target/dev/avnu_Forwarder.contract_class.json";
+const FORWARDER_CASM_FILE = process.env.FACET_FORWARDER_CASM_FILE
+  ?? "/Users/user/.facet-tools/avnu-paymaster/contracts/target/dev/avnu_Forwarder.compiled_contract_class.json";
+const FORWARDER_CLASS_HASH = "0x7812f3a7013dd0e4e1de6ee97a52949257b7d2a904b63b1d8ace8346d1e0c55";
 const PAYMASTER_CLI = process.env.FACET_PAYMASTER_CLI
   ?? "/Users/user/.facet-tools/avnu-paymaster/target/release/paymaster-cli";
 const STRK = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
@@ -84,7 +92,7 @@ async function run(command, args, stdinValue) {
 await mkdir(SECRET_DIR, { recursive: true, mode: 0o700 });
 try {
   const existing = JSON.parse(await readFile(CLIENT_FILE, "utf8"));
-  if (existing.apiKey && existing.poolAddress) {
+  if (!FORCE_SETUP && existing.apiKey && existing.poolAddress) {
     console.log(`Existing self-hosted paymaster profile: ${PROFILE_FILE}`);
     console.log(`Configured pool: ${existing.poolAddress}`);
     console.log("No deployment was repeated.");
@@ -104,6 +112,23 @@ const privateKey = decryptKeystore(keystore, password);
 const address = accountInfo.deployment.address;
 if (BigInt(ec.starkCurve.getStarkKey(privateKey)) !== BigInt(accountInfo.variant.public_key)) {
   throw new Error("Keystore key does not match the Gate A account descriptor.");
+}
+
+const provider = new RpcProvider({ nodeUrl: RPC_URL });
+const account = new Account({ provider, address, signer: new Signer(privateKey), cairoVersion: "1" });
+const forwarderClass = JSON.parse(await readFile(FORWARDER_CLASS_FILE, "utf8"));
+const forwarderCasm = JSON.parse(await readFile(FORWARDER_CASM_FILE, "utf8"));
+if (hash.computeSierraContractClassHash(forwarderClass).toLowerCase() !== FORWARDER_CLASS_HASH) {
+  throw new Error("Forwarder artifact class hash does not match the expected private-entrypoint class.");
+}
+console.log(`Declaring forwarder class ${FORWARDER_CLASS_HASH}...`);
+try {
+  const declaration = await account.declare({ contract: forwarderClass, casm: forwarderCasm });
+  await provider.waitForTransaction(declaration.transaction_hash);
+  console.log(`Forwarder declaration: ${declaration.transaction_hash}`);
+} catch (error) {
+  if (!String(error).toLowerCase().includes("already declared")) throw error;
+  console.log("Forwarder class already declared; continuing.");
 }
 
 console.log("Deploying one isolated relayer, gas tank, estimate account, and forwarder...");
