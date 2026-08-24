@@ -508,10 +508,13 @@ const depositBuilder = transfers.build({
   autoDiscover: { notes: "refresh", channels: "refresh" },
 });
 depositBuilder.with(STRK).deposit({ amount: depositAmount });
-depositBuilder.with(depositQuote.fee_action.token).withdraw({
-  recipient: depositQuote.fee_action.recipient,
-  amount: BigInt(depositQuote.fee_action.amount),
-});
+const depositFeeAmount = BigInt(depositQuote.fee_action.amount);
+if (depositFeeAmount > 0n) {
+  depositBuilder.with(depositQuote.fee_action.token).withdraw({
+    recipient: depositQuote.fee_action.recipient,
+    amount: depositFeeAmount,
+  });
+}
 const depositInvocation = await depositBuilder.createProofInvocation();
 await preflightInvocation(provider, depositInvocation.invocation, "Deposit");
 attachTestScreening = process.env.FACET_USE_TEST_POOL === "1";
@@ -562,10 +565,13 @@ gateBuilder.shadowAccounts(DAPP_NAME).invoke(NONCE, {
 });
 
 console.log("Building and proving Gate A: UseNote -> Withdraw -> ComputeAndInvoke...");
-gateBuilder.with(gateQuote.fee_action.token).withdraw({
-  recipient: gateQuote.fee_action.recipient,
-  amount: BigInt(gateQuote.fee_action.amount),
-});
+const gateFeeAmount = BigInt(gateQuote.fee_action.amount);
+if (gateFeeAmount > 0n) {
+  gateBuilder.with(gateQuote.fee_action.token).withdraw({
+    recipient: gateQuote.fee_action.recipient,
+    amount: gateFeeAmount,
+  });
+}
 const gateInvocation = await gateBuilder.createProofInvocation();
 await preflightInvocation(provider, gateInvocation.invocation, "Gate A");
 const started = Date.now();
