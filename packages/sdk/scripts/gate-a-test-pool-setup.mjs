@@ -1,8 +1,13 @@
 import { createDecipheriv, scryptSync, timingSafeEqual } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 import { Account, RpcProvider, Signer, ec } from "starknet";
 import { keccak_256 } from "@noble/hashes/sha3";
-import { SCREENING_SIGNER_PUBLIC_KEY } from "@starkware-libs/starknet-privacy-sdk/testing";
+const PRIVACY_SDK_ROOT = process.env.FACET_PRIVACY_SDK_ROOT
+  ?? "/Users/user/starknet-privacy/sdk";
+const { SCREENING_SIGNER_PUBLIC_KEY } = await import(
+  pathToFileURL(`${PRIVACY_SDK_ROOT}/dist/testing/index.js`)
+);
 
 const RPC_URL = process.env.FACET_RPC_URL
   ?? "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10";

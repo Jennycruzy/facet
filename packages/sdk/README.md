@@ -48,6 +48,10 @@ The operational Gate A scripts live in this package so the project owns its inte
 consuming the Starknet privacy SDK as a dependency. They never store the Gate account private key
 in the repository.
 
+Until the upstream package is available from the configured npm registry, operational scripts load
+its built output from `FACET_PRIVACY_SDK_ROOT` (default: `/Users/user/starknet-privacy/sdk`). Run
+`npm run build` in that upstream SDK checkout before Gate A.
+
 ```bash
 npm run gate-a:preflight
 npm run gate-a:run

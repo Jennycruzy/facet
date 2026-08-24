@@ -1,6 +1,7 @@
 import { createDecipheriv, scryptSync, timingSafeEqual } from "node:crypto";
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   Account,
@@ -15,17 +16,19 @@ import {
   stark,
 } from "starknet";
 import { keccak_256 } from "@noble/hashes/sha3";
-import {
+const PRIVACY_SDK_ROOT = process.env.FACET_PRIVACY_SDK_ROOT
+  ?? "/Users/user/starknet-privacy/sdk";
+const {
   ContractDiscoveryProvider,
   SCREENING_SIGNER_PRIVATE_KEY,
   signScreeningAttestation,
-} from "@starkware-libs/starknet-privacy-sdk/testing";
-import {
+} = await import(pathToFileURL(`${PRIVACY_SDK_ROOT}/dist/testing/index.js`));
+const {
   createPrivateTransfers,
   Open,
   ProvingServiceProofProvider,
   ShadowAccountAnonymizerABI,
-} from "@starkware-libs/starknet-privacy-sdk";
+} = await import(pathToFileURL(`${PRIVACY_SDK_ROOT}/dist/index.js`));
 
 const RPC_URL = process.env.FACET_RPC_URL ??
   "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10";
