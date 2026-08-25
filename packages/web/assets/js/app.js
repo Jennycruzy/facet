@@ -50,7 +50,11 @@ const gem = createGem($("stone"), {
 });
 gem.setFacets(data.facets);
 gem.start();
-$("stone-hint").textContent = `drag to turn · ${data.facets.length} of ${gem.faceCount} faces cut`;
+// The face count is a property of the render, not of the system — saying "1 of 49" would
+// state a cap that does not exist. Show what is cut, and that the supply is not the limit.
+const cutCount = data.facets.length;
+$("stone-hint").textContent =
+  `drag to turn · ${cutCount} facet${cutCount === 1 ? "" : "s"} cut · the supply is unlimited`;
 
 /* ---------- act 2: the facet cards ------------------------------------- */
 
