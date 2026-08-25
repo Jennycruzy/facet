@@ -134,13 +134,22 @@ renderLegs("private-legs", privateLegs);
 renderLegs("public-legs", publicLegs);
 
 $("col-private").append(el("p", null,
-  `<span class="hash"><a href="${explorer}/tx/${data.facets[0].transactions[1].hash}">${short(data.facets[0].transactions[1].hash, 10, 8)}</a></span>`));
+  `<span class="hash"><a href="${explorer}/tx/${data.facets[0].transactions[1].hash}">${short(data.facets[0].transactions[1].hash, 10, 8)}</a></span>
+   <span id="private-status" style="color:var(--text-faint)"><span class="skeleton"></span></span>
+   <div style="color:var(--text-dim);font-size:.86rem;margin-top:8px">The pool is the sender. No personal address appears in the funding leg.</div>`));
 $("col-public").append(el("p", null,
   `<span class="hash"><a href="${data.networks[data.linkable.network].explorer}/tx/${data.linkable.hash}">${short(data.linkable.hash, 10, 8)}</a></span>
    <span id="public-status" style="color:var(--text-faint)"><span class="skeleton"></span></span>
    <div style="color:var(--text-dim);font-size:.86rem;margin-top:8px">Funder <span class="hash">${short(data.linkable.funder, 8, 6)}</span> → facet <span class="hash">${short(data.linkable.shadow, 8, 6)}</span>, ${data.linkable.amount}.</div>`));
 
 async function fillPublic() {
+  try {
+    const own = await chain.receipt(net, data.facets[0].transactions[1].hash);
+    $("private-status").textContent =
+      ` · ${own.execution_status} · block ${Number(own.block_number).toLocaleString()} · sepolia`;
+  } catch {
+    $("private-status").textContent = " · recorded in FINDINGS.md §6.17";
+  }
   try {
     const r = await chain.receipt(data.linkable.network, data.linkable.hash);
     $("public-status").textContent = ` · ${r.execution_status} · block ${Number(r.block_number).toLocaleString()} · mainnet`;

@@ -40,11 +40,11 @@ export function brilliantCut(n = 8) {
 }
 
 const BASE = {
-  table: [26, 31, 44],
-  crown: [22, 27, 39],
-  upper: [18, 22, 33],
-  pavilion: [15, 18, 28],
-  culet: [12, 14, 22],
+  table: [52, 62, 86],
+  crown: [44, 54, 78],
+  upper: [36, 45, 66],
+  pavilion: [30, 37, 56],
+  culet: [24, 29, 46],
 };
 
 export function createGem(canvas, opts = {}) {
@@ -110,13 +110,13 @@ export function createGem(canvas, opts = {}) {
     const lit = litMap.get(i);
     const base = BASE[face.kind] ?? BASE.crown;
     if (lit) {
-      const glow = state.hover === i ? 1 : 0.82;
-      const r = 40 + 150 * lambert * glow;
-      const g = 150 + 95 * lambert * glow;
-      const bl = 190 + 60 * lambert * glow;
+      const glow = state.hover === i ? 1.15 : 0.95;
+      const r = Math.min(255, 60 + 165 * lambert * glow);
+      const g = Math.min(255, 178 + 72 * lambert * glow);
+      const bl = Math.min(255, 214 + 41 * lambert * glow);
       return `rgb(${r | 0}, ${g | 0}, ${bl | 0})`;
     }
-    const k = 0.55 + lambert * 0.9;
+    const k = 0.62 + lambert * 1.15;
     return `rgb(${(base[0] * k) | 0}, ${(base[1] * k) | 0}, ${(base[2] * k) | 0})`;
   }
 
@@ -135,6 +135,13 @@ export function createGem(canvas, opts = {}) {
       });
       ctx.closePath();
       ctx.fillStyle = shade(face, i);
+      if (litMap.has(i)) {
+        ctx.save();
+        ctx.shadowColor = "rgba(127, 215, 255, .85)";
+        ctx.shadowBlur = state.hover === i ? 34 : 22;
+        ctx.fill();
+        ctx.restore();
+      }
       ctx.fill();
       ctx.strokeStyle = litMap.has(i) ? "rgba(127,215,255,.55)" : "rgba(255,255,255,.05)";
       ctx.lineWidth = litMap.has(i) ? 1.1 : 0.6;
@@ -219,14 +226,19 @@ export function createGem(canvas, opts = {}) {
 
   return {
     faceCount: faces.length,
-    // Assign facets to crown-main faces, which are the largest and read best from any angle.
+    // Crown mains are the largest faces and read best. A lit face the visitor cannot see
+    // defeats the point, so pick the ones pointing at the camera in the opening orientation
+    // and spread the rest around the crown from there.
     setFacets(list) {
       litMap.clear();
-      const crown = faces.map((f, i) => (f.kind === "crown" ? i : -1)).filter((i) => i >= 0);
-      list.forEach((facet, n) => {
-        const idx = crown[(n * Math.floor(crown.length / Math.max(list.length, 2))) % crown.length];
-        litMap.set(idx, facet);
-      });
+      project();
+      const crown = faces
+        .map((f, i) => (f.kind === "crown" ? { i, facing: normalZ(f) } : null))
+        .filter(Boolean)
+        .sort((a, b) => b.facing - a.facing)
+        .map((o) => o.i);
+      const step = Math.max(1, Math.floor(crown.length / Math.max(list.length, 2)));
+      list.forEach((facet, n) => litMap.set(crown[(n * step) % crown.length], facet));
       draw();
     },
     start() { if (!raf) raf = requestAnimationFrame(loop); draw(); },

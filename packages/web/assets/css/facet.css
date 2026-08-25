@@ -71,10 +71,10 @@ p { margin: 0 0 1.1em; max-width: 68ch; }
 .claim strong { color: #fff; font-weight: 620; }
 
 .status {
-  margin-top: 28px; display: flex; align-items: center; gap: 10px;
+  margin-top: 28px; display: flex; align-items: flex-start; gap: 10px;
   font-family: var(--mono); font-size: .82rem; color: var(--text-dim);
 }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); flex: none; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); flex: none; margin-top: .48em; }
 .status[data-state="loading"] .dot { background: var(--warn); animation: pulse 1.2s ease-in-out infinite; }
 .status[data-state="live"] .dot { background: var(--ok); }
 .status[data-state="stale"] .dot { background: var(--warn); }
@@ -148,7 +148,9 @@ footer a { margin-right: 22px; }
 }
 
 @media (max-width: 900px) {
+  .hero { min-height: 0; padding-top: 40px; }
   .hero-grid { grid-template-columns: 1fr; gap: 32px; }
+  .stone-mount { max-width: 300px; }
   .challenge { grid-template-columns: 1fr; }
   .gap { min-height: 120px; }
   .act { padding: 68px 0; }
