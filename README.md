@@ -1,19 +1,39 @@
 # Facet
 
-**Private identities for Starknet DeFi.**
+**Hide My Email, for your money.**
 
-One shielded balance. Unlimited unlinkable facets. Trade on one protocol as one
-identity, lend on another as a different one, and nothing on-chain connects them to
-each other or to you.
+One shielded balance, and a fresh unlinkable address for every app you touch. Ekubo sees
+one address. Vesu sees a different one. Neither can be traced to you, or to each other.
 
-Built on STRK20 **shadow accounts** — a primitive that is deployed on mainnet,
-supported by the official SDK, named in the sprint's judging criteria, documented
-nowhere, and which has never once interacted with a DeFi protocol.
+Every Starknet address is a permanent public record of everything its owner has ever done.
+That is not an abstract problem:
+
+- **Copy-trading and front-running.** A trader who is good at this gets watched. Their
+  entries get front-run, and there is nothing they can do about it while their positions
+  are public and attributable.
+- **Liquidation hunting.** A leveraged position has a public liquidation price, and
+  searchers hunt it deliberately.
+- **Portfolio doxxing.** Anyone who learns your address knows your net worth — permanently,
+  and in some jurisdictions that is a physical safety problem rather than a privacy
+  preference.
+
+Facet gives you one identity per context instead of one identity forever. The funding never
+names you, and the identities are not linked to each other on chain.
+
+Built on STRK20 **shadow accounts** — a primitive that is deployed on mainnet, supported by
+the official SDK, named in the sprint's judging criteria, documented nowhere, and which had
+never once been funded from a shielded note until this project did it.
 
 > **Status: in development.** Built during the [STRK20 Private Sprint](https://strk20.starknet.io),
 > 14–31 August 2026. Nothing here is audited. Do not route funds you cannot afford to
 > lose. Claims in this README are traceable to a source reference or a transaction
 > hash; anything not yet done is marked as such.
+
+## New here?
+
+[`docs/SHADOW_ACCOUNTS.md`](docs/SHADOW_ACCOUNTS.md) is the guide to this primitive that
+does not otherwise exist — derivation, the action model, the funding pattern, what leaks,
+and every revert with its cause. It is the document we needed and could not find.
 
 ## Quick validation
 
@@ -24,9 +44,9 @@ cd packages/contracts
 snforge test
 ```
 
-The suite currently covers 14 tests against recorded mainnet and Sepolia state. It
-does not prove the full transaction path; the remaining limits are documented in
-[`docs/FINDINGS.md`](docs/FINDINGS.md).
+The suite currently covers 20 tests against recorded mainnet and Sepolia state. It does not
+prove the full transaction path — that path is proved on chain instead, in
+[`docs/FINDINGS.md`](docs/FINDINGS.md) §6.17.
 
 ---
 
@@ -106,10 +126,11 @@ Everything asserted above is recorded with a file:line reference or a block heig
 The funding pattern above is also exercised as a test suite against the **live deployed
 anonymizer**, forked at mainnet block 13,329,863 — a predicted address is funded before
 any code exists at it, and the shadow account deploys exactly there and collects the
-balance. `snforge test` in `packages/contracts` runs **14 tests, all passing**: ten against
-mainnet state, four replaying the decoded invocation with a control that breaks the decode
-as it must. What those tests cannot cover, and what remains unproven, is stated in
-`FINDINGS.md` §6.12.
+balance. `snforge test` in `packages/contracts` runs **20 tests, all passing** against
+recorded mainnet and Sepolia state, including the decoded invocation replayed against real
+bytecode with a control that breaks the decode as it must. What those tests cannot cover is
+the proved half — `UseNote`, `Withdraw`, and the `ClientAction` → `ServerAction` translation
+are unreachable from a fork test. That half is proved on chain instead: `FINDINGS.md` §6.17.
 
 ## Running the prover yourself
 
