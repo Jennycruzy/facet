@@ -944,6 +944,80 @@ not yet deployed; no transaction has been sent from it.
 
 ---
 
+### 6.17 The §6.6 sequence executed on Sepolia — 25 August 2026
+
+`UseNote → Withdraw → ComputeAndInvoke` has been executed. §6.6 established the sequence was
+sound in source and recorded that it had never been run by anyone; it now has two successful
+transactions on Starknet Sepolia. Both were proved by the self-hosted transaction prover
+(§6.13) and submitted by a self-hosted AVNU-compatible paymaster.
+
+| Item | Result |
+|---|---|
+| Pool | `0x073f3c4bc1ef39490f09587b11f6ea7f2cc66854d5df3306cda4736234693546` |
+| Anonymizer | `0x057e5052865eb08bc1134a62fadfef067015802ce7e989af29fe94913c535efd` |
+| Sender | `0x07a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135` |
+| Shadow account | `0x05709c3b9dc422ed56c8b21fb3f151a833e078d9f79b6189955f853f793d9d39` |
+| Shadow account class | `0x0346e143e3b353473a0d6f681c31ffcf2866537898008027fb3b57335bad7b5f` |
+| Deploy + withdraw + collect | `0x05faace1d275d2a301b10dd1fb3f809cc65d3ba8799fbc68f0828eca4a1dedef`, block 14,018,840, 2026-08-25 09:49:52Z |
+| Withdraw + dapp call + collect | `0x0111b815a660ee41c17bf285bde7c6b43cbef5bc5d6fbf43d25e94e7f17f3693`, block 14,020,928, 2026-08-25 10:47:41Z |
+| Status | Both `SUCCEEDED`; the first `ACCEPTED_ON_L1` |
+| Withdrawn per transaction | 0.5 STRK (`0x6f05b59d3b20000`) |
+| Fee, paid by the relayer | 2.786 STRK and 2.737 STRK |
+
+**The on-chain transaction is not the proved transaction.** The prover proves the user's
+invoke, whose hash never appears on chain; what is broadcast is the paymaster relayer's
+`apply_actions` call against the pool, under a different hash. Looking up the proved hash
+returns "Transaction hash not found" on a run that fully succeeded. Both hashes above are
+relayer transactions, sender
+`0x040374c3084946da092a48c8e4fa9fbec58cdef2653ac4cd354e2b85204d39cb`, nonces 1 and 2.
+
+**What the receipts show.** The two transactions differ in one respect, and between them they
+cover both halves of the pattern.
+
+The first carries an anonymizer event naming the shadow account — the deployment — followed by
+a 0.5 STRK transfer from the pool to that address, and the same 0.5 STRK returning to the
+anonymizer and being re-deposited to the pool. Nothing was spent, so the collect is exact.
+
+The second finds the account already deployed and therefore shows the invoke itself:
+
+1. STRK `Transfer`, pool → shadow account, `0x6f05b59d3b20000` (0.5 STRK) — the `Withdraw` leg
+   paying the *predicted* address.
+2. STRK `Transfer`, shadow account → sender, `0x1` — **the dapp call, executed as the shadow
+   account.** One wei is a deliberately trivial call; what matters is the caller.
+3. STRK `Transfer`, shadow account → anonymizer, `0x6f05b59d3b1ffff` — the remainder, which is
+   the withdrawal less the one wei spent, collected in full.
+4. `Approval` by the anonymizer to the pool for that amount, and a pool deposit event carrying
+   it. The change re-enters the shield rather than sitting in the open.
+
+The arithmetic closes exactly: 0.5 STRK in, 1 wei spent, 0.5 STRK − 1 wei back. The shadow
+account's STRK balance is **0** at the time of writing, which is the §6.12 prediction holding
+on chain rather than in a fork test: the collect is exact and nothing strands.
+
+Not every event in the two receipts has been decoded to a named variant; the four legs above
+are asserted from the token contract's own `Transfer` and `Approval` events and from the
+anonymizer and pool addresses emitting them.
+
+**Proving cost, measured.** 362.1s and 348.0s wall clock on the Zen 2 VPS
+(`ghcr.io/jennycruzy/facet-prover:znver2`, §6.13), consistent with the 485s of the first
+recorded proof and the ~290–360s band across eleven proofs run on 25 August.
+
+**Three failure modes cost most of that day**, all of them in the transaction-submission path
+rather than in the privacy primitive, and all worth recording because they are invisible in
+the SDK's documentation:
+
+1. `argent/multicall-failed` → `ENTRYPOINT_NOT_FOUND` from the paymaster's forwarder. The
+   deployed forwarder class did not carry the private entrypoint the privacy path calls.
+   Resolved by declaring the current forwarder class, redeploying the paymaster stack against
+   it, and upgrading the pool.
+2. The same error at the redeployed estimate account, for the same reason, one layer in.
+3. `ValidationFailure: Resources bounds … exceed balance`. The relayer needed roughly 6.74
+   STRK of resource bounds and held 4.28. Funding it from the gas tank cleared it.
+
+**Fee estimation runs after proving.** In each case the paymaster rejected the transaction
+seconds after a five-to-six minute proof had already been generated, so every configuration
+error costs a full proof before it surfaces. Any integration should estimate against the
+paymaster with a trivial call before spending prover time.
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:

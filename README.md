@@ -165,16 +165,26 @@ What is not built is listed as plainly as what is.
 | | |
 |---|---|
 | Research | `docs/FINDINGS.md` — pool, anonymizer, identity derivation, all 39 invocations decoded |
-| Contracts | `packages/contracts` — 14 fork tests against live mainnet and Sepolia state, all passing |
+| Contracts | `packages/contracts` — 20 fork tests against live mainnet and Sepolia state, all passing |
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
-| SDK | **not built** |
+| SDK | `packages/sdk` — the Gate A action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 9 tests passing |
+| Private transaction | **executed on Sepolia, 25 August 2026** — see below |
 | Application | **not built** |
 | Mainnet interaction | **eligibility shield complete** — one 7 STRK Ready X shield touched the STRK20 pool; no shadow account has touched a DeFi protocol |
 
-The `UseNote → Withdraw → ComputeAndInvoke` sequence has never been executed by anyone. The
-anonymizer half is covered by the fork tests; the proved half is not, and cannot be reached
-from a fork test. That is the next thing to prove, and until it lands nothing here claims
-otherwise.
+The `UseNote → Withdraw → ComputeAndInvoke` sequence had never been executed by anyone. On
+25 August 2026 it ran on Starknet Sepolia, twice, and succeeded — proved by a self-hosted
+transaction prover and submitted through a self-hosted paymaster:
+
+- `0x05faace1d275d2a301b10dd1fb3f809cc65d3ba8799fbc68f0828eca4a1dedef`, block 14,018,840 —
+  the shadow account deploys at its predicted address, 0.5 STRK is withdrawn to it, and the
+  full amount is collected back.
+- `0x0111b815a660ee41c17bf285bde7c6b43cbef5bc5d6fbf43d25e94e7f17f3693`, block 14,020,928 —
+  the same withdrawal, then **a dapp call executed as the shadow account**, then the
+  remainder collected back into the shield. The account's balance afterwards is 0.
+
+The event-level decode is `docs/FINDINGS.md` §6.17. The application on top of this is not
+built, and nothing here claims otherwise.
 
 ## Documentation
 

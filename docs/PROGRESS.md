@@ -107,6 +107,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | Phase A owner authorization | **Confirmed, 19 August 2026** | Owner approved the Sepolia account above, trusted VPS prover `38.49.216.59`, an initial 0.5 STRK rehearsal target plus fees, and a maximum total exposure of 30 STRK. The proved §6.6 sequence remains pending. |
 | Isolated Gate A pool | **Deployed, 23 August 2026** | Pool `0x73f3c4bc1ef39490f09587b11f6ea7f2cc66854d5df3306cda4736234693546`, transaction `0x69562899d887cbb1cbfaaa5fcb60ec3e4a89dac48d1b7483a95f6230f73039a`; anonymizer `0x57e5052865eb08bc1134a62fadfef067015802ce7e989af29fe94913c535efd`, transaction `0x21fba6477885991912fefd1a5e862532ac0ad8b91011bca2079723b7e946e4f`. This avoids the original pool's unavailable screening signer while preserving screening behavior in the rehearsal. |
 | Self-hosted private paymaster core | **Deployed, 23 August 2026** | One-relayer AVNU-compatible Sepolia deployment succeeded in transaction `0x006e6ff906cfd97d24f70e060514e0a97837bdcb5f00497d91b2a11c61870da8`. It allocated 4 testnet STRK and removes dependence on the managed service's single configured privacy-pool address. Generated service credentials remain outside Git. Service startup and the end-to-end proved transactions remain pending. |
+| **§6.6 sequence executed on Sepolia** | **Done, 25 August 2026** | `UseNote → Withdraw → ComputeAndInvoke` ran twice and succeeded. Deploy leg `0x05faace1d…dedef`, block 14,018,840; invoke leg `0x0111b815a…f3693`, block 14,020,928. Shadow account `0x05709c3b9…d9d39` deployed at the predicted address, a dapp call executed as that account, and the remainder collected back into the shield; its balance is 0. Proved locally in 362.1s and 348.0s. Recorded as `FINDINGS.md` §6.17. |
 
 ---
 
@@ -152,8 +153,15 @@ Recorded as `FINDINGS.md` §6.6. All three legs confirmed:
   prediction and deployment agree by construction.
 - `WITHDRAW_PHASE` (6) precedes `INVOKE_PHASE` (7).
 
-The `UseNote → Withdraw → ComputeAndInvoke` sequence is therefore sound as designed.
-**It remains unexecuted.** Running it on Sepolia is the first build task.
+The `UseNote → Withdraw → ComputeAndInvoke` sequence is therefore sound as designed —
+**and as of 25 August 2026 it has been executed on Sepolia**, twice, successfully. See
+`FINDINGS.md` §6.17 for the transactions and the event-level decode. The design argument above
+is now a chain fact.
+
+**The trap that outlived the design work:** the proved transaction hash and the on-chain
+transaction hash are different. The prover proves the user's invoke; the paymaster relayer
+broadcasts an `apply_actions` call. Looking up the proved hash returns "Transaction hash not
+found" on a run that fully succeeded, which reads exactly like failure.
 
 ---
 
@@ -161,7 +169,15 @@ The `UseNote → Withdraw → ComputeAndInvoke` sequence is therefore sound as d
 
 Carried forward until answered from a primary source or by the user.
 
-1. **Wire the validated local transaction prover into the SDK.** `apply_actions` requires a proof, but
+1. **Wire the validated local transaction prover into the SDK — ANSWERED, 25 August 2026.**
+   Done and exercised: the SDK's proving path reached the self-hosted prover over an SSH
+   tunnel and produced the two successful transactions in `FINDINGS.md` §6.17, at 362.1s and
+   348.0s. A hosted prover URL was never needed. The submission path, not the proving path,
+   turned out to hold the real obstacles — a paymaster forwarder missing the private
+   entrypoint and an underfunded relayer, both recorded in §6.17. The original question and
+   its measurements are kept below because the hardware findings still stand.
+
+   **Wire the validated local transaction prover into the SDK.** `apply_actions` requires a proof, but
    no hosted prover URL is published in the SDK, docs dump, demo configuration, or starter
    kit (`FINDINGS.md` §6.13). That is not a missing credential and does not require waiting
    for the organisers: the official [transaction-prover README](https://github.com/starkware-libs/sequencer/blob/avi/privacy/configmap-docs/crates/starknet_transaction_prover/README.md)
