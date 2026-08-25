@@ -82,6 +82,28 @@ Ekubo's core uses a lock/callback pattern rather than a plain swap entrypoint, a
 guess into this file would be worse than leaving it open. It is the third adapter for the
 timing reason above, and its exact calldata will be recorded here when it is built and tested.
 
+## The recipient guard
+
+**An adapter must refuse to build a call that names an address linked to the user.**
+
+This is not a style rule. The first Sepolia rehearsal sent one wei to the owner's own
+address because it was a smoke test, and that single receipt permanently connects the
+identity to its owner on chain. The funding leg was shielded and did its job; the dapp call
+gave it away.
+
+Every adapter therefore checks its recipient and refuses, rather than warns, when the target
+is:
+
+- the connected wallet's address,
+- any address that has funded the shielded pool for this user,
+- any other identity belonging to the same user.
+
+The last one matters most and is the easiest to miss: paying one identity from another links
+the two, which is the exact property the product sells.
+
+A refusal here is a success, not an error state. The interface should say which rule was hit
+and what to do instead, because a user who cannot see why will work around it.
+
 ## Collect policy
 
 Each adapter must state its `CollectPolicy` and the reasoning:
