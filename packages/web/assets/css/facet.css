@@ -219,3 +219,5 @@ body.app { font-size: 16px; }
   font-size: 1.12rem; color: var(--lit); font-weight: 560;
   margin: -.3em 0 .9em; letter-spacing: -.01em;
 }
+.tile-contract { font-size: .78rem; border-top: 1px dashed var(--line); padding-top: 10px; line-height: 1.5; }
+.tile-contract code { font-family: var(--mono); color: var(--lit); font-size: .78rem; }

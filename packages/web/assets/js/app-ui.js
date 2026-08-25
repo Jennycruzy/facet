@@ -80,6 +80,14 @@ for (const app of data.apps) {
   head.append(el("div", "tile-name", app.name), el("div", "tile-kind", app.kind));
   tile.append(head);
   tile.append(el("div", "tile-note", app.note));
+  if (app.contract) {
+    const mainnet = data.networks.mainnet.explorer;
+    tile.append(el("div", "tile-contract",
+      `<span class="tile-kind">calls</span><br>
+       <a class="hash" href="${mainnet}/contract/${app.contract}">${short(app.contract, 8, 6)}</a>
+       <code>${app.entrypoint}</code>
+       <div style="color:var(--text-faint);margin-top:4px">${app.contractLabel} — the protocol's own mainnet contract, not a copy</div>`));
+  }
   const state = app.tolerates_delay
     ? el("div", "tile-state pending", `${app.action} · awaiting mainnet contracts`)
     : el("div", "tile-state later", `${app.action} · last, by design`);

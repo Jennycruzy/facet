@@ -62,7 +62,11 @@
       "kind": "savings",
       "action": "Deposit",
       "tolerates_delay": true,
-      "note": "Deposits are unaffected by the proving window, so this is the first card to go live."
+      "note": "Deposits are unaffected by the proving window, so this is the first card to go live.",
+      "contract": "0x451fe483d5921a2919ddd81d0de6696669bccdacd859f72a4fba7656b97c3b5",
+      "contractLabel": "Vesu V2 \u00b7 Prime pool",
+      "entrypoint": "modify_position",
+      "verified": "read from mainnet ABI, 25 Aug 2026"
     },
     {
       "id": "endur",
@@ -70,7 +74,11 @@
       "kind": "staking",
       "action": "Stake",
       "tolerates_delay": true,
-      "note": "Staking tolerates the proving window. This is the second identity in the demo."
+      "note": "Staking tolerates the proving window. This is the second identity in the demo.",
+      "contract": "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
+      "contractLabel": "Endur \u00b7 xSTRK",
+      "entrypoint": "deposit",
+      "verified": "read from mainnet ABI, 25 Aug 2026"
     },
     {
       "id": "ekubo",
@@ -78,7 +86,11 @@
       "kind": "trading",
       "action": "Swap",
       "tolerates_delay": false,
-      "note": "A swap quote can go stale inside the proving window, so this card comes last."
+      "note": "A swap quote can go stale inside the proving window, so this card comes last.",
+      "contract": "0x00000005dd3d2f4429af886cd1a3b08289dbcea99a294197e9eb43b0e0325b4b",
+      "contractLabel": "Ekubo \u00b7 Core",
+      "entrypoint": "swap",
+      "verified": "class hash confirmed on mainnet, 25 Aug 2026"
     }
   ]
 }
