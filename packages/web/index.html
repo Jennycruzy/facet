@@ -4,93 +4,111 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Facet — one balance, a different face in every app</title>
-<meta name="description" content="A private account and portfolio layer for Starknet. One shielded balance, unlimited unlinkable identities, one per app. Externally unlinkable, internally one portfolio.">
-<link rel="stylesheet" href="assets/css/facet.css">
+<meta name="description" content="A private account and portfolio layer for Starknet. One shielded balance, unlimited unlinkable identities, one per app.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
 </head>
-<body class="app">
+<body>
 
-<header class="appbar wrap">
-  <div class="brand">
-    <canvas id="mark" width="72" height="72" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header class="appbar">
+    <a class="brand" href="./">
+      <canvas id="mark" width="68" height="68" aria-hidden="true"></canvas>
+      <span class="wordmark">Facet<small>private accounts</small></span>
+    </a>
+    <nav class="appnav">
+      <a href="proof.html">How it works</a>
+      <a href="proof.html#verify">Verify</a>
+      <a href="https://github.com/Jennycruzy/facet">GitHub</a>
+    </nav>
+  </header>
+
+  <section class="hero">
     <div>
-      <div class="brand-name">Facet</div>
-      <div class="brand-sub">private account &amp; portfolio layer</div>
+      <div class="eyebrow">Private account &amp; portfolio layer</div>
+      <h1>One balance.<br>A different face<br>in every app.</h1>
+      <p class="tagline">Hide My Email, for your money.</p>
+      <p class="sub">Externally unlinkable, internally one portfolio. Every figure on this
+      page is read from the chain in your browser.</p>
+      <div class="live" id="live" data-state="loading"><span class="dot"></span><span id="live-text">connecting</span></div>
     </div>
-  </div>
-  <nav class="appnav">
-    <a href="proof.html">How it works &amp; proof</a>
-    <a href="https://github.com/Jennycruzy/facet">Repo</a>
-  </nav>
-</header>
+    <div class="stage"><canvas id="stone" aria-label="A cut stone. Lit faces are identities that exist on chain."></canvas></div>
+  </section>
 
-<main class="wrap">
+  <section class="stats">
+    <div class="cut"><div class="cut-in stat">
+      <div class="k">Shielded balance</div>
+      <div class="v sm">Private</div>
+      <div class="n">Not readable from a web page, by us or anyone.</div>
+    </div></div>
+    <div class="cut"><div class="cut-in stat">
+      <div class="k">Identities</div>
+      <div class="v" id="stat-faces">—</div>
+      <div class="n">Separate on-chain accounts. No limit.</div>
+    </div></div>
+    <div class="cut"><div class="cut-in stat">
+      <div class="k">Links between them</div>
+      <div class="v ok" id="stat-links">—</div>
+      <div class="n">Public connections anyone could follow.</div>
+    </div></div>
+  </section>
 
-  <section class="topline">
-    <h1>One balance. A different face in every app.</h1>
-    <p class="tagline">Hide My Email, for your money.</p>
-    <p class="lede">Externally unlinkable, internally one portfolio. Every value below is read
-    from chain in your browser — nothing here is a mockup.</p>
-    <div class="status" id="status" data-state="loading">
-      <span class="dot"></span><span id="status-text">reading the chain…</span>
+  <section class="block">
+    <div class="head">
+      <h2>Your identities</h2>
+      <div class="aside" id="ids-aside"></div>
+    </div>
+    <div class="grid" id="ids"></div>
+  </section>
+
+  <section class="block">
+    <div class="head">
+      <h2>Apps</h2>
+      <div class="aside">Each opens with a fresh identity</div>
+    </div>
+    <div class="grid" id="tiles"></div>
+  </section>
+
+  <section class="block">
+    <div class="head">
+      <h2>What this doesn't hide</h2>
+      <div class="aside"><a href="proof.html" style="color:var(--lit)">Full detail →</a></div>
+    </div>
+    <div class="fine">
+      <div>
+        <h4>Amounts and timing</h4>
+        <p>Both are public. Two identities funded with the same amount, seconds apart, are
+        correlated in practice whatever the cryptography says.</p>
+      </div>
+      <div>
+        <h4>The identity itself</h4>
+        <p>Anyone can see the account exists and what it did. What stays hidden is whose
+        it is.</p>
+      </div>
+      <div>
+        <h4>A careless action</h4>
+        <p>If the action names you, the receipt links it back. Our first test run did exactly
+        that, and we wrote it up rather than quietly fixing it.</p>
+      </div>
+      <div>
+        <h4>Six minutes</h4>
+        <p>Every action is proved before it lands. That is the real cost of the privacy, and
+        the interface shows the stages rather than a spinner.</p>
+      </div>
     </div>
   </section>
 
-  <section class="balance-strip">
-    <div>
-      <div class="strip-label">Shielded balance</div>
-      <div class="strip-value" id="shielded">private by design</div>
-      <div class="strip-note">A shielded balance is not readable from a web page — not by us,
-      not by anyone. That is the point of it, so this field will never show a number.</div>
-    </div>
-    <div>
-      <div class="strip-label">Faces cut</div>
-      <div class="strip-value" id="face-count">—</div>
-      <div class="strip-note">Each one is a separate on-chain identity. The supply is
-      unlimited.</div>
-    </div>
-    <div>
-      <div class="strip-label">Public links between them</div>
-      <div class="strip-value ok" id="link-count">—</div>
-      <div class="strip-note">Counted from the funding legs of the transactions below.</div>
-    </div>
-  </section>
-
-  <section class="section">
-    <h2>Your faces</h2>
-    <div class="facet-grid" id="facet-cards"></div>
-  </section>
-
-  <section class="section">
-    <h2>Open an app</h2>
-    <div class="notice" id="app-notice"></div>
-    <div class="tiles" id="app-tiles"></div>
-  </section>
-
-  <section class="section">
-    <h2>What this does not hide</h2>
-    <ul class="limits">
-      <li><strong>Amounts and timing are public.</strong> The funding leg names the token and
-      the exact amount. Two faces funded with the same amount seconds apart are correlated in
-      practice, whatever the cryptography says.</li>
-      <li><strong>The face itself is public.</strong> What is hidden is whose it is, not that
-      it exists.</li>
-      <li><strong>A careless call can undo it.</strong> If the action itself names you, the
-      receipt links the face to you. Our first rehearsal did exactly that, and it is written
-      up on the <a href="proof.html">proof page</a> rather than quietly fixed.</li>
-      <li><strong>Every action takes about six minutes to prove.</strong> That is the honest
-      cost of the privacy, and the interface shows the real stages rather than a spinner.</li>
-    </ul>
-  </section>
-
-</main>
-
-<footer class="wrap">
-  <a href="proof.html">Proof</a>
-  <a href="https://github.com/Jennycruzy/facet/blob/main/docs/SHADOW_ACCOUNTS.md">Shadow accounts guide</a>
-  <a href="https://github.com/Jennycruzy/facet">Repository</a>
-  <p style="margin-top:20px">MIT. Built for the STRK20 Private Sprint, 14–31 August 2026.
-  Nothing here is audited.</p>
-</footer>
+  <footer>
+    <nav>
+      <a href="proof.html">Proof</a>
+      <a href="https://github.com/Jennycruzy/facet/blob/main/docs/SHADOW_ACCOUNTS.md">Docs</a>
+      <a href="https://github.com/Jennycruzy/facet">GitHub</a>
+    </nav>
+    <div>MIT · STRK20 Private Sprint · unaudited</div>
+  </footer>
+</div>
 
 <script type="module" src="assets/js/app-ui.js"></script>
 </body>

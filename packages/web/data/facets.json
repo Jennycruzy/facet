@@ -43,10 +43,12 @@
         }
       ],
       "app": null,
-      "label": "Gate A rehearsal"
+      "label": "Identity 01",
+      "context": "First live run of the sequence",
+      "monogram": "01"
     }
   ],
-  "uncutNote": "Every other face is an identity that has not been cut. A second facet requires one more run of the same sequence with a different dapp name.",
+  "uncutNote": "Tap an app below to cut a new one.",
   "linkable": {
     "network": "mainnet",
     "hash": "0x319b9de82e1704ba861283d26b4e03356a5a3cc948ce8ad752366f1f8bf7883",
@@ -66,7 +68,8 @@
       "contract": "0x451fe483d5921a2919ddd81d0de6696669bccdacd859f72a4fba7656b97c3b5",
       "contractLabel": "Vesu V2 \u00b7 Prime pool",
       "entrypoint": "modify_position",
-      "verified": "read from mainnet ABI, 25 Aug 2026"
+      "verified": "read from mainnet ABI, 25 Aug 2026",
+      "monogram": "Ve"
     },
     {
       "id": "endur",
@@ -78,7 +81,8 @@
       "contract": "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
       "contractLabel": "Endur \u00b7 xSTRK",
       "entrypoint": "deposit",
-      "verified": "read from mainnet ABI, 25 Aug 2026"
+      "verified": "read from mainnet ABI, 25 Aug 2026",
+      "monogram": "En"
     },
     {
       "id": "ekubo",
@@ -90,7 +94,8 @@
       "contract": "0x00000005dd3d2f4429af886cd1a3b08289dbcea99a294197e9eb43b0e0325b4b",
       "contractLabel": "Ekubo \u00b7 Core",
       "entrypoint": "swap",
-      "verified": "class hash confirmed on mainnet, 25 Aug 2026"
+      "verified": "class hash confirmed on mainnet, 25 Aug 2026",
+      "monogram": "Ek"
     }
   ]
 }

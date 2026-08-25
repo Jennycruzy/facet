@@ -2,117 +2,150 @@ import { createGem } from "./gem.js";
 import { createChain, short, strk, ago } from "./chain.js";
 
 const $ = (id) => document.getElementById(id);
-const el = (tag, cls, html) => {
+const h = (tag, cls, html) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
   if (html != null) n.innerHTML = html;
   return n;
 };
+// Every surface carries one cut corner. Two layers so the hairline follows the chamfer.
+const cut = (cls, inner) => {
+  const outer = h("div", "cut");
+  const box = h("div", `cut-in ${cls}`);
+  if (inner) box.append(...inner);
+  outer.append(box);
+  return outer;
+};
 
 const data = await fetch("data/facets.json").then((r) => r.json());
 const chain = createChain(data.networks);
 const net = data.deployment.network;
-const explorer = data.networks[net].explorer;
+const explorer = (n) => data.networks[n].explorer;
 
-/* ---------- the mark ---------- */
+/* ---------- the stone, and the mark ---------- */
 
-const mark = createGem($("mark"), {});
-mark.setFacets(data.facets);
-mark.start();
-
-/* ---------- status ---------- */
-
-function setStatus(state, text) {
-  $("status").dataset.state = state;
-  $("status-text").textContent = text;
+for (const [id, opts] of [["stone", {}], ["mark", { segments: 6 }]]) {
+  const gem = createGem($(id), opts);
+  gem.setFacets(data.facets);
+  gem.start();
 }
 
-/* ---------- the strip ---------- */
+/* ---------- stats ---------- */
 
-$("face-count").textContent = String(data.facets.length);
-
-// A public link is a funding leg that names a personal address. Ours are funded from the
-// shielded pool, so the honest count is derived, not asserted.
+$("stat-faces").textContent = String(data.facets.length);
 const publicLinks = data.facets.filter((f) => f.fundedPublicly).length;
-$("link-count").textContent = String(publicLinks);
-if (publicLinks > 0) $("link-count").classList.remove("ok");
+$("stat-links").textContent = String(publicLinks);
+if (publicLinks > 0) $("stat-links").classList.remove("ok");
+$("ids-aside").textContent = `${data.facets.length} cut`;
 
-/* ---------- faces ---------- */
+/* ---------- identities ---------- */
 
-function facetCard(facet) {
-  const card = el("div", "card lit");
-  const title = facet.app
-    ? data.apps.find((a) => a.id === facet.app)?.name ?? facet.app
-    : facet.label ?? "Facet";
-  card.append(el("h3", null, `<span class="pip"></span>${title}`));
-  const kv = el("dl", "kv");
-  const row = (k, v) => kv.append(el("dt", null, k), el("dd", null, v));
-  row("address", `<a class="hash" href="${explorer}/contract/${facet.address}">${short(facet.address, 10, 8)}</a>`);
-  row("network", data.networks[facet.network].label);
-  row("deployed", `<span class="hash" id="${facet.id}-class"><span class="skeleton"></span></span>`);
-  row("holding", `<span class="hash" id="${facet.id}-bal"><span class="skeleton"></span></span>`);
-  for (const tx of facet.transactions) {
-    row(tx.role, `<a class="hash" href="${explorer}/tx/${tx.hash}">${short(tx.hash, 10, 8)}</a>
-      <span id="${facet.id}-${tx.role}-status" style="color:var(--text-faint)"> · <span class="skeleton"></span></span>`);
+function copyable(text, href) {
+  const row = h("div", "addr");
+  const a = h("a", null, short(text, 10, 8));
+  a.href = href;
+  row.append(a);
+  const btn = h("button", "copy-btn", "copy");
+  btn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = "copied";
+      setTimeout(() => { btn.textContent = "copy"; }, 1200);
+    } catch { btn.textContent = "select"; }
+  };
+  row.append(btn);
+  return row;
+}
+
+function identityCard(f) {
+  const app = f.app ? data.apps.find((a) => a.id === f.app) : null;
+
+  const top = h("div", "id-top");
+  top.append(h("div", "mono-badge", app ? app.monogram : (f.monogram ?? "01")));
+  const names = h("div");
+  names.append(h("div", "id-name", app ? app.name : f.label));
+  names.append(h("div", "id-ctx", app ? app.kind : f.context ?? ""));
+  top.append(names);
+  top.append(h("span", "pill", data.networks[f.network].label.replace("Starknet ", "")));
+
+  const amount = h("div", "amount", `<small>Holding</small><span id="${f.id}-bal">—</span>`);
+
+  const txs = h("div", "txs");
+  for (const tx of f.transactions) {
+    const row = h("div", "tx");
+    row.append(h("span", "tick", "✓"));
+    row.append(h("span", null, tx.role));
+    const a = h("a", null, short(tx.hash, 6, 4));
+    a.href = `${explorer(f.network)}/tx/${tx.hash}`;
+    row.append(a);
+    row.append(h("span", null, `<span id="${f.id}-${tx.role}-blk"></span>`));
+    txs.append(row);
   }
-  card.append(kv);
+
+  const card = cut("id-card", [
+    top, amount, copyable(f.address, `${explorer(f.network)}/contract/${f.address}`), txs,
+  ]);
+  card.id = `card-${f.id}`;
   return card;
 }
 
-data.facets.forEach((f) => $("facet-cards").append(facetCard(f)));
+data.facets.forEach((f) => $("ids").append(identityCard(f)));
 
-const uncut = el("div", "card uncut");
-uncut.append(el("h3", null, `<span class="pip"></span>Not yet cut`));
-uncut.append(el("p", null, data.uncutNote));
-$("facet-cards").append(uncut);
+{
+  const top = h("div", "id-top");
+  top.append(h("div", "mono-badge dim", "+"));
+  const names = h("div");
+  names.append(h("div", "id-name", "Cut a new one"));
+  names.append(h("div", "id-ctx", data.uncutNote));
+  top.append(names);
+  $("ids").append(cut("id-card empty", [top]));
+}
 
 /* ---------- apps ---------- */
 
-$("app-notice").innerHTML = `
-  <strong>Creating a face from this page is not live yet.</strong> It needs the Facet
-  contracts on mainnet, and they are being deployed now. Rather than show buttons that do
-  nothing, each card below states exactly where it stands. Everything above this line is real
-  and on chain today — check any hash.`;
-
 for (const app of data.apps) {
-  const tile = el("div", "tile");
-  const head = el("div", "tile-head");
-  head.append(el("div", "tile-name", app.name), el("div", "tile-kind", app.kind));
-  tile.append(head);
-  tile.append(el("div", "tile-note", app.note));
+  const top = h("div", "tile-top");
+  top.append(h("div", "mono-badge", app.monogram));
+  const names = h("div");
+  names.append(h("div", "id-name", app.name));
+  names.append(h("div", "id-ctx", app.kind));
+  top.append(names);
+
+  const parts = [top, h("div", "tile-note", app.note)];
+
   if (app.contract) {
-    const mainnet = data.networks.mainnet.explorer;
-    tile.append(el("div", "tile-contract",
-      `<span class="tile-kind">calls</span><br>
-       <a class="hash" href="${mainnet}/contract/${app.contract}">${short(app.contract, 8, 6)}</a>
-       <code>${app.entrypoint}</code>
-       <div style="color:var(--text-faint);margin-top:4px">${app.contractLabel} — the protocol's own mainnet contract, not a copy</div>`));
+    parts.push(h("div", "calls",
+      `calls <a href="${explorer("mainnet")}/contract/${app.contract}">${short(app.contract, 6, 4)}</a> <b>${app.entrypoint}</b><br>${app.contractLabel}`));
   }
-  const state = app.tolerates_delay
-    ? el("div", "tile-state pending", `${app.action} · awaiting mainnet contracts`)
-    : el("div", "tile-state later", `${app.action} · last, by design`);
-  tile.append(state);
-  $("app-tiles").append(tile);
+
+  const act = h("div", "act");
+  const btn = h("button", "btn", app.action);
+  btn.disabled = true;
+  act.append(btn);
+  act.append(h("span", "btn-why", app.tolerates_delay ? "live when contracts land" : "after the first two"));
+  parts.push(act);
+
+  $("tiles").append(cut("tile", parts));
 }
 
 /* ---------- live values ---------- */
 
+function setLive(state, text) {
+  $("live").dataset.state = state;
+  $("live-text").textContent = text;
+}
+
 try {
   const head = await chain.head(net);
-  setStatus("live", `${data.networks[net].label.toLowerCase()} · block ${head.number.toLocaleString()} · ${ago(head.timestamp)}`);
-  for (const facet of data.facets) {
-    const cls = await chain.classHashAt(facet.network, facet.address);
-    $(`${facet.id}-class`).textContent =
-      BigInt(cls) === BigInt(facet.classHash) ? `yes · ${short(cls, 6, 4)}` : `class differs: ${short(cls, 6, 4)}`;
-    const bal = await chain.balanceOf(facet.network, data.strk, facet.address);
-    $(`${facet.id}-bal`).textContent = bal === 0n ? "0 — swept back into the shield" : strk(bal);
-    for (const tx of facet.transactions) {
-      const r = await chain.receipt(facet.network, tx.hash);
-      $(`${facet.id}-${tx.role}-status`).textContent =
-        ` · ${r.execution_status} · block ${Number(r.block_number).toLocaleString()}`;
+  setLive("live", `${data.networks[net].label} · ${head.number.toLocaleString()} · ${ago(head.timestamp)}`);
+  for (const f of data.facets) {
+    const bal = await chain.balanceOf(f.network, data.strk, f.address);
+    $(`${f.id}-bal`).textContent = bal === 0n ? "0 STRK" : strk(bal);
+    for (const tx of f.transactions) {
+      const r = await chain.receipt(f.network, tx.hash);
+      $(`${f.id}-${tx.role}-blk`).textContent = `· ${Number(r.block_number).toLocaleString()}`;
     }
   }
-} catch (err) {
-  setStatus("stale", `chain unreachable — values below were recorded 25 August 2026 (${err.message})`);
-  document.querySelectorAll(".skeleton").forEach((s) => s.replaceWith(document.createTextNode("unavailable")));
+} catch {
+  setLive("stale", "chain unreachable — figures recorded 25 Aug 2026");
 }
