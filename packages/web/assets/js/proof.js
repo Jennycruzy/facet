@@ -40,7 +40,7 @@ for (const [n, name, text] of steps) {
   t.append(h("div", "id-name", name));
   t.append(h("div", "id-ctx", "inside the proof"));
   top.append(t);
-  $("steps").append(cut("id-card", [top, h("p", "step-text", text)]));
+  $("steps").append(cut(`id-card accent-${["sapphire","emerald","violet"][Number(n) - 1]}`, [top, h("p", "step-text", text)]));
 }
 
 /* ---------- the two transactions ---------- */
@@ -67,7 +67,7 @@ for (const tx of facet.transactions) {
   link.append(a);
   link.append(h("span", `state ${tx.role}`, `<span id="st-${tx.role}">checking</span>`));
 
-  $("proof-txs").append(cut("id-card", [top, body, link]));
+  $("proof-txs").append(cut(`id-card accent-${tx.role === "deploy" ? "sapphire" : "emerald"}`, [top, body, link]));
 }
 
 /* ---------- the comparison ---------- */

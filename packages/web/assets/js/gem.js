@@ -40,11 +40,11 @@ export function brilliantCut(n = 8) {
 }
 
 const BASE = {
-  table: [46, 66, 122],
-  crown: [34, 52, 104],
-  upper: [26, 42, 88],
-  pavilion: [19, 32, 72],
-  culet: [13, 23, 56],
+  table: [64, 104, 190],
+  crown: [48, 84, 164],
+  upper: [36, 66, 138],
+  pavilion: [26, 50, 112],
+  culet: [18, 36, 86],
 };
 
 export function createGem(canvas, opts = {}) {
@@ -116,7 +116,7 @@ export function createGem(canvas, opts = {}) {
       const bl = Math.min(255, 232 + 23 * lambert * glow);
       return `rgb(${r | 0}, ${g | 0}, ${bl | 0})`;
     }
-    const k = 0.52 + Math.min(lambert, 0.85) * 0.72;
+    const k = 0.46 + Math.min(lambert, 0.9) * 0.92;
     return `rgb(${(base[0] * k) | 0}, ${(base[1] * k) | 0}, ${(base[2] * k) | 0})`;
   }
 
@@ -143,7 +143,7 @@ export function createGem(canvas, opts = {}) {
         ctx.restore();
       }
       ctx.fill();
-      ctx.strokeStyle = litMap.has(i) ? "rgba(210,230,255,.75)" : "rgba(255,255,255,.07)";
+      ctx.strokeStyle = litMap.has(i) ? "rgba(215,235,255,.8)" : "rgba(150,190,255,.10)";
       ctx.lineWidth = litMap.has(i) ? 1.1 : 0.6;
       ctx.stroke();
     }

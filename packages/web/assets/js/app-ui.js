@@ -82,7 +82,7 @@ function identityCard(f) {
     txs.append(row);
   }
 
-  const card = cut("id-card", [
+  const card = cut(`id-card accent-${f.accent ?? "sapphire"}`, [
     top, amount, copyable(f.address, `${explorer(f.network)}/contract/${f.address}`), txs,
   ]);
   card.id = `card-${f.id}`;
@@ -125,7 +125,7 @@ for (const app of data.apps) {
   act.append(h("span", "btn-why", app.tolerates_delay ? "live when contracts land" : "after the first two"));
   parts.push(act);
 
-  $("tiles").append(cut("tile", parts));
+  $("tiles").append(cut(`tile accent-${app.accent ?? "sapphire"}`, parts));
 }
 
 /* ---------- live values ---------- */

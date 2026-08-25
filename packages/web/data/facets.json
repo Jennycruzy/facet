@@ -45,7 +45,8 @@
       "app": null,
       "label": "Identity 01",
       "context": "First live run of the sequence",
-      "monogram": "01"
+      "monogram": "01",
+      "accent": "sapphire"
     }
   ],
   "uncutNote": "Tap an app below to cut a new one.",
@@ -69,7 +70,8 @@
       "contractLabel": "Vesu V2 \u00b7 Prime pool",
       "entrypoint": "modify_position",
       "verified": "read from mainnet ABI, 25 Aug 2026",
-      "monogram": "Ve"
+      "monogram": "Ve",
+      "accent": "emerald"
     },
     {
       "id": "endur",
@@ -82,7 +84,8 @@
       "contractLabel": "Endur \u00b7 xSTRK",
       "entrypoint": "deposit",
       "verified": "read from mainnet ABI, 25 Aug 2026",
-      "monogram": "En"
+      "monogram": "En",
+      "accent": "violet"
     },
     {
       "id": "ekubo",
@@ -95,7 +98,8 @@
       "contractLabel": "Ekubo \u00b7 Core",
       "entrypoint": "swap",
       "verified": "class hash confirmed on mainnet, 25 Aug 2026",
-      "monogram": "Ek"
+      "monogram": "Ek",
+      "accent": "amber"
     }
   ]
 }
