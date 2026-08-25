@@ -1,5 +1,6 @@
 import { createGem } from "./gem.js";
 import { createChain, short, strk, ago } from "./chain.js";
+import { enableTilt } from "./tilt.js";
 
 const $ = (id) => document.getElementById(id);
 const h = (tag, cls, html) => {
@@ -12,6 +13,7 @@ const h = (tag, cls, html) => {
 const cut = (cls, inner) => {
   const outer = h("div", "cut");
   const box = h("div", `cut-in ${cls}`);
+  box.append(h("div", "sheen"));
   if (inner) box.append(...inner);
   outer.append(box);
   return outer;
@@ -149,3 +151,5 @@ try {
 } catch {
   setLive("stale", "chain unreachable, figures recorded 25 Aug 2026");
 }
+
+enableTilt();

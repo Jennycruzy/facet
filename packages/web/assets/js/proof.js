@@ -1,5 +1,6 @@
 import { createGem } from "./gem.js";
 import { createChain, short, ago } from "./chain.js";
+import { enableTilt } from "./tilt.js";
 
 const $ = (id) => document.getElementById(id);
 const h = (tag, cls, html) => {
@@ -11,6 +12,7 @@ const h = (tag, cls, html) => {
 const cut = (cls, inner) => {
   const outer = h("div", "cut");
   const box = h("div", `cut-in ${cls}`);
+  box.append(h("div", "sheen"));
   box.append(...inner);
   outer.append(box);
   return outer;
@@ -169,3 +171,5 @@ try {
   $("proof-live").textContent = "chain unreachable, values recorded 25 Aug 2026";
   document.querySelectorAll("[id^='st-']").forEach((n) => { n.textContent = "recorded 25 Aug 2026"; });
 }
+
+enableTilt();
