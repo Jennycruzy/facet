@@ -18,9 +18,8 @@ python3 -m http.server 8899 --bind 127.0.0.1   # from this directory
 
 ## Deploying
 
-Cloudflare Pages, not GitHub Pages: this account's GitHub Actions is billing-locked, and the
-Pages deployment path depends on it. Cloudflare builds on its own infrastructure and only
-needs read access to the repository.
+Cloudflare Pages. It builds on its own infrastructure and needs only read access to the
+repository, so the page ships without depending on a CI runner.
 
 - Framework preset: **None**
 - Build command: *(empty)*
