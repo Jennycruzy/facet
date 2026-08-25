@@ -221,11 +221,28 @@ itself should not be trusted.
 
 ## 10. What is still unknown
 
-- **Where the private key can live for a browser-based product.** Derivation needs
-  `user_private_key` inside the proved execution, and a browser wallet will not release one.
-  `privacy-bridge/packages/bridge-core` derives client-side key material from a single wallet
-  signature and is probably the intended pattern, but we have not confirmed it against the
-  SDK's proving path.
+- ~~**Where the private key can live for a browser-based product.**~~ **Answered, 25 August
+  2026 — with a constraint that changes the product.** A facet *can* be derived from a wallet
+  signature as the sole secret input: `privacy-bridge/packages/bridge-core` derives both a
+  Starknet private key and a privacy viewing key from one `personal_sign` signature, keeps
+  them in memory, and the privacy SDK needs only `{ address, signer }` plus a
+  `viewingKeyProvider` — it never asks a wallet for a raw private key. The proving factory
+  passes the viewing key privately into `compile_actions` and signs the proof invocation with
+  the derived signer.
+
+  **The constraint: this requires a standard EOA signature.** Starknet wallets — Argent X,
+  Braavos — are smart contract accounts, and their signatures are not the 65-byte recoverable
+  form this derivation depends on. So a browser product built this way connects an EOA wallet
+  and derives its Starknet identity from that signature; it does not derive facets from the
+  user's existing Starknet wallet. That is a different onboarding story than "connect Argent
+  X", and it needs saying out loud rather than discovering at demo time.
+
+  Practical requirements, if you build it: a fixed domain-separated message, reject
+  non-65-byte smart-account signatures, verify the recovered signer identity, and never
+  persist the signature or any derived key.
+
+  Established by reading `bridge-core` against the SDK's proving path. **Not yet exercised by
+  us end to end** — no adapter is implemented.
 - **Whether slippage survives the proving window.** Calls are built before proving. A swap
   quote computed five minutes before execution may fail its slippage check.
 - Whether a user can submit directly, without a relayer, and at what cost.

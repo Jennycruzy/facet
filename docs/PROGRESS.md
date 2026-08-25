@@ -163,6 +163,24 @@ transaction hash are different. The prover proves the user's invoke; the paymast
 broadcasts an `apply_actions` call. Looking up the proved hash returns "Transaction hash not
 found" on a run that fully succeeded, which reads exactly like failure.
 
+**Where the private key lives for a browser product — answered, 25 August 2026.**
+
+A facet can be derived from a wallet signature alone. `privacy-bridge/packages/bridge-core`
+derives a Starknet private key and a privacy viewing key from one `personal_sign` signature;
+the privacy SDK requires only `{ address, signer }` and a `viewingKeyProvider`, never a raw
+private key. This was the highest-priority unknown in the project because a browser wallet
+will not release a key and we must never accept one.
+
+**It resolves with a constraint that changes the product, not a clean yes.** The derivation
+depends on a standard EOA signature, and Starknet wallets are smart contract accounts whose
+signatures are not in that form. A browser launcher therefore connects an EOA wallet and
+derives a Starknet identity from it, rather than deriving facets from the user's existing
+Argent X or Braavos wallet. Detail and the implementation requirements are in
+`SHADOW_ACCOUNTS.md` §10.
+
+Established by reading the source against the SDK's proving path; no adapter is implemented
+and the path has not been exercised end to end.
+
 ---
 
 ## Open questions
