@@ -1,0 +1,56 @@
+{
+  "generated": "2026-08-25",
+  "networks": {
+    "sepolia": {
+      "label": "Starknet Sepolia",
+      "rpc": "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_9",
+      "explorer": "https://sepolia.voyager.online"
+    },
+    "mainnet": {
+      "label": "Starknet Mainnet",
+      "rpc": "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9",
+      "explorer": "https://voyager.online"
+    }
+  },
+  "strk": "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+  "deployment": {
+    "network": "sepolia",
+    "pool": "0x73f3c4bc1ef39490f09587b11f6ea7f2cc66854d5df3306cda4736234693546",
+    "anonymizer": "0x57e5052865eb08bc1134a62fadfef067015802ce7e989af29fe94913c535efd",
+    "owner": "0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135"
+  },
+  "facets": [
+    {
+      "id": "facet-1",
+      "address": "0x5709c3b9dc422ed56c8b21fb3f151a833e078d9f79b6189955f853f793d9d39",
+      "classHash": "0x346e143e3b353473a0d6f681c31ffcf2866537898008027fb3b57335bad7b5f",
+      "network": "sepolia",
+      "cut": true,
+      "transactions": [
+        {
+          "hash": "0x5faace1d275d2a301b10dd1fb3f809cc65d3ba8799fbc68f0828eca4a1dedef",
+          "block": 14018840,
+          "timestamp": "2026-08-25T09:49:52Z",
+          "role": "deploy",
+          "summary": "Shadow account deploys at its predicted address. 0.5 STRK withdrawn from a shielded note, all of it collected back."
+        },
+        {
+          "hash": "0x111b815a660ee41c17bf285bde7c6b43cbef5bc5d6fbf43d25e94e7f17f3693",
+          "block": 14020928,
+          "timestamp": "2026-08-25T10:47:41Z",
+          "role": "invoke",
+          "summary": "0.5 STRK withdrawn, a dapp call executed as the shadow account, the remainder collected back into the shield."
+        }
+      ]
+    }
+  ],
+  "uncutNote": "Every other face is an identity that has not been cut. A second facet requires one more run of the same sequence with a different dapp name.",
+  "linkable": {
+    "network": "mainnet",
+    "hash": "0x319b9de82e1704ba861283d26b4e03356a5a3cc948ce8ad752366f1f8bf7883",
+    "shadow": "0x344e658822ac3b5a48e69dbdd5a428d5298c4d3924ffa0b2e8b367554896e4",
+    "funder": "0x46e978c45ab856377819018ef872314ddaf8f58d9c1dcd5dfcb2265cdcd464c",
+    "amount": "1 STRK",
+    "note": "A shadow account funded the public way: an external account pre-approves it, and the account's first call pulls the funds. The funder's address is in the clear, in the same transaction, and it is a real funded wallet."
+  }
+}
