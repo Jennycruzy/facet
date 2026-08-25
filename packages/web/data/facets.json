@@ -101,5 +101,19 @@
       "monogram": "Ek",
       "accent": "amber"
     }
-  ]
+  ],
+  "denominations": {
+    "token": "STRK",
+    "steps": [
+      10,
+      25,
+      50,
+      100,
+      250
+    ],
+    "why": "Identities are funded only in these amounts. An arbitrary figure such as 137.42 STRK identifies you across every identity that uses it; a fixed step does not."
+  },
+  "timing": {
+    "why": "Funding and acting are separated by a random delay, so two identities created in one sitting do not appear on chain seconds apart."
+  }
 }

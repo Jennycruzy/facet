@@ -82,6 +82,36 @@ Ekubo's core uses a lock/callback pattern rather than a plain swap entrypoint, a
 guess into this file would be worse than leaving it open. It is the third adapter for the
 timing reason above, and its exact calldata will be recorded here when it is built and tested.
 
+## Funding denominations
+
+**Facet chooses the amount. The user does not type one.**
+
+The funding leg is public: it names the token and the exact figure. An arbitrary amount is a
+fingerprint, and it survives across every identity that uses it. Funding one identity with
+137.42 STRK and another with 137.42 STRK links them as surely as reusing an address.
+
+Identities are therefore funded in fixed steps, currently **10, 25, 50, 100, 250 STRK**. The
+step is the anonymity set: an identity funded with 50 STRK is indistinguishable from every
+other identity funded with 50 STRK. Change is collected back into the shield, so the amount
+that leaves the pool never reveals what was actually spent.
+
+This closes `PROGRESS.md` open question 3, which asked how funding amounts should be chosen
+and warned that leaving it to the user was not an answer.
+
+## Timing separation
+
+Two identities created in one sitting, funded seconds apart, correlate on timing no matter
+how good the denominations are. Funding and acting are therefore spaced, and the interface is
+explicit that the delay is deliberate rather than a stall. A user who thinks it is broken
+will retry and destroy the property.
+
+## Proving starts early
+
+Proving takes five to six minutes and cannot be shortened on modest hardware. It can,
+however, begin when the user picks an app rather than when they confirm an amount, so most of
+the wait is spent while they are still deciding. This changes nothing on chain and costs
+nothing to build. Show real stages throughout; a spinner at six minutes reads as broken.
+
 ## The recipient guard
 
 **An adapter must refuse to build a call that names an address linked to the user.**
