@@ -40,11 +40,11 @@ export function brilliantCut(n = 8) {
 }
 
 const BASE = {
-  table: [52, 62, 86],
-  crown: [44, 54, 78],
-  upper: [36, 45, 66],
-  pavilion: [30, 37, 56],
-  culet: [24, 29, 46],
+  table: [46, 66, 122],
+  crown: [34, 52, 104],
+  upper: [26, 42, 88],
+  pavilion: [19, 32, 72],
+  culet: [13, 23, 56],
 };
 
 export function createGem(canvas, opts = {}) {
@@ -110,13 +110,13 @@ export function createGem(canvas, opts = {}) {
     const lit = litMap.get(i);
     const base = BASE[face.kind] ?? BASE.crown;
     if (lit) {
-      const glow = state.hover === i ? 1.15 : 0.95;
-      const r = Math.min(255, 60 + 165 * lambert * glow);
-      const g = Math.min(255, 178 + 72 * lambert * glow);
-      const bl = Math.min(255, 214 + 41 * lambert * glow);
+      const glow = state.hover === i ? 1.15 : 0.98;
+      const r = Math.min(255, 150 + 105 * lambert * glow);
+      const g = Math.min(255, 196 + 59 * lambert * glow);
+      const bl = Math.min(255, 232 + 23 * lambert * glow);
       return `rgb(${r | 0}, ${g | 0}, ${bl | 0})`;
     }
-    const k = 0.62 + lambert * 1.15;
+    const k = 0.52 + Math.min(lambert, 0.85) * 0.72;
     return `rgb(${(base[0] * k) | 0}, ${(base[1] * k) | 0}, ${(base[2] * k) | 0})`;
   }
 
@@ -137,13 +137,13 @@ export function createGem(canvas, opts = {}) {
       ctx.fillStyle = shade(face, i);
       if (litMap.has(i)) {
         ctx.save();
-        ctx.shadowColor = "rgba(127, 215, 255, .85)";
+        ctx.shadowColor = "rgba(120, 170, 255, .75)";
         ctx.shadowBlur = state.hover === i ? 34 : 22;
         ctx.fill();
         ctx.restore();
       }
       ctx.fill();
-      ctx.strokeStyle = litMap.has(i) ? "rgba(127,215,255,.55)" : "rgba(255,255,255,.05)";
+      ctx.strokeStyle = litMap.has(i) ? "rgba(210,230,255,.75)" : "rgba(255,255,255,.07)";
       ctx.lineWidth = litMap.has(i) ? 1.1 : 0.6;
       ctx.stroke();
     }

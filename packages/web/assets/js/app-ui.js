@@ -68,7 +68,7 @@ function identityCard(f) {
   top.append(names);
   top.append(h("span", "pill", data.networks[f.network].label.replace("Starknet ", "")));
 
-  const amount = h("div", "amount", `<small>Holding</small><span id="${f.id}-bal">—</span>`);
+  const amount = h("div", "amount", `<small>Holding</small><span id="${f.id}-bal">&nbsp;</span>`);
 
   const txs = h("div", "txs");
   for (const tx of f.transactions) {
@@ -147,5 +147,5 @@ try {
     }
   }
 } catch {
-  setLive("stale", "chain unreachable — figures recorded 25 Aug 2026");
+  setLive("stale", "chain unreachable, figures recorded 25 Aug 2026");
 }

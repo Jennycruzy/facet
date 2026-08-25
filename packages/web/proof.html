@@ -3,140 +3,118 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Facet — how it works, and the proof</title>
-<meta name="description" content="One shielded balance, unlimited unlinkable facets. Built on STRK20 shadow accounts. Every value on this page is read from chain in your browser.">
-<link rel="stylesheet" href="assets/css/facet.css">
+<title>Facet · how it works, and the proof</title>
+<meta name="description" content="The sequence, the transactions that prove it, and how to check every claim yourself.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body>
 
-<!-- ACT 0 + 1 ------------------------------------------------------------- -->
-<header class="wrap hero">
-  <div class="hero-grid">
-    <div>
-      <div class="eyebrow"><a href="index.html" style="color:inherit">← Facet</a> · how it works &amp; proof</div>
-      <h1>One balance.<br>Many identities.</h1>
-      <p class="claim">A shielded balance funds <strong>a separate on-chain identity for every
-      dapp you touch</strong>. The funding leg never names you, and the identities are not
-      linked to each other on chain.</p>
-      <div class="status" id="status" data-state="loading">
-        <span class="dot"></span>
-        <span id="status-text">reading Starknet Sepolia…</span>
-      </div>
-    </div>
-    <div class="stone-mount">
-      <canvas id="stone" aria-label="A cut stone. Lit faces are facets that exist on chain."></canvas>
-      <div class="stone-hint" id="stone-hint">drag to turn · lit faces are real</div>
-    </div>
-  </div>
-</header>
+<div class="wrap">
+  <header class="appbar">
+    <a class="brand" href="./">
+      <canvas id="mark" width="68" height="68" aria-hidden="true"></canvas>
+      <span class="wordmark">Facet<small>private accounts</small></span>
+    </a>
+    <nav class="appnav">
+      <a href="./">The app</a>
+      <a href="#verify">Verify</a>
+      <a href="https://github.com/Jennycruzy/facet">GitHub</a>
+    </nav>
+  </header>
 
-<!-- ACT 2 ----------------------------------------------------------------- -->
-<section class="act wrap" id="facets">
-  <div class="act-label">The facets</div>
-  <h2>What has actually been cut</h2>
-  <p class="lede">Each lit face is a shadow account that exists on chain right now. Every dark
-  face is an identity that has not been cut yet — the supply is unlimited, so the honest
-  number to show is the one that exists.</p>
-  <div class="facet-grid" id="facet-cards"></div>
-</section>
+  <section class="doc-hero">
+    <div class="eyebrow">How it works</div>
+    <h1>Three actions,<br>one transaction.</h1>
+    <p class="sub">A shielded note pays for an identity that does not exist yet, that identity
+    acts, and the change returns to the shield. Nobody had executed this sequence before
+    25 August 2026.</p>
+  </section>
 
-<!-- ACT 3 ----------------------------------------------------------------- -->
-<section class="act wrap" id="challenge">
-  <div class="act-label">The difference</div>
-  <h2>Follow the money into the account</h2>
-  <p class="lede">A shadow account is useless until it holds funds, and how it gets them is
-  the whole privacy question. Both columns are real transactions, read live: ours on Sepolia,
-  the public-funding pattern on Starknet mainnet.</p>
-  <div class="challenge">
-    <div class="column" id="col-private">
-      <div class="tag private">Funded from a shielded note</div>
-      <h3>Facet, Sepolia</h3>
-      <div id="private-legs"></div>
+  <section class="block">
+    <div class="head"><h2>The sequence</h2><div class="aside">Inside one proved execution</div></div>
+    <div class="grid" id="steps"></div>
+  </section>
+
+  <section class="block">
+    <div class="head">
+      <h2>The proof</h2>
+      <div class="aside" id="proof-live">reading the chain</div>
     </div>
-    <div class="gap">
-      <div class="counter zero" id="counter-private">0</div>
-      <p>public addresses the funding leg reveals</p>
-      <div class="counter some" id="counter-public">1</div>
-      <p>on the pre-approval pattern opposite</p>
+    <div class="grid" id="proof-txs"></div>
+  </section>
+
+  <section class="block">
+    <div class="head"><h2>Why the funding leg is the whole argument</h2>
+      <div class="aside">Both columns are real transactions</div></div>
+    <div class="compare">
+      <div class="cut"><div class="cut-in col">
+        <div class="col-tag good">Funded from a shielded note</div>
+        <h3>Facet</h3>
+        <div id="legs-private"></div>
+        <div class="verdict good"><span class="big">0</span> public addresses revealed</div>
+      </div></div>
+      <div class="cut"><div class="cut-in col">
+        <div class="col-tag bad">Funded by pre-approval</div>
+        <h3>The alternative</h3>
+        <div id="legs-public"></div>
+        <div class="verdict bad"><span class="big">1</span> public address revealed</div>
+      </div></div>
     </div>
-    <div class="column" id="col-public">
-      <div class="tag public">Funded by pre-approval</div>
-      <h3>Shadow account, mainnet</h3>
-      <div id="public-legs"></div>
-    </div>
-  </div>
-</section>
+    <p class="note" id="compare-note"></p>
+  </section>
 
-<!-- ACT 4 ----------------------------------------------------------------- -->
-<section class="act wrap" id="how">
-  <div class="act-label">How it works</div>
-  <h2>Three actions, one transaction</h2>
-  <p class="lede">The sequence is <code>UseNote → Withdraw → ComputeAndInvoke</code>. It runs
-  inside a proved virtual execution, so the private inputs never reach public calldata.
-  Before 25 August 2026 nobody had executed it.</p>
-  <div class="facet-grid" id="how-steps"></div>
-</section>
+  <section class="block" id="verify">
+    <div class="head"><h2>Check it yourself</h2><div class="aside">No trust in this page required</div></div>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <pre id="tab-body"></pre>
+    <button class="btn ghost" id="copy">Copy command</button>
+  </section>
 
-<!-- ACT 5 ----------------------------------------------------------------- -->
-<section class="act wrap" id="verify">
-  <div class="act-label">Verify it yourself</div>
-  <h2>Don't trust this page's JavaScript</h2>
-  <p class="lede">Every claim above is a public RPC call away. Paste any of these into a
-  terminal.</p>
-  <div class="tabs" id="verify-tabs" role="tablist"></div>
-  <pre id="verify-body"></pre>
-  <button class="copy" id="verify-copy">copy</button>
-</section>
+  <section class="block">
+    <div class="head"><h2>Run it yourself</h2><div class="aside">Everything is reproducible</div></div>
+    <pre>git clone https://github.com/Jennycruzy/facet
 
-<!-- ACT 6 ----------------------------------------------------------------- -->
-<section class="act wrap" id="run">
-  <div class="act-label">Run it yourself</div>
-  <h2>The whole path is reproducible</h2>
-  <p class="lede">The official prover image aborts on older AMD hosts because it is compiled
-  for a newer CPU. The rebuild is published, and the recipe is in the repo.</p>
-  <pre>git clone https://github.com/Jennycruzy/facet
-<span class="c"># the transaction prover, rebuilt for Zen 2 — see docs/PROVER.md</span>
+<span class="c"># the transaction prover, rebuilt for older AMD hosts. See docs/PROVER.md</span>
 docker run -p 3000:3000 ghcr.io/jennycruzy/facet-prover:znver2
 
-<span class="c"># the action builder</span>
-npm --prefix packages/sdk install &amp;&amp; npm --prefix packages/sdk run check
 <span class="c"># 20 Cairo fork tests against live mainnet state</span>
 snforge test --workspace</pre>
-</section>
+  </section>
 
-<!-- ACT 7 ----------------------------------------------------------------- -->
-<section class="act wrap" id="limits">
-  <div class="act-label">What we cannot claim</div>
-  <h2>The limits, stated first</h2>
-  <ul class="limits">
-    <li><strong>This is not a new privacy protocol.</strong> It uses StarkWare's STRK20
-    anonymizer unmodified. The contribution is the funding pattern, the SDK path and the
-    first execution of it.</li>
-    <li><strong>We are not the only users of the primitive.</strong> Most compute-path calls
-    on mainnet belong to other teams' anonymizers.</li>
-    <li><strong>We were not the first to fund a shadow account.</strong> Seven mainnet
-    <code>transfer_from</code> transactions did it first, the public way — that is the
-    comparison in the column above, not a strawman.</li>
-    <li><strong>The demo invoke links this facet to its owner, and that is our own doing.</strong>
-    The dapp call in the second transaction sends one wei to the owner's own address, because
-    it was a smoke test. That single receipt therefore does connect them. The unlinkability
-    argument here rests on the funding leg, which is shielded; a real call to a real protocol
-    would not carry that artefact.</li>
-    <li><strong>No shadow account has touched a DeFi protocol yet.</strong> All 39 mainnet
-    invocations target the STRK token. Ours is on Sepolia. Mainnet DeFi is the next step and
-    is not claimed here.</li>
-  </ul>
-</section>
+  <section class="block">
+    <div class="head"><h2>What we cannot claim</h2><div class="aside">Stated before anyone asks</div></div>
+    <div class="fine">
+      <div><h4>Not a new privacy protocol</h4>
+      <p>It uses StarkWare's anonymizer unmodified. What is new is the funding pattern, the
+      SDK path, and the first execution of it.</p></div>
+      <div><h4>Not the only users</h4>
+      <p>Most compute path calls on mainnet belong to other teams' anonymizers.</p></div>
+      <div><h4>Not the first to fund one</h4>
+      <p>Seven mainnet transactions did it first, the public way. That is the comparison
+      above, not a strawman.</p></div>
+      <div><h4>Our own test linked an identity</h4>
+      <p>The first run sent one wei to the owner's address because it was a smoke test, so
+      that receipt does connect them. The argument rests on the funding leg, which is
+      shielded.</p></div>
+      <div><h4>No DeFi protocol yet</h4>
+      <p>All 39 mainnet invocations target the STRK token. Ours ran on testnet. Mainnet DeFi
+      is next and is not claimed here.</p></div>
+    </div>
+  </section>
 
-<footer class="wrap">
-  <a href="index.html">Back to the app</a>
-  <a href="https://github.com/Jennycruzy/facet">Repository</a>
-  <a href="https://github.com/Jennycruzy/facet/blob/main/docs/FINDINGS.md">FINDINGS.md</a>
-  <a href="https://github.com/Jennycruzy/facet/blob/main/docs/PROVER.md">Prover recipe</a>
-  <p style="margin-top:20px">Facet is MIT licensed. Built for the STRK20 Private Sprint,
-  14–31 August 2026.</p>
-</footer>
+  <footer>
+    <nav>
+      <a href="./">The app</a>
+      <a href="https://github.com/Jennycruzy/facet/blob/main/docs/SHADOW_ACCOUNTS.md">Docs</a>
+      <a href="https://github.com/Jennycruzy/facet">GitHub</a>
+    </nav>
+    <div>MIT · STRK20 Private Sprint · unaudited</div>
+  </footer>
+</div>
 
-<script type="module" src="assets/js/app.js"></script>
+<script type="module" src="assets/js/proof.js"></script>
 </body>
 </html>
