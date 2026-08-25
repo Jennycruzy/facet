@@ -190,6 +190,7 @@ built, and nothing here claims otherwise.
 
 | Document | Contents |
 |---|---|
+| [`docs/SHADOW_ACCOUNTS.md`](docs/SHADOW_ACCOUNTS.md) | The guide to the primitive that does not otherwise exist — derivation, the two-tier action model, the funding pattern, what leaks, and every revert with its cause |
 | [`docs/FINDINGS.md`](docs/FINDINGS.md) | Everything verified from source and chain data |
 | [`docs/PROVER.md`](docs/PROVER.md) | Self-hosting the transaction prover, start to finish |
 | [`docs/PROGRESS.md`](docs/PROGRESS.md) | Dated record of what was established, and when |
