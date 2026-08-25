@@ -49,9 +49,11 @@ const ACCOUNT_DIR = "/Users/user/.facet-secrets/starknet-gate-a-new";
 const ACCOUNT_FILE = `${ACCOUNT_DIR}/account.json`;
 const KEYSTORE_FILE = `${ACCOUNT_DIR}/keystore.json`;
 const TEST_POOL_FILE = `${ACCOUNT_DIR}/test-pool.json`;
+const GATE_A_POOL_CLASS_HASH = "0x56ab118a8a6e38efc93ad758cefe909fee421fa931ce3cf72df624d345623b2";
 const DAPP_NAME = "facet";
 const NONCE = 0n;
 const AMOUNT = 500_000_000_000_000_000n; // 0.5 STRK
+const DEMO_TRANSFER_AMOUNT = 1n; // Safe Sepolia state-changing smoke test.
 
 if (!PAYMASTER_API_KEY) {
   throw new Error(
@@ -221,7 +223,7 @@ function makePoolViews(provider) {
 
 async function preflightInvocation(provider, invocation, label) {
   console.log(`Preflighting ${label} signature and actions on Sepolia...`);
-  await provider.channel.simulateTransaction(
+  const simulations = await provider.channel.simulateTransaction(
     [{
       type: TransactionType.INVOKE,
       contractAddress: invocation.sender_address,
@@ -238,7 +240,27 @@ async function preflightInvocation(provider, invocation, label) {
     }],
     { blockIdentifier: "latest", skipValidate: true, skipFeeCharge: true },
   );
+  const executeInvocation = simulations?.[0]?.transaction_trace?.execute_invocation
+    ?? simulations?.[0]?.transactionTrace?.executeInvocation;
+  const revertReason = executeInvocation?.revert_reason ?? executeInvocation?.revertReason;
+  if (revertReason) throw new Error(`${label} preflight reverted: ${revertReason}`);
   console.log(`${label} preflight passed.`);
+}
+
+async function waitForAcceptedOnL2(provider, transactionHash, label) {
+  for (let attempt = 1; attempt <= 120; attempt += 1) {
+    const status = await provider.getTransactionStatus(transactionHash);
+    const execution = status.execution_status ?? status.executionStatus;
+    const finality = status.finality_status ?? status.finalityStatus;
+    if (execution === "REVERTED") throw new Error(`${label} reverted before L2 acceptance.`);
+    if (finality === "ACCEPTED_ON_L2" || finality === "ACCEPTED_ON_L1") {
+      console.log(`${label} accepted on L2.`);
+      return;
+    }
+    if (attempt === 1) console.log(`Waiting for ${label} to reach ACCEPTED_ON_L2...`);
+    await delay(5_000);
+  }
+  throw new Error(`${label} did not reach ACCEPTED_ON_L2 within ten minutes.`);
 }
 
 function callProverWithCurl(method, params) {
@@ -372,6 +394,14 @@ if (BigInt(ec.starkCurve.getStarkKey(privateKey)) !== expectedPublicKey) {
 }
 
 const provider = new RpcProvider({ nodeUrl: RPC_URL });
+if (process.env.FACET_USE_TEST_POOL === "1") {
+  const poolClassHash = await provider.getClassHashAt(POOL);
+  if (BigInt(poolClassHash) !== BigInt(GATE_A_POOL_CLASS_HASH)) {
+    throw new Error(
+      `Gate A pool upgrade required. Run npm run gate-a:pool-upgrade first (current ${poolClassHash}).`,
+    );
+  }
+}
 const baseSigner = new Signer(privateKey);
 // Sepolia currently exposes proof_facts on the RPC transaction without including
 // them in the account's canonical V3 signature hash. starknet.js 10.5 includes
@@ -500,38 +530,53 @@ for (let attempt = 0; attempt < 3; attempt += 1) {
 if (!depositQuote) throw new Error("AVNU deposit fee quote did not stabilize.");
 console.log(`Deposit amount including both private paymaster fees: ${depositAmount} wei`);
 
-console.log("Building and proving the funded Gate A note (autoRegister + autoSetup)...");
-await recycleLocalProver("Deposit");
-const depositBuilder = transfers.build({
-  autoRegister: true,
-  autoSetup: true,
-  autoDiscover: { notes: "refresh", channels: "refresh" },
-});
-depositBuilder.with(STRK).deposit({ amount: depositAmount });
-const depositFeeAmount = BigInt(depositQuote.fee_action.amount);
-if (depositFeeAmount > 0n) {
-  depositBuilder.with(depositQuote.fee_action.token).withdraw({
-    recipient: depositQuote.fee_action.recipient,
-    amount: depositFeeAmount,
+const discoveredBeforeDeposit = await transfers.discoverNotes({ tokens: [BigInt(STRK)] });
+const existingNotes = (discoveredBeforeDeposit.notes.get(BigInt(STRK)) ?? [])
+  .filter((note) => note.amount >= AMOUNT)
+  .sort((a, b) => Number(b.amount - a.amount));
+let depositedNote = existingNotes[0];
+let depositResult;
+let depositTx = "existing on-chain note (deposit skipped)";
+
+if (depositedNote) {
+  console.log(`Existing unspent Gate A note found: ${hex(depositedNote.id)} (${depositedNote.amount} wei).`);
+  console.log("Skipping funded deposit and resuming Gate A.");
+} else {
+  console.log("Building and proving the funded Gate A note (autoRegister + autoSetup)...");
+  await recycleLocalProver("Deposit");
+  const depositBuilder = transfers.build({
+    autoRegister: true,
+    autoSetup: true,
+    autoDiscover: { notes: "refresh", channels: "refresh" },
   });
+  depositBuilder.with(STRK).deposit({ amount: depositAmount });
+  const depositFeeAmount = BigInt(depositQuote.fee_action.amount);
+  if (depositFeeAmount > 0n) {
+    depositBuilder.with(depositQuote.fee_action.token).withdraw({
+      recipient: depositQuote.fee_action.recipient,
+      amount: depositFeeAmount,
+    });
+  }
+  const depositInvocation = await depositBuilder.createProofInvocation();
+  await preflightInvocation(provider, depositInvocation.invocation, "Deposit");
+  attachTestScreening = process.env.FACET_USE_TEST_POOL === "1";
+  depositResult = await transfers.executeWithInvocation(depositInvocation);
+  attachTestScreening = false;
+  const depositSignature = stark.signatureToHexArray(
+    await baseSigner.signMessage(depositQuote.typed_data, address),
+  );
+  depositTx = await submitPaymasterProof(provider, depositResult, "Deposit", {
+    user_address: address,
+    typed_data: depositQuote.typed_data,
+    signature: depositSignature,
+  });
+  await waitForAcceptedOnL2(provider, depositTx, "Deposit");
+  transfers.invalidateProofNonceCache();
+  const depositedNotes = depositResult.registry.notes.get(BigInt(STRK)) ?? [];
+  depositedNote = depositedNotes.at(-1);
 }
-const depositInvocation = await depositBuilder.createProofInvocation();
-await preflightInvocation(provider, depositInvocation.invocation, "Deposit");
-attachTestScreening = process.env.FACET_USE_TEST_POOL === "1";
-const depositResult = await transfers.executeWithInvocation(depositInvocation);
-attachTestScreening = false;
-const depositSignature = stark.signatureToHexArray(
-  await baseSigner.signMessage(depositQuote.typed_data, address),
-);
-const depositTx = await submitPaymasterProof(provider, depositResult, "Deposit", {
-  user_address: address,
-  typed_data: depositQuote.typed_data,
-  signature: depositSignature,
-});
-transfers.invalidateProofNonceCache();
+
 await recycleLocalProver("Gate A");
-const depositedNotes = depositResult.registry.notes.get(BigInt(STRK)) ?? [];
-const depositedNote = depositedNotes.at(-1);
 if (!depositedNote) throw new Error("Deposit proof returned no note in its registry.");
 console.log(`Note id: ${hex(depositedNote.id)}`);
 console.log(`Note amount: ${depositedNote.amount}`);
@@ -541,7 +586,7 @@ const gateBuilder = transfers.build({
   autoSetup: true,
   autoSelectNotes: "naive",
   autoDiscover: { notes: "refresh", channels: "refresh" },
-  registry: depositResult.registry,
+  registry: depositResult?.registry,
 });
 const anonymizerContract = new Contract({
   abi: ShadowAccountAnonymizerABI,
@@ -560,11 +605,18 @@ gateBuilder
   .withdraw({ recipient: shadowAccount.address, amount: AMOUNT })
   .transfer({ recipient: address, amount: Open });
 gateBuilder.shadowAccounts(DAPP_NAME).invoke(NONCE, {
-  calls: [{ contractAddress: STRK, entrypoint: "balance_of", calldata: [address] }],
+  calls: [{
+    contractAddress: STRK,
+    entrypoint: "transfer",
+    calldata: [address, num.toHex(DEMO_TRANSFER_AMOUNT), "0x0"],
+  }],
   collectPolicy: { type: "all" },
 });
 
-console.log("Building and proving Gate A: UseNote -> Withdraw -> ComputeAndInvoke...");
+console.log(
+  `Building and proving Gate A: UseNote -> Withdraw -> ComputeAndInvoke -> ` +
+  `STRK.transfer(${DEMO_TRANSFER_AMOUNT} wei)...`,
+);
 const gateFeeAmount = BigInt(gateQuote.fee_action.amount);
 if (gateFeeAmount > 0n) {
   gateBuilder.with(gateQuote.fee_action.token).withdraw({

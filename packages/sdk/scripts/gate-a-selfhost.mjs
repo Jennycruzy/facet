@@ -1,8 +1,12 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 
-const clientFile = process.env.FACET_PAYMASTER_CLIENT_FILE
-  ?? "/Users/user/.facet-secrets/starknet-gate-a-new/selfhost-paymaster-client.json";
+const defaultClientFile = "/Users/user/.facet-secrets/starknet-gate-a-new/selfhost-paymaster-client-v2.json";
+const configuredClientFile = process.env.FACET_PAYMASTER_CLIENT_FILE;
+const clientFile = configuredClientFile && existsSync(configuredClientFile)
+  ? configuredClientFile
+  : defaultClientFile;
 const mode = process.argv[2] ?? "run";
 if (!new Set(["preflight", "run"]).has(mode)) {
   throw new Error("Usage: node scripts/gate-a-selfhost.mjs [preflight|run]");
