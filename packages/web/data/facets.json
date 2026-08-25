@@ -41,7 +41,9 @@
           "role": "invoke",
           "summary": "0.5 STRK withdrawn, a dapp call executed as the shadow account, the remainder collected back into the shield."
         }
-      ]
+      ],
+      "app": null,
+      "label": "Gate A rehearsal"
     }
   ],
   "uncutNote": "Every other face is an identity that has not been cut. A second facet requires one more run of the same sequence with a different dapp name.",
@@ -52,5 +54,31 @@
     "funder": "0x46e978c45ab856377819018ef872314ddaf8f58d9c1dcd5dfcb2265cdcd464c",
     "amount": "1 STRK",
     "note": "A shadow account funded the public way: an external account pre-approves it, and the account's first call pulls the funds. The funder's address is in the clear, in the same transaction, and it is a real funded wallet."
-  }
+  },
+  "apps": [
+    {
+      "id": "vesu",
+      "name": "Vesu",
+      "kind": "savings",
+      "action": "Deposit",
+      "tolerates_delay": true,
+      "note": "Deposits are unaffected by the proving window, so this is the first card to go live."
+    },
+    {
+      "id": "endur",
+      "name": "Endur",
+      "kind": "staking",
+      "action": "Stake",
+      "tolerates_delay": true,
+      "note": "Staking tolerates the proving window. This is the second identity in the demo."
+    },
+    {
+      "id": "ekubo",
+      "name": "Ekubo",
+      "kind": "trading",
+      "action": "Swap",
+      "tolerates_delay": false,
+      "note": "A swap quote can go stale inside the proving window, so this card comes last."
+    }
+  ]
 }

@@ -34,11 +34,13 @@ RPC from the visitor's browser. Nothing else on the host is reachable through th
 
 | File | Contents |
 |---|---|
-| `index.html` | The seven acts, in order, as plain semantic markup |
+| `index.html` | **The app** — IDEA-20's grid: your faces, their live on-chain state, and the app tiles |
+| `proof.html` | How it works and the evidence, in seven acts. One click behind the app, for the reader who wants to verify rather than use |
 | `assets/css/facet.css` | Design tokens and layout. Dark, single accent, no framework |
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
 | `assets/js/chain.js` | The only module that talks to an RPC node. `sessionStorage` cache, five-minute TTL |
-| `assets/js/app.js` | Wires chain data into the acts |
+| `assets/js/app-ui.js` | The app: strip, faces, tiles |
+| `assets/js/app.js` | Wires chain data into the proof page's acts |
 | `data/facets.json` | Addresses, transaction hashes, RPC endpoints |
 
 ## Rules this page follows
