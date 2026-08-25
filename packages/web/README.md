@@ -18,12 +18,17 @@ python3 -m http.server 8899 --bind 127.0.0.1   # from this directory
 
 ## Deploying
 
-Cloudflare Pages. It builds on its own infrastructure and needs only read access to the
-repository, so the page ships without depending on a CI runner.
+The page is static, so it is served directly from the project's own host on its own domain —
+`demo_url` in the sprint registry should be that domain, not a platform subdomain.
 
-- Framework preset: **None**
-- Build command: *(empty)*
-- Output directory: `packages/web`
+```bash
+./facet-deploy-web.sh          # rsync packages/web -> /var/www/facet
+ln -s /etc/nginx/sites-available/facet /etc/nginx/sites-enabled/facet
+certbot --nginx -d <domain>    # certificate and the HTTPS redirect
+```
+
+There is no build step and no upstream: nginx serves the files, and the page reads Starknet
+RPC from the visitor's browser. Nothing else on the host is reachable through the site.
 
 ## Structure
 
