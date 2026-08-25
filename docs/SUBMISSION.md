@@ -11,7 +11,7 @@ needs, what is in it now, and how to verify a value before it is added.
   "transactions": ["0x0721505c…5716a"],
   "contracts": [],
   "demo_video": "",
-  "demo_url": ""
+  "demo_url": "https://usefacet.xyz"
 }
 ```
 
@@ -56,10 +56,10 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9 \
 
 ## `demo_url`
 
-`https://usefacet.xyz` — the domain is registered and pointed at the project's host, and
-`packages/web` is what it serves. **Do not write this field until the certificate is issued
-and the URL loads over HTTPS in a cold browser with no wallet and no extensions.** A judge
-meeting a certificate warning is worse than a judge meeting an empty field.
+**Done — `https://usefacet.xyz`.** Certificate issued 25 August 2026 (Let's Encrypt, ECDSA,
+covers apex and `www`), HTTP redirects to HTTPS, and the page was loaded cold in a browser
+with no wallet and no extensions: 200, no console errors, and its live Sepolia and mainnet
+reads all resolved.
 
 ```bash
 curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
