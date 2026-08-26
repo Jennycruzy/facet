@@ -1,9 +1,12 @@
 # `@facet/sdk`
 
 This package is the Facet-specific action builder over
-`@starkware-libs/starknet-privacy-sdk`.
+`@starkware-libs/starknet-privacy-sdk`. Facet is a private account and portfolio layer:
+the SDK turns a shielded note into a context-specific shadow-account call and settles
+the result back into private notes.
 
-`buildGateAActionSet` performs the read-only address lookup and queues the first Facet operation:
+`buildGateAActionSet` performs the read-only address lookup and queues the first private
+account operation:
 
 1. create an open settlement note;
 2. withdraw the requested token amount to the anonymizer's authoritative shadow-account address;
@@ -53,16 +56,25 @@ its built output from `FACET_PRIVACY_SDK_ROOT` (default: `/Users/user/starknet-p
 `npm run build` in that upstream SDK checkout before running a private transaction.
 
 ```bash
-npm run gate-a:preflight
-npm run gate-a:run
+npm run private:sepolia:preflight
+npm run private:sepolia:run
 ```
 
-`gate-a:run` requires `FACET_PAYMASTER_API_KEY`, a tunnel to the trusted prover, and the local Sepolia
+The managed Sepolia runner requires `FACET_PAYMASTER_API_KEY`, a tunnel to the trusted prover, and the local Sepolia
 A keystore. For the isolated self-hosted path, configure `FACET_PAYMASTER_URL` and
-`FACET_USE_TEST_POOL=1`. Setup scripts are exposed as `gate-a:test-pool` and
-`gate-a:paymaster-setup`; do not repeat deployments when their mode-0600 profiles already exist.
-For an existing self-hosted profile, use `npm run gate-a:selfhost:preflight` and then
-`npm run gate-a:selfhost:run`; the wrapper loads the API key without printing it.
-If the paymaster reports a missing private forwarder entrypoint, run `npm run paymaster:refresh`
+`FACET_USE_TEST_POOL=1`. Setup scripts are exposed as `private:pool:setup` and
+`private:paymaster:setup`; do not repeat deployments when their mode-0600 profiles already exist.
+For an existing self-hosted profile, use `npm run private:sepolia:selfhost:preflight` and then
+`npm run private:sepolia:selfhost:run`; the wrapper loads the API key without printing it.
+If the fee sponsor reports a missing private forwarder entrypoint, run `npm run private:paymaster:refresh`
 once. It declares the current forwarder class and writes separate `*-v2` profiles, leaving the
 old profile recoverable.
+
+The Ekubo adapter is run with:
+
+```bash
+npm run private:defi:ekubo
+```
+
+The older script names remain as compatibility aliases for existing checklists; new
+integrations and documentation should use the private-account names above.

@@ -15,11 +15,11 @@ stored here.
 
 | Item | Record |
 |---|---|
-| Sepolia private-transaction account | `starknet-gate-a-new`, `0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135` |
+| Sepolia private-transaction account | `0x7a00bfa75ea68c2baa0d6ef2a10bfe2d4424072d06139b135` |
 | Retired Sepolia account | `facet-sepolia`, `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5`; historical replay account, no longer signs |
 | Sepolia purpose | `UseNote → Withdraw → ComputeAndInvoke` private-transaction rehearsal |
 | Initial Sepolia target | 0.5 STRK private note, plus transaction fees |
-| Total owner-approved ceiling | Up to 30 STRK for the end-to-end work; this is a ceiling, not an instruction to spend it all |
+| Current owner-approved mainnet ceiling | Up to 15 STRK for this run; this is a ceiling, not an instruction to spend it all |
 | Mainnet funded account | `starknet-gate2`, `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` |
 | Mainnet purpose | Later Facet/Mainnet work; distinct from the Sepolia account and the Ready X eligibility wallet |
 | Trusted prover host | VPS `38.49.216.59` (`jennycruzy`), prover bound to the trusted host rather than exposed publicly |
@@ -104,7 +104,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | Same replay against Sepolia state | Done | `decoded_payload_replays_on_sepolia`, forked at block 13,518,500. A free dry run of the live transaction. |
 | Live Sepolia transaction | **Done, 18 August 2026** | Account `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5`; anonymizer deploy `0x014eb1f86482ae09c32d5784d604115b9e8ab24c3c6f9349308028e6d5a3ab29`; materialisation `0x0719c8ddafc64eebaea496f84d0ec4ccbee46d561a227422d94e5f0be874e9b7`; funding `0x067c272692c0afe9f95535504a81352b0ec664c4b09eb8ccbe0c5ae84a571193`; replay `0x01278bd9634d952da1502118c3bf6f8578b5e4148da6ab992384aeca110675cf`. Exact 0.5 STRK was collected; derived shadow balance is 0. |
 | First funded mainnet interaction | **Done, 19 August 2026** | Ready X shielded 7 STRK into the mainnet STRK20 pool; transaction `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, block 13,538,709, accepted on L2. |
-| Phase A owner authorization | **Confirmed, 19 August 2026** | Owner approved the Sepolia account above, trusted VPS prover `38.49.216.59`, an initial 0.5 STRK rehearsal target plus fees, and a maximum total exposure of 30 STRK. Mainnet DeFi still requires a separate exact amount. |
+| Phase A owner authorization | **Confirmed, 19 August 2026; current run updated 26 August 2026** | Owner approved the Sepolia account above, trusted VPS prover `38.49.216.59`, an initial 0.5 STRK rehearsal target plus fees, and a current 15 STRK mainnet ceiling. The ceiling is a safety limit, not an instruction to spend it all. |
 | Isolated Sepolia rehearsal pool | **Deployed, 23 August 2026** | Pool `0x73f3c4bc1ef39490f09587b11f6ea7f2cc66854d5df3306cda4736234693546`, transaction `0x69562899d887cbb1cbfaaa5fcb60ec3e4a89dac48d1b7483a95f6230f73039a`; anonymizer `0x57e5052865eb08bc1134a62fadfef067015802ce7e989af29fe94913c535efd`, transaction `0x21fba6477885991912fefd1a5e862532ac0ad8b91011bca2079723b7e946e4f`. This avoids the original pool's unavailable screening signer while preserving screening behavior in the rehearsal. |
 | Self-hosted private paymaster core | **Deployed, 23 August 2026** | One-relayer AVNU-compatible Sepolia deployment succeeded in transaction `0x006e6ff906cfd97d24f70e060514e0a97837bdcb5f00497d91b2a11c61870da8`. It allocated 4 testnet STRK and removes dependence on the managed service's single configured privacy-pool address. Generated service credentials remain outside Git. Service startup and the end-to-end proved transactions remain pending. |
 | **§6.6 sequence executed on Sepolia** | **Done, 25 August 2026** | The first facet succeeded in `0x05faace1d…dedef` and `0x0111b815a…f3693`. A second clean facet named `facet-second` used deposit `0x4cee8465…0a07` and private transaction `0x68510769…6b3a`; shadow `0x560b1983…e2b8` sent 1 wei to `0x…dead`, not the owner, and collected the remainder. The second proof took 400s. Recorded as `FINDINGS.md` §6.17–§6.18. |

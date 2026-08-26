@@ -306,6 +306,30 @@ Also worth knowing if you are running Cairo tests against Sepolia: the bare
 `api.cartridge.gg/x/starknet/sepolia` host serves RPC 0.9.0, which snforge 0.59.0 rejects
 outright. The versioned path `…/sepolia/rpc/v0_10` serves 0.10.2 and works.
 
+## 8. Mainnet proof-facts compatibility
+
+The deployed mainnet STRK20 pool is not compatible with every prover build that can
+produce an otherwise valid proof. Its proof-facts parser expects the legacy `PROOF0`
+marker (`0x50524f4f4630`) and an allowlisted virtual-OS program hash.
+
+The current upstream development prover emits `PROOF1`
+(`0x50524f4f4631`) and, in one otherwise healthy build, emitted the virtual-OS hash
+`0x47fb7a3dfec1ede12156a1dfeec3b2b9c7e549e0ae208d1b760dea41c248901`. The mainnet pool
+rejected that hash before execution. Replacing the first marker alone is therefore not
+enough.
+
+The SDK's mainnet runner now does three things before any broadcast:
+
+1. generates the proof from a signed Invoke V3;
+2. normalizes only the marker when the deployed pool requires `PROOF0`;
+3. runs a proof-aware simulation of the exact signed transaction and stops if the pool
+   rejects the facts.
+
+Do not bypass the proof-aware simulation or rewrite arbitrary proof fields. A compatible
+prover must be built from a Cairo/Starknet toolchain whose virtual-OS hash is in the
+deployed pool's allowlist. This compatibility check belongs in infrastructure validation,
+not in a user's first transaction attempt.
+
 ---
 
 ## Summary

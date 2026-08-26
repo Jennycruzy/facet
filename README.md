@@ -2,16 +2,19 @@
 
 **Hide My Email, for your money.**
 
-One shielded balance, and a fresh unlinkable address for every app you touch. Vesu sees one
-address. Endur sees a different one. Neither can be traced to you, or to each other.
+Facet is a private account and portfolio layer for Starknet: one shielded balance, a
+fresh context-specific account for every application, and a portfolio view that does
+not require the user to publicly reuse one wallet everywhere.
 
 > **Externally unlinkable, internally one portfolio.**
 
-That is [IDEA-20](https://github.com/starkience/strk20-hackathon/blob/main/IDEAS.md) — the
-private account and portfolio layer — and it is what Facet is. The ideas page marks it as
-depending on sub-accounts, which are "not shipped yet". They are the same primitive this
-project is built on, and on 25 August 2026 we executed the full sequence on chain. The
-dependency other teams were told to be careful of is the one already demonstrated here.
+Vesu sees one account. Ekubo sees another. A future application sees a third. The user
+still has one private portfolio underneath, with deterministic recovery instead of a
+folder full of manually managed wallets.
+
+Read [`docs/PRODUCT.md`](docs/PRODUCT.md) for the product model, privacy boundary,
+account lifecycle, and architecture. This README keeps the implementation evidence and
+the runnable path close at hand.
 
 Every Starknet address is a permanent public record of everything its owner has ever done.
 That is not an abstract problem:
@@ -28,20 +31,22 @@ That is not an abstract problem:
 Facet gives you one identity per context instead of one identity forever. The funding never
 names you, and the identities are not linked to each other on chain.
 
-Built on STRK20 **shadow accounts** — a primitive that is deployed on mainnet, supported by
-the official SDK, named in the sprint's judging criteria, documented nowhere, and now
-demonstrated twice from a shielded note by this project on Sepolia.
+Built on STRK20 **shadow accounts** — a primitive that lets a proved private transaction
+fund a deterministic account, have it call a normal Starknet application, and settle the
+result back into shielded notes. Facet turns that primitive into an account and portfolio
+model rather than asking users to think in raw commitments, notes, and contract phases.
 
-> **Status: in development.** Built during the [STRK20 Private Sprint](https://strk20.starknet.io),
-> 14–31 August 2026. Nothing here is audited. Do not route funds you cannot afford to
-> lose. Claims in this README are traceable to a source reference or a transaction
-> hash; anything not yet done is marked as such.
+> **Status: in development.** Nothing here is audited. Do not route funds you cannot
+> afford to lose. Claims in this README are traceable to a source reference or a
+> transaction hash; anything not yet done is marked as such.
 
 ## New here?
 
-[`docs/SHADOW_ACCOUNTS.md`](docs/SHADOW_ACCOUNTS.md) is the guide to this primitive that
-does not otherwise exist — derivation, the action model, the funding pattern, what leaks,
-and every revert with its cause. It is the document we needed and could not find.
+Start with [`docs/PRODUCT.md`](docs/PRODUCT.md) for the product, then use
+[`docs/SHADOW_ACCOUNTS.md`](docs/SHADOW_ACCOUNTS.md) for the underlying primitive:
+derivation, the action model, the funding pattern, what leaks, and every revert with its
+cause. The implementation is intentionally documented at both levels: what a user gets,
+and how the protocol makes it possible.
 
 ## Quick validation
 
@@ -80,8 +85,8 @@ The result is one identity per user, per anonymizer, per dapp, per nonce — eac
 by its own contract account, none of them linkable to the others or to the person
 behind them.
 
-That is a **facet**: one cut face of a single stone, different from every angle, still
-one stone.
+That is a **facet**: one visible face of a single private portfolio, different from
+every angle, still one portfolio.
 
 ## Architecture at a glance
 
@@ -93,7 +98,7 @@ one stone.
 | Shadow account | Becomes the public caller seen by the dapp and is funded at its deterministic address from the private note. |
 | Ekubo router | Receives the shadow account's STRK call and returns the swap balances for private-note settlement. |
 | Transaction prover | Re-executes the signed Invoke V3 and supplies the proof facts required by the pool. |
-| Paymaster | Sponsors Sepolia private transactions through a self-hosted relayer; mainnet uses the funded deployment account directly. |
+| Relayer / paymaster | Submits proof-bearing transactions and can sponsor execution where the network path supports it. |
 
 ```text
 wallet signature + private identity
@@ -108,9 +113,11 @@ wallet signature + private identity
        STRK / ETH private notes
 ```
 
-## Why this doesn't already exist
+## Why this is hard
 
-The contract shipped. The product did not.
+The underlying contracts exist, but turning them into a reliable product requires more
+than deriving a new address. The system has to preserve privacy across funding,
+application execution, settlement, proving, fee payment, recovery, and portfolio display.
 
 - A shadow account anonymizer has been live on mainnet since **23 July 2026**
   (`0x4f33230dc57855c6e7eabe66dfa0fde82c5458fd0e54827cdb7cb4c474888a7`, deployed at
@@ -206,10 +213,10 @@ transactions have. The difference is that their method needs a public `approve` 
 funded address, naming the shadow account as spender, which links a real identity to
 the facet.
 
-The claim made here is narrow and checkable: **all 39 invocations target the STRK token
-contract, and no shadow account has ever interacted with a DeFi protocol.** Facet aims
-to be the first, and to leave behind the SDK and the documentation that would let
-anyone else do it too.
+The claim made here is narrow and checkable: **Facet provides a private account and
+portfolio layer by funding context-specific shadow accounts from shielded notes, then
+settling application results back into shielded notes.** The implementation evidence,
+known limits, and unfinished product layers are all called out below.
 
 ## What exists today
 
@@ -223,8 +230,9 @@ What is not built is listed as plainly as what is.
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
 | SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 9 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
-| Application | **not built** |
-| Mainnet interaction | **eligibility shield complete** — one 7 STRK Ready X shield touched the STRK20 pool; no shadow account has touched a DeFi protocol |
+| Product layer | **in development** — account contexts, private funding, settlement, and adapter foundations exist; browser launcher and portfolio index remain to be built |
+| Mainnet contracts | **deployed** — immutable anonymizer and `FacetAccount`; deployment evidence is in `docs/ARCHITECTURE.md` |
+| Mainnet interaction | **not yet claimed** — the Sepolia adapter is verified; the current-compatible mainnet prover is being validated before any broadcast |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted
@@ -249,6 +257,7 @@ built, and nothing here claims otherwise.
 
 | Document | Contents |
 |---|---|
+| [`docs/PRODUCT.md`](docs/PRODUCT.md) | Product model: private portfolio, context accounts, user flow, privacy boundary, and roadmap |
 | [`docs/SHADOW_ACCOUNTS.md`](docs/SHADOW_ACCOUNTS.md) | The guide to the primitive that does not otherwise exist — derivation, the two-tier action model, the funding pattern, what leaks, and every revert with its cause |
 | [`docs/FINDINGS.md`](docs/FINDINGS.md) | Everything verified from source and chain data |
 | [`docs/PROVER.md`](docs/PROVER.md) | Self-hosting the transaction prover, start to finish |

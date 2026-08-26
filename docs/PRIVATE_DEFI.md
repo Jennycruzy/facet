@@ -1,8 +1,8 @@
 # Private STRK20 DeFi transactions
 
-This is the user-facing description of Facet's private transaction path. The repository
-also contains historical script names such as `gate-c:ekubo`; those names are implementation
-labels, not product concepts.
+This document describes the application-adapter path in Facet's private account and
+portfolio layer. A user supplies a shielded STRK note and receives private output notes;
+the protocol sees a context-specific shadow account, not the user's primary wallet.
 
 ## What the stack does
 
@@ -17,12 +17,12 @@ Facet combines five Starknet components:
    the public caller seen by the dapp; the owner address is not the dapp caller.
 3. **Ekubo.** The shadow account calls the Ekubo router with STRK, then clears the router's
    STRK and ETH balances. The resulting STRK and ETH are returned to private notes.
-4. **Self-hosted transaction prover.** The SDK sends a signed Invoke V3 to
+4. **Transaction prover.** The SDK sends a signed Invoke V3 to
    `starknet_proveTransaction`. The prover returns the proof facts needed by the privacy
    pool. In development, the Mac reaches the VPS prover through an SSH loopback tunnel.
-5. **Paymaster.** Sepolia rehearsals use the self-hosted AVNU-compatible paymaster and its
-   relayer. Mainnet uses the deployment account directly, so the mainnet fee is charged to
-   that account rather than to the Sepolia paymaster.
+5. **Relayer / fee payer.** Sepolia rehearsals use the self-hosted AVNU-compatible relayer
+   and fee sponsor. Mainnet uses the deployment account directly in the current runner, so
+   the mainnet fee is charged to that account rather than to the Sepolia sponsor.
 
 The deployed mainnet contracts are:
 
@@ -74,7 +74,7 @@ export FACET_NETWORK=mainnet
 export FACET_MAINNET_MAX_SPEND_STRK=15
 export FACET_DAPP_NAME=facet-mainnet-ekubo-v1
 export FACET_GATE_C_AMOUNT=100000000000000000
-npm run gate-c:ekubo
+npm run private:defi:ekubo
 ```
 
 The command prompts for the encrypted keystore password. Enter it locally; it is never
@@ -88,8 +88,9 @@ signed transaction submission
 receipt verification
 ```
 
-A line such as `zsh: command not found: gate-c-ekubo-mainnet-v1` means the command was pasted
-with an unintended newline. It does not indicate an on-chain failure.
+A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with
+an unintended newline and an environment assignment was split. It does not indicate an
+on-chain failure.
 
 ## Timing and product expectations
 

@@ -1,17 +1,22 @@
 # Architecture
 
-Status: Sepolia private transactions and mainnet contract deployment verified, 25 August
-2026; the mainnet DeFi interaction remains amount-controlled.
+Facet is a private account and portfolio layer: the user keeps one shielded balance while
+each application sees a separate deterministic shadow account. This document records the
+execution boundary, account controls, and settlement path that make that product model
+possible.
 
-This document records the execution boundary and account controls for Facet. The proved
-shadow-account sequence has now settled twice on Sepolia and was independently verified.
-Mainnet DeFi remains controlled by an owner-supplied amount.
+Status: the private account sequence and the Ekubo adapter are verified on Sepolia; the
+immutable anonymizer and `FacetAccount` are deployed on mainnet. A mainnet DeFi interaction
+is deliberately not reported until the current-compatible prover and proof facts have been
+validated end to end.
+
+For the product model and user-facing privacy boundary, see [`PRODUCT.md`](PRODUCT.md).
 
 ## Account separation
 
 | Account | Network | Role |
 |---|---|---|
-| `starknet-gate-a-new` — `0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135` | Sepolia | Active private-transaction signer and fee payer |
+| Active Sepolia signer — `0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135` | Sepolia | Private-transaction signer and fee payer |
 | `facet-sepolia` — `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` | Sepolia | Retired historical replay account; must not sign |
 | `starknet-gate2` — `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` | Mainnet | Funded Facet deployment account; encrypted keystore stays local |
 | Ready X — `0x0470c4cca0dd62caecaeb3f9bf047aa3e65fc2f6aa64c6c06ca85929306714fa` | Mainnet | Separate eligibility shield wallet |
@@ -23,10 +28,10 @@ without changing its value.
 ## Execution authorization
 
 - Initial private-note target: 0.5 STRK, plus fees.
-- Owner-approved maximum exposure for the end-to-end work: 30 STRK total.
+- Current owner-approved maximum exposure for the mainnet run: 15 STRK total.
 - The maximum is a safety ceiling, not a reason to spend the full amount.
 - No Mainnet DeFi transaction is authorized until the owner confirms that transaction's
-  exact STRK amount. The 30 STRK ceiling is not an instruction to spend it all.
+  exact STRK amount. The 15 STRK ceiling is not an instruction to spend it all.
 
 ## Preflight status
 

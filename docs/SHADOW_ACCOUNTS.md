@@ -1,9 +1,12 @@
-# Shadow accounts: the guide that does not exist
+# Shadow accounts: the implementation guide
 
-STRK20's shadow-account anonymizer is deployed on Starknet mainnet, supported by the
-privacy SDK, and named in the sprint's judging criteria. Its public documentation is a
-single sentence. This document is what we needed and could not find, assembled by reading
-the source, decoding every mainnet invocation, and executing the sequence.
+Shadow accounts are the account-separation primitive underneath Facet's private account
+and portfolio layer. They let one shielded portfolio present a different deterministic
+Starknet account to each application context.
+
+The upstream public documentation is brief. This document supplies the missing engineering
+detail, assembled by reading the source, decoding mainnet invocations, and executing the
+sequence. For the user-facing product model, start with [`PRODUCT.md`](PRODUCT.md).
 
 Everything here is traceable to `FINDINGS.md`, which carries the file:line and block
 references. Where the two disagree, `FINDINGS.md` is authoritative — it is checked against

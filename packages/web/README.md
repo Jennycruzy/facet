@@ -34,7 +34,7 @@ RPC from the visitor's browser. Nothing else on the host is reachable through th
 
 | File | Contents |
 |---|---|
-| `index.html` | **The app** — IDEA-20's grid: your faces, their live on-chain state, and the app tiles |
+| `index.html` | **The app** — Facet's grid: your private account contexts, their live on-chain state, and the application tiles |
 | `proof.html` | How it works and the evidence, in seven acts. One click behind the app, for the reader who wants to verify rather than use |
 | `assets/css/facet.css` | Design tokens and layout. Dark, single accent, no framework |
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |

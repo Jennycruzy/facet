@@ -777,7 +777,7 @@ reports `amd64` and carries the upstream revision as an OCI label.
 
 **The published amd64 workflow used `TARGET_CPU=znver5`; that image is incompatible with this
 Zen 2 host.** Rebuilding the same revision with `TARGET_CPU=znver2` fixed startup and, in the
-Gate 2 test below, completed an entire proof on that host. This establishes that AVX-512 is
+full proof benchmark below, completed an entire proof on that host. This establishes that AVX-512 is
 not required for the tested proving path; it does not establish compatibility with every CPU.
 
 An `arm64` image is also published. The x86 instruction-set choice cannot exist in an aarch64
@@ -786,7 +786,7 @@ verification, since this host has no qemu, but the amd64 result makes it very li
 
 **Memory floor, measured.** Startup precomputation was OOM-killed (exit 137, `OOMKilled=true`)
 with ~1.1 GiB available and no swap. With a temporary 16 GiB swapfile the service started and
-settled at **~2.29 GiB resident**. The successful Gate 2 proof peaked at **7,064,956,928 bytes
+settled at **~2.29 GiB resident**. The successful proof benchmark peaked at **7,064,956,928 bytes
 (~6.58 GiB)** in the prover cgroup and drove host swap usage to roughly 12 GiB while sharing
 the 7.8 GiB host with other services. The OOM killer is therefore a live risk to unrelated
 production services — do not start the prover here without swap in place and headroom checked.
@@ -797,7 +797,7 @@ handoff was wrong. For reference the mainnet RPC this was pointed at, `api.cartr
 reports `0.10.2` on both its bare and `/rpc/v0_10` paths — unlike the Sepolia host noted at
 the end of this section, the bare mainnet path is not version-degraded.
 
-**Historical replay is not a usable Gate 2 fixture.** Two finalized Argent Invoke V3
+**Historical replay is not a usable proof fixture.** Two finalized Argent Invoke V3
 transactions — `0x62252938…20ea0` (block 12,397,335) and `0x319b9de8…f7883` (block
 12,713,881) — were replayed against their parent blocks and both failed account validation
 with `argent/invalid-owner-sig`. Zeroing the fee prices and tip changes the signed transaction
@@ -817,7 +817,7 @@ mainnet state (a newly created account therefore needs one funded deployment fir
 matches how Facet will really operate — the
 §6.6 sequence always signs its own transactions, so replay was only ever a convenience.
 
-**Gate 2 completed, 16 August.** A fresh OpenZeppelin account signed an unbroadcast Invoke V3
+**The full proof benchmark completed, 16 August.** A fresh OpenZeppelin account signed an unbroadcast Invoke V3
 calling STRK `balance_of`, with all gas prices and tip zero and `l2_gas.max_amount` set to
 100,000,000. Against `block_id: "latest"`, the `znver2` prover returned a populated
 306,508-character base64 proof and eight proof-fact felts in **485 seconds (8m 05s)**. The
@@ -898,7 +898,7 @@ The accounts used in this project are deliberately separated by network and purp
 
 | Account | Network | Purpose |
 |---|---|---|
-| `starknet-gate-a-new` — `0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135` | Sepolia | Active private-transaction signer and fee payer; two facets verified |
+| Active Sepolia signer — `0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135` | Sepolia | Private-transaction signer and fee payer; two facets verified |
 | `facet-sepolia` — `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` | Sepolia | Retired historical replay signer; no longer authorized |
 | `starknet-gate2` — `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` | Mainnet | Funded deployment account reserved for later Facet/Mainnet work |
 | Ready X — `0x0470c4cca0dd62caecaeb3f9bf047aa3e65fc2f6aa64c6c06ca85929306714fa` | Mainnet | Eligibility shield wallet; not the Facet deployment account |
@@ -918,7 +918,7 @@ separate transaction before being counted.
 
 The owner confirmed the following operational authorization on 19 August 2026:
 
-- use the newly created Sepolia `starknet-gate-a-new` account for private transactions;
+- use the newly created Sepolia private-transaction account for private transactions;
 - target 0.5 STRK for the initial private note, plus fees;
 - treat 30 STRK as the maximum total exposure for the end-to-end work, not as a
   requirement to spend the full amount;
