@@ -41,7 +41,12 @@
           "role": "invoke",
           "summary": "0.5 STRK withdrawn, a dapp call executed as the shadow account, the remainder collected back into the shield."
         }
-      ]
+      ],
+      "app": null,
+      "label": "Identity 01",
+      "context": "First live run of the sequence",
+      "monogram": "01",
+      "accent": "sapphire"
     },
     {
       "id": "facet-second",
@@ -64,7 +69,12 @@
           "role": "invoke",
           "summary": "The shadow account sends 1 wei to an unrelated 0x…dead recipient; the remainder returns to the shield."
         }
-      ]
+      ],
+      "app": null,
+      "label": "Identity 02",
+      "context": "Second live run with an unrelated recipient",
+      "monogram": "02",
+      "accent": "violet"
     }
   ],
   "uncutNote": "Every other face is an identity that has not been cut. The two recorded faces use distinct dapp names; no other identity is claimed.",
@@ -75,5 +85,63 @@
     "funder": "0x46e978c45ab856377819018ef872314ddaf8f58d9c1dcd5dfcb2265cdcd464c",
     "amount": "1 STRK",
     "note": "A shadow account funded the public way: an external account pre-approves it, and the account's first call pulls the funds. The funder's address is in the clear, in the same transaction, and it is a real funded wallet."
+  },
+  "apps": [
+    {
+      "id": "vesu",
+      "name": "Vesu",
+      "kind": "savings",
+      "action": "Deposit",
+      "tolerates_delay": true,
+      "note": "Every action takes about six minutes to prove. A deposit does not mind the wait: the amount you asked for is the amount that lands.",
+      "contract": "0x451fe483d5921a2919ddd81d0de6696669bccdacd859f72a4fba7656b97c3b5",
+      "contractLabel": "Vesu V2 \u00b7 Prime pool",
+      "entrypoint": "modify_position",
+      "verified": "read from mainnet ABI, 25 Aug 2026",
+      "monogram": "Ve",
+      "accent": "emerald"
+    },
+    {
+      "id": "endur",
+      "name": "Endur",
+      "kind": "staking",
+      "action": "Stake",
+      "tolerates_delay": true,
+      "note": "The same six minutes. A stake is unaffected by the delay, which makes this the second identity in the demo.",
+      "contract": "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
+      "contractLabel": "Endur \u00b7 xSTRK",
+      "entrypoint": "deposit",
+      "verified": "read from mainnet ABI, 25 Aug 2026",
+      "monogram": "En",
+      "accent": "violet"
+    },
+    {
+      "id": "ekubo",
+      "name": "Ekubo",
+      "kind": "trading",
+      "action": "Swap",
+      "tolerates_delay": false,
+      "note": "The same six minutes, but a swap price can expire inside them. That is the only reason this one comes last.",
+      "contract": "0x00000005dd3d2f4429af886cd1a3b08289dbcea99a294197e9eb43b0e0325b4b",
+      "contractLabel": "Ekubo \u00b7 Core",
+      "entrypoint": "swap",
+      "verified": "class hash confirmed on mainnet, 25 Aug 2026",
+      "monogram": "Ek",
+      "accent": "amber"
+    }
+  ],
+  "denominations": {
+    "token": "STRK",
+    "steps": [
+      10,
+      25,
+      50,
+      100,
+      250
+    ],
+    "why": "Identities are funded only in these amounts. An arbitrary figure such as 137.42 STRK identifies you across every identity that uses it; a fixed step does not."
+  },
+  "timing": {
+    "why": "Funding and acting are separated by a random delay, so two identities created in one sitting do not appear on chain seconds apart."
   }
 }

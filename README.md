@@ -2,8 +2,16 @@
 
 **Hide My Email, for your money.**
 
-One shielded balance, and a fresh unlinkable address for every app you touch. Ekubo sees
-one address. Vesu sees a different one. Neither can be traced to you, or to each other.
+One shielded balance, and a fresh unlinkable address for every app you touch. Vesu sees one
+address. Endur sees a different one. Neither can be traced to you, or to each other.
+
+> **Externally unlinkable, internally one portfolio.**
+
+That is [IDEA-20](https://github.com/starkience/strk20-hackathon/blob/main/IDEAS.md) — the
+private account and portfolio layer — and it is what Facet is. The ideas page marks it as
+depending on sub-accounts, which are "not shipped yet". They are the same primitive this
+project is built on, and on 25 August 2026 we executed the full sequence on chain. The
+dependency other teams were told to be careful of is the one already demonstrated here.
 
 Every Starknet address is a permanent public record of everything its owner has ever done.
 That is not an abstract problem:

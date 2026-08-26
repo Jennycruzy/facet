@@ -224,23 +224,26 @@ itself should not be trusted.
 
 ## 10. Browser key derivation — resolved
 
-**Yes: a facet can be derived from a wallet signature alone.** The wallet does not release
-its raw private key. Instead, the browser asks the wallet to sign one canonical,
-chain-and-pool-bound message, then derives the private viewing-key scalar from the returned
-signature in memory. The current local runner shows the corresponding shape in
-`packages/sdk/scripts/gate-a-sepolia.mjs:181-188`: signature components are reduced through
-Poseidon and canonicalized before they become the `user_private_key` supplied to the proof.
+**Yes: a facet can be derived from a wallet signature alone, with an important product
+constraint.** The wallet does not release its raw private key. Instead, the browser asks the
+wallet to sign one canonical, chain-and-pool-bound message, then derives the private viewing-key
+scalar from the returned signature in memory. `privacy-bridge/packages/bridge-core` derives both
+a Starknet private key and a privacy viewing key from one `personal_sign` signature; the privacy
+SDK needs only `{ address, signer }` plus a `viewingKeyProvider`, and never asks for a raw private
+key. The proving factory passes the viewing key privately into `compile_actions` and signs the
+proof invocation with the derived signer.
 
-This matches `privacy-bridge`'s stated design: its bridge-core takes the raw wallet signature
-in memory and derives the Starknet key, viewing key, per-account keys, and commitments; it
-does not log or persist the signature or private keys. See the upstream
-[`privacy-bridge` README](https://github.com/starkware-libs/privacy-bridge#what-it-does)
-and [`bridge-core` README](https://github.com/starkware-libs/privacy-bridge/tree/main/packages/bridge-core#secrets).
+**The constraint: this currently requires a standard EOA signature.** Argent X and Braavos are
+smart-contract accounts, and their signatures are not the 65-byte recoverable form this
+derivation depends on. A browser product built this way therefore connects an EOA wallet and
+derives its Starknet identity from that signature; it does not derive facets from the user's
+existing Starknet wallet. That onboarding distinction must be explicit.
 
-The answer is about feasibility, not completion of a web launcher. Facet still needs to use
-one canonical wallet-signing format and message, verify the wallet signature before proving,
-and keep the derived key in memory. A read-only viewing key may be persisted; a signing
-capability may not.
+Facet still needs one fixed domain-separated message, signature recovery/identity verification,
+rejection of unsupported smart-account signatures, and in-memory handling only. Do not persist
+the signature or a derived signing key; a read-only viewing key may be persisted. This answer is
+about feasibility, not completion of a web launcher, and the adapter has not yet been exercised
+end to end.
 - **Whether slippage survives the proving window.** Calls are built before proving. A swap
   quote computed five minutes before execution may fail its slippage check.
 - Whether a user can submit directly, without a relayer, and at what cost.
