@@ -8,7 +8,8 @@ exists.
 
 Every address below was read from Starknet **mainnet** on 25 August 2026 — the ABIs were
 fetched with `starknet_getClassAt` and the function signatures taken from them, not from
-documentation and not from memory. Verify any of them yourself with the command at the end.
+documentation and not from memory. The SDK call serializers were checked against those ABI
+layouts on 26 August. Verify any of them yourself with the command at the end.
 
 ## Order, and why
 
@@ -54,6 +55,10 @@ position belong to an identity nobody can trace. A supply-only deposit sets a po
 Two calls, one invocation: `approve` on the collateral token, then `modify_position`. The
 anonymizer takes an `Array<Call>`, so both fit in a single proved transaction.
 
+The pure SDK builder is `buildVesuDepositPlan`. It returns those two calls plus a per-token
+`diff` settlement hint. It requires the caller to provide every address already linked to the
+user; the `user` field is refused if it matches one of them.
+
 ## Endur — stake
 
 | | |
@@ -71,16 +76,28 @@ the xSTRK lands in the facet's balance.
 
 Same two-call pattern: `approve` STRK to the xSTRK contract, then `deposit`.
 
+The pure SDK builder is `buildEndurStakePlan`. It returns separate `diff` settlement hints for
+the unused input token and the xSTRK output, because those are different balances.
+
 ## Ekubo — swap
 
 | | |
 |---|---|
 | Core | `0x00000005dd3d2f4429af886cd1a3b08289dbcea99a294197e9eb43b0e0325b4b` |
 
-Class hash confirmed on mainnet. The call shape is **not yet pinned down here**, because
-Ekubo's core uses a lock/callback pattern rather than a plain swap entrypoint, and writing a
-guess into this file would be worse than leaving it open. It is the third adapter for the
-timing reason above, and its exact calldata will be recorded here when it is built and tested.
+The router's single-hop `swap` call is now pinned to the live ABI and the Sepolia rehearsal:
+
+```text
+RouteNode    = PoolKey(token0, token1, fee, tick_spacing, extension)
+             + sqrt_ratio_limit(u256=0) + skip_ahead(u128=0)
+TokenAmount  = token_in + i129(amount_in, positive)
+```
+
+The transaction uses three calls in one shadow-account invocation: ERC-20 `transfer` of the
+input to the router, `swap`, and `clear_minimum` for the output token. `quote_swap` is exposed
+as a separate read-only call builder so the minimum can be read immediately before proving.
+The implementation is `buildEkuboQuoteCall` and `buildEkuboSwapPlan`; the latter returns
+independent `diff` settlement hints for the input remainder and output token.
 
 ## Funding denominations
 
@@ -145,6 +162,11 @@ Each adapter must state its `CollectPolicy` and the reasoning:
 
 Do not copy a policy between adapters. `All` on an account that still holds a position token
 does something different from `All` on an emptied one.
+
+The SDK builders in `packages/sdk/src/adapters.ts` do not prove or broadcast. They only return
+canonical calls and settlement metadata for composition with `buildGateAActionSet` and the
+upstream privacy client. Vesu and Endur builders enforce the recipient guard; Ekubo has no
+user-supplied recipient in its tested single-hop path.
 
 ## Verify any address here
 

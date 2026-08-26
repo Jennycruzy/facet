@@ -300,3 +300,53 @@ pre .c { color: var(--text-3); }
 .btn.ghost:hover { background: rgba(91,149,255,.16); filter: none; }
 
 @media (max-width: 940px) { .compare { grid-template-columns: 1fr; } }
+
+/* ---- staged launcher ---- */
+.launch-hero { padding: 62px 0 48px; max-width: 720px; }
+.launch-hero h1 { font-size: clamp(2.6rem, 5.4vw, 4.1rem); }
+.launch-lede { color: var(--text-2); font-size: 1.04rem; max-width: 58ch; margin: 22px 0 0; }
+.launch-status { display: inline-flex; align-items: center; gap: 9px; margin-top: 25px; padding: 8px 14px;
+  border: 1px solid var(--rule); border-radius: 999px; color: var(--text-2); font-family: var(--mono); font-size: .74rem;
+  background: linear-gradient(160deg, rgba(91,149,255,.14), rgba(8,18,40,.7)); }
+.launch-status[data-state="connected"] .dot { background: var(--sapphire); }
+.launch-status[data-state="signing"] .dot { background: var(--amber); animation: pulse 1.2s ease-in-out infinite; }
+.launch-status[data-state="bound"] .dot { background: var(--verified); box-shadow: 0 0 0 3px rgba(58,217,166,.14); }
+.launch-status[data-state="error"] .dot { background: var(--amber); }
+.launch-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.launch-card { min-height: 100%; padding: 25px 26px 28px; display: flex; flex-direction: column; gap: 18px; }
+.launch-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.launch-card-head h2 { font-size: 1.25rem; margin-top: 15px; }
+.launch-copy { color: var(--text-2); font-size: .88rem; margin: 0; max-width: 52ch; }
+.launch-kv { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; padding: 15px 0;
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); font-family: var(--mono); font-size: .74rem; }
+.launch-kv span { color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; }
+.launch-kv strong { min-width: 0; overflow: hidden; color: var(--text-2); text-overflow: ellipsis; white-space: nowrap; font-weight: 400; }
+.launch-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+.launch-actions .btn { padding: 10px 15px; }
+.text-button { border: 0; padding: 8px 0; color: var(--text-3); background: none; cursor: pointer; font: inherit; font-size: .78rem; }
+.text-button:hover { color: var(--sapphire); }
+.binding-message { flex: 1; min-height: 255px; margin: 0; white-space: pre-wrap; word-break: break-word; font-size: .73rem; }
+.pill-good { color: var(--verified); border-color: rgba(58,217,166,.45); }
+.launch-next { padding-top: 78px !important; }
+.launch-queue { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.queue-step { display: flex; gap: 11px; padding: 17px 14px; border-top: 1px solid var(--rule); color: var(--text-3); }
+.queue-step > span { color: var(--text-3); font-family: var(--mono); font-size: .72rem; }
+.queue-step strong { display: block; color: var(--text-2); font-size: .84rem; font-weight: 600; line-height: 1.35; }
+.queue-step small { display: block; margin-top: 8px; font-size: .74rem; line-height: 1.5; }
+.queue-step.active { border-top-color: var(--violet); }
+.queue-step.active > span, .queue-step.active strong { color: var(--violet); }
+.launch-integrations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; }
+.launch-app { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; padding: 14px;
+  border: 1px solid var(--rule); border-radius: 4px; background: rgba(13,26,55,.55); color: var(--text-2); text-align: left; font: inherit; }
+.launch-app span { grid-row: span 2; display: grid; place-items: center; width: 36px; height: 36px; color: var(--violet);
+  border: 1px solid rgba(177,151,252,.45); font-family: var(--mono); font-size: .67rem; }
+.launch-app small { color: var(--text-3); font-size: .7rem; }
+.launch-app:disabled { opacity: .72; cursor: not-allowed; }
+.launch-boundary { padding-bottom: 30px; }
+.launch-boundary .note { max-width: 70ch; }
+code { color: var(--sapphire-2); font-family: var(--mono); font-size: .9em; }
+
+@media (max-width: 940px) {
+  .launch-layout, .launch-queue { grid-template-columns: 1fr; }
+  .launch-integrations { grid-template-columns: 1fr; }
+}

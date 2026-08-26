@@ -14,3 +14,19 @@ export {
   type CollectPolicy,
   type CollectPolicyInput,
 } from "./gate-a.js";
+
+export {
+  assertRecipientUnlinked,
+  buildErc20ApproveCall,
+  buildEkuboQuoteCall,
+  buildEkuboSwapPlan,
+  buildEndurStakePlan,
+  buildVesuDepositPlan,
+  LinkedRecipientError,
+  type AdapterPlan,
+  type AdapterSettlement,
+  type BuildEndurStakePlanOptions,
+  type BuildEkuboSwapPlanOptions,
+  type BuildVesuDepositPlanOptions,
+  type EkuboRouteOptions,
+} from "./adapters.js";

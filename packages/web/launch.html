@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facet · launch a private account</title>
+<meta name="description" content="A staged Facet launcher: bind an EOA wallet in memory, choose an application context, and prepare a private account action.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="appbar">
+    <a class="brand" href="./">
+      <canvas id="mark" width="68" height="68" aria-hidden="true"></canvas>
+      <span class="wordmark">Facet<small>private accounts</small></span>
+    </a>
+    <nav class="appnav">
+      <a href="./">The app</a>
+      <a href="proof.html">How it works</a>
+      <a href="https://github.com/Jennycruzy/facet">GitHub</a>
+    </nav>
+  </header>
+
+  <section class="launch-hero">
+    <div class="eyebrow">Staged launcher · wallet binding</div>
+    <h1>Give every app<br>a different face.</h1>
+    <p class="launch-lede">Bind one EOA wallet to a private Facet session, then choose the context
+    that an application will see. The signature authorizes no transaction and is held only in memory.</p>
+    <div class="launch-status" id="wallet-status" data-state="idle" role="status" aria-live="polite">
+      <span class="dot"></span><span id="wallet-status-text">checking for an EOA wallet…</span>
+    </div>
+  </section>
+
+  <section class="launch-layout">
+    <div class="cut accent-sapphire">
+      <div class="cut-in launch-card">
+        <div class="launch-card-head">
+          <div>
+            <div class="mono-badge">01</div>
+            <h2>Bind the wallet</h2>
+          </div>
+          <span class="pill" id="bound-pill">not bound</span>
+        </div>
+        <p class="launch-copy">Facet uses one explicit EOA signature as the browser-side identity
+        boundary. It never asks an injected wallet for a raw private key. Argent X and Braavos
+        smart-account signatures are not accepted by this derivation path yet.</p>
+        <div class="launch-kv">
+          <span>account</span><strong id="wallet-address">not connected</strong>
+          <span>network</span><strong id="network">—</strong>
+          <span>pool</span><strong id="pool">—</strong>
+        </div>
+        <div class="launch-actions">
+          <button class="btn" id="connect" type="button">Connect EOA wallet</button>
+          <button class="btn ghost" id="sign" type="button" disabled>Sign binding message</button>
+          <button class="text-button" id="reset" type="button" hidden>Clear this tab</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cut accent-violet">
+      <div class="cut-in launch-card">
+        <div class="launch-card-head">
+          <div>
+            <div class="mono-badge">02</div>
+            <h2>Read the message</h2>
+          </div>
+          <span class="pill">before signing</span>
+        </div>
+        <p class="launch-copy">This is the exact text sent to <code>personal_sign</code>. It is
+        bound to this origin, the selected Starknet network, the privacy pool, and the wallet.</p>
+        <pre class="binding-message" id="binding-message">Connect an EOA wallet to preview the exact message. Nothing is signed on page load.</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="block launch-next">
+    <div class="head"><h2>What happens next</h2><div class="aside">Submission remains disabled</div></div>
+    <div class="launch-queue">
+      <div class="queue-step active"><span>03</span><div><strong>Choose an application context</strong><small>Ekubo, Vesu, or Endur will receive a fresh shadow account.</small></div></div>
+      <div class="queue-step"><span>04</span><div><strong>Quote, build, and safety-check</strong><small>The adapter refuses linked recipients and records per-token settlement policy.</small></div></div>
+      <div class="queue-step"><span>05</span><div><strong>Prove asynchronously</strong><small>The current development prover takes minutes; progress must be visible.</small></div></div>
+      <div class="queue-step"><span>06</span><div><strong>Review before any broadcast</strong><small>Proof-aware preflight must pass before a wallet or relayer can submit.</small></div></div>
+    </div>
+    <div class="launch-integrations">
+      <button class="launch-app" data-launch-action type="button" disabled><span>EK</span>Ekubo<small>shielded swap · coming next</small></button>
+      <button class="launch-app" data-launch-action type="button" disabled><span>VE</span>Vesu<small>private deposit · adapter ready</small></button>
+      <button class="launch-app" data-launch-action type="button" disabled><span>EN</span>Endur<small>private stake · adapter ready</small></button>
+    </div>
+  </section>
+
+  <section class="block launch-boundary">
+    <div class="head"><h2>Honest boundary</h2><div class="aside">This page is intentionally staged</div></div>
+    <p class="note">Wallet binding is implemented as an in-memory browser flow. Identity derivation,
+    note discovery, asynchronous proving, and broadcast are not wired to this public page yet.
+    Signing the message above does not move funds or authorize a transaction. The existing
+    <a href="proof.html">evidence page</a> remains the place to verify the two completed Sepolia runs.</p>
+  </section>
+
+  <footer>
+    <nav>
+      <a href="./">The app</a>
+      <a href="proof.html">Proof</a>
+      <a href="https://github.com/Jennycruzy/facet">GitHub</a>
+    </nav>
+    <div>MIT · STRK20 Private Sprint · unaudited</div>
+  </footer>
+</div>
+
+<script type="module" src="assets/js/launcher.js"></script>
+</body>
+</html>

@@ -45,6 +45,23 @@ The client-layer `PrivacyBuilder` exposes neither — its `build()` takes no opt
 `register()`. Asking for `register: true` there throws rather than queueing a set that cannot
 register; use `supportsRegistration` to check first, or build on the core path.
 
+## Protocol adapters
+
+`src/adapters.ts` contains pure call builders for the first three Facet integrations:
+
+- `buildVesuDepositPlan` — ERC-20 approval plus Vesu `modify_position` with an
+  asset-denominated positive `i257` collateral amount.
+- `buildEndurStakePlan` — ERC-20 approval plus Endur `deposit(assets, receiver)`.
+- `buildEkuboQuoteCall` and `buildEkuboSwapPlan` — the live single-hop Ekubo route, including
+  the transfer, swap, and minimum-output clear calls.
+
+Each plan returns canonical `PrivacyCall`s, the input token and amount, and independent
+settlement policies for every token whose balance can change. Vesu and Endur require a list of
+addresses already linked to the user and refuse a matching protocol recipient with a typed
+`LinkedRecipientError`; this is a hard privacy guard, not a warning. The builders do not quote,
+prove, or broadcast. Quote Ekubo immediately before starting a proof because its minimum output
+can decay during the proving window.
+
 ## Sepolia private-transaction runner
 
 The operational private-transaction scripts live in this package so the project owns its integration code while
