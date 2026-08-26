@@ -228,11 +228,11 @@ What is not built is listed as plainly as what is.
 | Research | `docs/FINDINGS.md` — pool, anonymizer, identity derivation, all 39 invocations decoded |
 | Contracts | `packages/contracts` — 20 fork tests against live mainnet and Sepolia state, all passing |
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
-| SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 9 tests passing |
+| SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 20 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
-| Product layer | **in development** — account contexts, private funding, settlement, and adapter foundations exist; browser launcher and portfolio index remain to be built |
+| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, and a staged wallet launcher exist; note discovery, proving UI, and portfolio index remain to be built |
 | Mainnet contracts | **deployed** — immutable anonymizer and `FacetAccount`; deployment evidence is in `docs/ARCHITECTURE.md` |
-| Mainnet interaction | **not yet claimed** — the Sepolia adapter is verified; the current-compatible mainnet prover is being validated before any broadcast |
+| Mainnet interaction | **not yet claimed** — the prover is benchmarked, but no mainnet DeFi broadcast has been authorized or executed |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted

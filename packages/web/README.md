@@ -32,10 +32,10 @@ page reads Starknet RPC from the visitor's browser. Nothing else on the host is 
 the site.
 
 The staged wallet-binding preview is available at `launch.html`. It can connect to an injected
-EIP-1193 EOA provider, request one origin/network/pool-bound `personal_sign` message, and derive
-the pool viewing key in memory using the same two-limb recipe as the SDK. The signature and key
-are never persisted; note discovery, proving, and broadcast are deliberately disabled until the
-browser path is wired to the reviewed SDK.
+EIP-1193 EOA provider, request one origin/network/pool-bound `personal_sign` message, derive the
+pool viewing key in memory using the same two-limb recipe as the SDK, and preview an Ekubo, Vesu,
+or Endur context. The signature and key are never persisted; note discovery, proving, and
+broadcast are deliberately disabled until the browser path is wired to the reviewed SDK.
 
 ## Structure
 
@@ -47,7 +47,7 @@ browser path is wired to the reviewed SDK.
 | `assets/css/facet.css` | Design tokens and layout. Dark, single accent, no framework |
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
 | `assets/js/chain.js` | The only module that talks to an RPC node. `sessionStorage` cache, five-minute TTL |
-| `assets/js/app-ui.js` | The app: strip, faces, tiles |
+| `assets/js/app-ui.js` | The app: live strip, identity cards, app tiles, and dated RPC fallbacks |
 | `assets/js/launcher.js` | The staged browser wallet boundary and in-memory session state |
 | `assets/js/wallet-binding.js` | Canonical binding message, EIP-1193 account handling, and signature validation |
 | `assets/js/wallet-derivation.js` | Dependency-free Keccak and bridge-compatible viewing-key derivation |

@@ -20,6 +20,7 @@
     </a>
     <nav class="appnav">
       <a href="./">The app</a>
+      <a href="launch.html" aria-current="page">Launch</a>
       <a href="proof.html">How it works</a>
       <a href="https://github.com/Jennycruzy/facet">GitHub</a>
     </nav>
@@ -46,8 +47,9 @@
           <span class="pill" id="bound-pill">not bound</span>
         </div>
         <p class="launch-copy">Facet uses one explicit EOA signature as the browser-side identity
-        boundary, then derives the pool viewing key locally. It never asks an injected wallet for a raw private key. Argent X and Braavos
-        smart-account signatures are not accepted by this derivation path yet.</p>
+        boundary, then derives the pool viewing key locally. It never asks an injected wallet for
+        a raw private key. Argent X and Braavos smart-account signatures are not accepted by this
+        derivation path yet.</p>
         <div class="launch-kv">
           <span>account</span><strong id="wallet-address">not connected</strong>
           <span>network</span><strong id="network">—</strong>
@@ -73,6 +75,10 @@
         <p class="launch-copy">This is the exact text sent to <code>personal_sign</code>. It is
         bound to this origin, the selected Starknet network, the privacy pool, and the wallet.</p>
         <pre class="binding-message" id="binding-message">Connect an EOA wallet to preview the exact message. Nothing is signed on page load.</pre>
+        <div class="message-actions">
+          <button class="text-button" id="copy-message" type="button" disabled>Copy message</button>
+          <span class="copy-status" id="copy-message-status" role="status" aria-live="polite"></span>
+        </div>
       </div>
     </div>
   </section>
@@ -80,15 +86,18 @@
   <section class="block launch-next">
     <div class="head"><h2>What happens next</h2><div class="aside">Submission remains disabled</div></div>
     <div class="launch-queue">
-      <div class="queue-step active"><span>03</span><div><strong>Choose an application context</strong><small>Ekubo, Vesu, or Endur will receive a fresh shadow account.</small></div></div>
-      <div class="queue-step"><span>04</span><div><strong>Quote, build, and safety-check</strong><small>The adapter refuses linked recipients and records per-token settlement policy.</small></div></div>
-      <div class="queue-step"><span>05</span><div><strong>Prove asynchronously</strong><small>The current development prover takes minutes; progress must be visible.</small></div></div>
-      <div class="queue-step"><span>06</span><div><strong>Review before any broadcast</strong><small>Proof-aware preflight must pass before a wallet or relayer can submit.</small></div></div>
+      <div class="queue-step active" data-queue-step="context"><span>03</span><div><strong>Choose an application context</strong><small>Ekubo, Vesu, or Endur will receive a fresh shadow account.</small></div></div>
+      <div class="queue-step" data-queue-step="quote"><span>04</span><div><strong>Quote, build, and safety-check</strong><small>The adapter refuses linked recipients and records per-token settlement policy.</small></div></div>
+      <div class="queue-step" data-queue-step="prove"><span>05</span><div><strong>Prove asynchronously</strong><small>The current development prover takes minutes; progress must be visible.</small></div></div>
+      <div class="queue-step" data-queue-step="review"><span>06</span><div><strong>Review before any broadcast</strong><small>Proof-aware preflight must pass before a wallet or relayer can submit.</small></div></div>
     </div>
-    <div class="launch-integrations">
-      <button class="launch-app" data-launch-action type="button" disabled><span>EK</span>Ekubo<small>shielded swap · coming next</small></button>
-      <button class="launch-app" data-launch-action type="button" disabled><span>VE</span>Vesu<small>private deposit · adapter ready</small></button>
-      <button class="launch-app" data-launch-action type="button" disabled><span>EN</span>Endur<small>private stake · adapter ready</small></button>
+    <div class="launch-selection" id="selection-note" role="status" aria-live="polite">
+      Sign the binding message to choose an application context. No transaction is prepared here.
+    </div>
+    <div class="launch-integrations" aria-label="Application contexts">
+      <button class="launch-app" data-launch-action data-app-id="ekubo" type="button" disabled aria-pressed="false"><span>EK</span><strong>Ekubo</strong><small>shielded swap · adapter ready</small></button>
+      <button class="launch-app" data-launch-action data-app-id="vesu" type="button" disabled aria-pressed="false"><span>VE</span><strong>Vesu</strong><small>private deposit · adapter ready</small></button>
+      <button class="launch-app" data-launch-action data-app-id="endur" type="button" disabled aria-pressed="false"><span>EN</span><strong>Endur</strong><small>private stake · adapter ready</small></button>
     </div>
   </section>
 
@@ -109,6 +118,8 @@
     <div>MIT · STRK20 Private Sprint · unaudited</div>
   </footer>
 </div>
+
+<noscript><p class="noscript">JavaScript is required to inspect wallet state. The evidence page remains available without a wallet.</p></noscript>
 
 <script type="module" src="assets/js/launcher.js"></script>
 </body>

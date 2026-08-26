@@ -48,6 +48,7 @@ function copyable(text, href) {
   a.href = href;
   row.append(a);
   const btn = h("button", "copy-btn", "copy");
+  btn.setAttribute("aria-label", `Copy address ${short(text, 10, 8)}`);
   btn.onclick = async () => {
     try {
       await navigator.clipboard.writeText(text);
@@ -70,7 +71,11 @@ function identityCard(f) {
   top.append(names);
   top.append(h("span", "pill", data.networks[f.network].label.replace("Starknet ", "")));
 
-  const amount = h("div", "amount", `<small>Holding</small><span id="${f.id}-bal">&nbsp;</span>`);
+  const amount = h("div", "amount");
+  amount.append(h("small", null, "Holding"));
+  const balance = h("span", null, "checking");
+  balance.id = `${f.id}-bal`;
+  amount.append(balance);
 
   const txs = h("div", "txs");
   for (const tx of f.transactions) {
@@ -80,7 +85,10 @@ function identityCard(f) {
     const a = h("a", null, short(tx.hash, 6, 4));
     a.href = `${explorer(f.network)}/tx/${tx.hash}`;
     row.append(a);
-    row.append(h("span", null, `<span id="${f.id}-${tx.role}-blk"></span>`));
+    const block = h("span", null, tx.block ? `· ${Number(tx.block).toLocaleString()}` : "checking");
+    block.id = `${f.id}-${tx.role}-blk`;
+    if (tx.block) block.dataset.source = "snapshot";
+    row.append(block);
     txs.append(row);
   }
 
@@ -137,19 +145,57 @@ function setLive(state, text) {
   $("live-text").textContent = text;
 }
 
+function setSnapshotBalance(f) {
+  const value = $(`${f.id}-bal`);
+  if (f.snapshotBalanceWei == null) {
+    value.textContent = "unavailable";
+    value.dataset.source = "unavailable";
+    return;
+  }
+  const wei = BigInt(f.snapshotBalanceWei);
+  value.textContent = wei === 0n ? "0 STRK" : strk(wei);
+  value.dataset.source = "snapshot";
+}
+
+function setLiveBalance(f, wei) {
+  const value = $(`${f.id}-bal`);
+  value.textContent = wei === 0n ? "0 STRK" : strk(wei);
+  delete value.dataset.source;
+}
+
+let chainAvailable = true;
 try {
   const head = await chain.head(net);
   setLive("live", `${data.networks[net].label} · ${head.number.toLocaleString()} · ${ago(head.timestamp)}`);
-  for (const f of data.facets) {
+} catch {
+  chainAvailable = false;
+}
+
+for (const f of data.facets) {
+  try {
     const bal = await chain.balanceOf(f.network, data.strk, f.address);
-    $(`${f.id}-bal`).textContent = bal === 0n ? "0 STRK" : strk(bal);
-    for (const tx of f.transactions) {
+    setLiveBalance(f, bal);
+  } catch {
+    chainAvailable = false;
+    setSnapshotBalance(f);
+  }
+  for (const tx of f.transactions) {
+    try {
       const r = await chain.receipt(f.network, tx.hash);
-      $(`${f.id}-${tx.role}-blk`).textContent = `· ${Number(r.block_number).toLocaleString()}`;
+      const block = $(`${f.id}-${tx.role}-blk`);
+      block.textContent = `· ${Number(r.block_number).toLocaleString()}`;
+      delete block.dataset.source;
+    } catch {
+      chainAvailable = false;
+      const block = $(`${f.id}-${tx.role}-blk`);
+      block.textContent = tx.block ? `· ${Number(tx.block).toLocaleString()}` : "unavailable";
+      block.dataset.source = tx.block ? "snapshot" : "unavailable";
     }
   }
-} catch {
-  setLive("stale", "chain unreachable, figures recorded 25 Aug 2026");
+}
+
+if (!chainAvailable) {
+  setLive("stale", `chain unavailable, figures recorded ${data.generated}`);
 }
 
 enableTilt();

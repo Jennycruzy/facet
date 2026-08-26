@@ -833,11 +833,12 @@ The successful run used `https://rpc.vauban.tech/rpc/v0_10`, which reported RPC
 
 Two consequences worth carrying forward:
 
-1. **Local prover validation is complete; SDK integration is now the critical path.**
-   `apply_actions` needs a proof, and the self-hosted service has now returned both a populated
-   proof and proof facts for a freshly signed Invoke V3. Next point the SDK's
-   `ProvingServiceProofProvider` at the local service and exercise the flow on Sepolia before
-   spending mainnet funds. A hosted endpoint is optional; do not block on an unpublished URL.
+1. **Local prover validation is complete; browser proof composition is now the critical path.**
+   `apply_actions` needs a proof, and the self-hosted service has returned both a populated
+   proof and proof facts for a freshly signed Invoke V3. The SDK's local adapter and proving
+   primitives are covered by tests; the browser still needs note discovery, proof composition,
+   and Sepolia submission before any mainnet funds are considered. A hosted endpoint is
+   optional; do not block on an unpublished URL.
 2. **Self-deploying the anonymizer is not just a privacy choice, it is the only way to
    exercise the primitive without StarkWare's backend.** The constructor takes
    `privacy_contract` as a parameter, so any address — including an ordinary account —

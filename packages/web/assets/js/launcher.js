@@ -36,6 +36,7 @@ const session = {
   message: null,
   signature: null,
   viewingKey: null,
+  selectedApp: null,
   state: "idle",
 };
 
@@ -61,14 +62,29 @@ function render() {
   $("sign").textContent = bound ? "Binding signed" : "Sign binding message";
   $("binding-message").textContent = session.message ??
     "Connect an EOA wallet to preview the exact message. Nothing is signed on page load.";
+  $("copy-message").disabled = !session.message;
   $("bound-pill").textContent = bound ? "bound · key in memory" : "not bound";
   $("bound-pill").className = `pill ${bound ? "pill-good" : ""}`;
   $("reset").hidden = !connected;
-  // Binding is only the identity boundary. Keep protocol actions disabled until the reviewed
-  // derivation, note discovery, proving, and preflight path is wired to this page.
-  document.querySelectorAll("[data-launch-action]").forEach((button) => {
-    button.disabled = true;
+  const selected = data.apps.find((app) => app.id === session.selectedApp) ?? null;
+  const activeQueueStep = selected ? "quote" : "context";
+  document.querySelectorAll("[data-queue-step]").forEach((step) => {
+    const active = step.dataset.queueStep === activeQueueStep;
+    step.classList.toggle("active", active);
+    if (active) step.setAttribute("aria-current", "step");
+    else step.removeAttribute("aria-current");
   });
+  document.querySelectorAll("[data-launch-action]").forEach((button) => {
+    const isSelected = selected?.id === button.dataset.appId;
+    button.disabled = !bound;
+    button.setAttribute("aria-pressed", String(isSelected));
+    button.classList.toggle("selected", isSelected);
+  });
+  $("selection-note").textContent = selected
+    ? `${selected.name} selected. The adapter is previewed; no transaction was prepared.`
+    : bound
+      ? "Choose an application context. Selection only previews the next step; no transaction is prepared."
+      : "Sign the binding message to choose an application context. No transaction is prepared here.";
 }
 
 function clearSession(text = "Wallet disconnected from this launcher.") {
@@ -76,6 +92,8 @@ function clearSession(text = "Wallet disconnected from this launcher.") {
   session.message = null;
   session.signature = null;
   session.viewingKey = null;
+  session.selectedApp = null;
+  $("copy-message-status").textContent = "";
   setStatus("idle", text);
   render();
 }
@@ -116,9 +134,32 @@ async function sign() {
   }
 }
 
+function selectApp(id) {
+  if (!session.signature || session.viewingKey === null) return;
+  const app = data.apps.find((candidate) => candidate.id === id);
+  if (!app) return;
+  session.selectedApp = app.id;
+  setStatus("selected", `${app.name} selected. No transaction was authorized.`);
+  render();
+}
+
+async function copyMessage() {
+  if (!session.message) return;
+  try {
+    await navigator.clipboard.writeText(session.message);
+    $("copy-message-status").textContent = "copied";
+  } catch {
+    $("copy-message-status").textContent = "Clipboard unavailable; select the message above.";
+  }
+}
+
 $("connect").onclick = connect;
 $("sign").onclick = sign;
 $("reset").onclick = () => clearSession();
+$("copy-message").onclick = copyMessage;
+document.querySelectorAll("[data-launch-action]").forEach((button) => {
+  button.onclick = () => selectApp(button.dataset.appId);
+});
 
 if (!session.provider) {
   setStatus("error", "No EOA wallet detected. The launcher is preview-only until one is connected.");

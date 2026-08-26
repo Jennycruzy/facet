@@ -6,9 +6,10 @@ execution boundary, account controls, and settlement path that make that product
 possible.
 
 Status: the private account sequence and the Ekubo adapter are verified on Sepolia; the
-immutable anonymizer and `FacetAccount` are deployed on mainnet. A mainnet DeFi interaction
-is deliberately not reported until the current-compatible prover and proof facts have been
-validated end to end.
+immutable anonymizer and `FacetAccount` are deployed on mainnet. The browser launcher is
+staged locally with wallet binding and in-memory viewing-key derivation, but note discovery,
+browser proving, and submission are not complete. A mainnet DeFi interaction is deliberately
+not reported until its exact amount is authorized and the path is rehearsed end to end.
 
 For the product model and user-facing privacy boundary, see [`PRODUCT.md`](PRODUCT.md).
 
@@ -67,9 +68,9 @@ The trusted prover is VPS `38.49.216.59`, running the self-hosted transaction pr
 the private host interface. It must not be published as an unauthenticated public
 endpoint.
 
-The upstream privacy SDK derives the viewing key inside the prover/client orchestration,
-but the proof invocation includes that key in the `compile_actions` input sent to the
-prover. Consequently:
+The staged browser launcher derives a candidate viewing key from the wallet signature in
+memory. The eventual privacy-client proof invocation includes that key in the `compile_actions`
+input sent to the prover. Consequently:
 
 - wallet keys, signatures, passphrases, and viewing keys stay out of chat, source,
   logs, and commits;

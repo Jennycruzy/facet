@@ -15,7 +15,7 @@ stored here.
 
 | Item | Record |
 |---|---|
-| Sepolia private-transaction account | `0x7a00bfa75ea68c2baa0d6ef2a10bfe2d4424072d06139b135` |
+| Sepolia private-transaction account | `0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135` |
 | Retired Sepolia account | `facet-sepolia`, `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5`; historical replay account, no longer signs |
 | Sepolia purpose | `UseNote → Withdraw → ComputeAndInvoke` private-transaction rehearsal |
 | Initial Sepolia target | 0.5 STRK private note, plus transaction fees |
@@ -87,7 +87,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | Full shadow anonymizer source and test suite read | Partial | Interface, identity derivation, `OpenNote`, `CollectPolicy` read. The 733-line test suite is not yet read in full. |
 | Existing SDK shadow support catalogued | Partial | Confirmed present: `sdk/src/internal/shadow-accounts.ts` (98 lines, `ShadowAccountsBuilderImpl`), `ShadowAccountAnonymizerABI` exported at `index.ts:4`, plus references in `interfaces.ts`, `factory.ts`, `internal/builders.ts`, `internal/anonymizer-abi.ts`, `testing/mocknet.ts`. What each one does is not yet catalogued. |
 | Prior-art check | Done | Nothing in the hackathon README, `IDEAS.md`, or `projects.json` mentions shadow or stealth accounts. Field at 35 projects; three have mainnet transactions recorded (cutout 4, redpocket 3, veilpass 1). |
-| Commit identity single-valued | Pending first commit | `user.name jennycruzy`, `user.email jennycruzy@users.noreply.github.com` configured. |
+| Commit identity single-valued | Done | `user.name jennycruzy`, `user.email jennycruzy@users.noreply.github.com` configured and used by the local commits. |
 | Secret scan clean | Pending first commit | |
 
 ---
@@ -98,7 +98,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 |---|---|---|
 | `packages/contracts` scaffolded | Done | `facet_contracts` 0.1.0, edition `2024_07`, pinned `starknet 2.17.0` / `snforge_std 0.59.0`. Anonymizer and ERC20 bindings plus `mainnet.cairo`, which carries every verified address as a documented constant. |
 | Fork harness against live mainnet | Done | `[[tool.snforge.fork]]` MAINNET pinned to block 13,329,863 — the block the findings are measured against — over `api.cartridge.gg`. Reproducible, no key, no fee. |
-| Fork tests passing | Done | `snforge test` — **10 passed, 0 failed**. Recorded as `FINDINGS.md` §6.12. |
+| Fork tests passing | Done | `snforge test` — **20 passed, 0 failed**. Recorded as `FINDINGS.md` §6.12. |
 | §6.6 funding pattern exercised against deployed bytecode | Done, proof half excluded | Predicted address funded before deployment, account deploys exactly where predicted, full balance collects to the note, pool approved for the total. The `UseNote`/`Withdraw` legs run inside the proved execution and cannot be reached from a fork test. |
 | §6.4 payload replayed against real bytecode | Done | `decoded_invocation.cairo` — the eleven felts fed back through `call_contract_syscall`, no dispatcher in between, plus a control that breaks the decode by shifting slot 11. Answers open question 1 in substance. |
 | Same replay against Sepolia state | Done | `decoded_payload_replays_on_sepolia`, forked at block 13,518,500. A free dry run of the live transaction. |
@@ -108,10 +108,10 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | First funded mainnet interaction | **Done, 19 August 2026** | Ready X shielded 7 STRK into the mainnet STRK20 pool; transaction `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, block 13,538,709, accepted on L2. |
 | Phase A owner authorization | **Confirmed, 19 August 2026; current run updated 26 August 2026** | Owner approved the Sepolia account above, trusted VPS prover `38.49.216.59`, an initial 0.5 STRK rehearsal target plus fees, and a current 15 STRK mainnet ceiling. The ceiling is a safety limit, not an instruction to spend it all. |
 | Isolated Sepolia rehearsal pool | **Deployed, 23 August 2026** | Pool `0x73f3c4bc1ef39490f09587b11f6ea7f2cc66854d5df3306cda4736234693546`, transaction `0x69562899d887cbb1cbfaaa5fcb60ec3e4a89dac48d1b7483a95f6230f73039a`; anonymizer `0x57e5052865eb08bc1134a62fadfef067015802ce7e989af29fe94913c535efd`, transaction `0x21fba6477885991912fefd1a5e862532ac0ad8b91011bca2079723b7e946e4f`. This avoids the original pool's unavailable screening signer while preserving screening behavior in the rehearsal. |
-| Self-hosted private paymaster core | **Deployed, 23 August 2026** | One-relayer AVNU-compatible Sepolia deployment succeeded in transaction `0x006e6ff906cfd97d24f70e060514e0a97837bdcb5f00497d91b2a11c61870da8`. It allocated 4 testnet STRK and removes dependence on the managed service's single configured privacy-pool address. Generated service credentials remain outside Git. Service startup and the end-to-end proved transactions remain pending. |
+| Self-hosted private paymaster core | **Deployed, 23 August 2026** | One-relayer AVNU-compatible Sepolia deployment succeeded in transaction `0x006e6ff906cfd97d24f70e060514e0a97837bdcb5f00497d91b2a11c61870da8`. It allocated 4 testnet STRK and removes dependence on the managed service's single configured privacy-pool address. Generated service credentials remain outside Git; the end-to-end proved transactions subsequently succeeded and are recorded in §6.17–§6.18. |
 | **§6.6 sequence executed on Sepolia** | **Done, 25 August 2026** | The first facet succeeded in `0x05faace1d…dedef` and `0x0111b815a…f3693`. A second clean facet named `facet-second` used deposit `0x4cee8465…0a07` and private transaction `0x68510769…6b3a`; shadow `0x560b1983…e2b8` sent 1 wei to `0x…dead`, not the owner, and collected the remainder. The second proof took 400s. Recorded as `FINDINGS.md` §6.17–§6.18. |
 | **Facet contracts on mainnet** | **Done, 25 August 2026** | Immutable anonymizer `0x741fe9dc…63bc`, deployment `0x277a84c5…922`; `FacetAccount` `0x42e9d345…1a45`, deployment `0x4e9305a7…732f`. Production classes were declared first and the immutable ABI was checked for privileged entrypoints. Recorded as `FINDINGS.md` §6.19. |
-| §3.4 wallet-signature derivation | **Answered, 25 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the browser launcher is feasible but not yet built. |
+| §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
 
 ---
 
@@ -182,8 +182,9 @@ derives a Starknet identity from it, rather than deriving facets from the user's
 Argent X or Braavos wallet. Detail and the implementation requirements are in
 `SHADOW_ACCOUNTS.md` §10.
 
-Established by reading the source against the SDK's proving path; no adapter is implemented
-and the path has not been exercised end to end.
+Established by reading the source against the SDK's proving path; pure adapter builders are now
+implemented and unit-tested, but the browser composition and adapter path have not been
+exercised end to end.
 
 ---
 
