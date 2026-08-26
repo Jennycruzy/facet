@@ -42,22 +42,22 @@ The client-layer `PrivacyBuilder` exposes neither — its `build()` takes no opt
 `register()`. Asking for `register: true` there throws rather than queueing a set that cannot
 register; use `supportsRegistration` to check first, or build on the core path.
 
-## Sepolia Gate A runner
+## Sepolia private-transaction runner
 
-The operational Gate A scripts live in this package so the project owns its integration code while
-consuming the Starknet privacy SDK as a dependency. They never store the Gate account private key
+The operational private-transaction scripts live in this package so the project owns its integration code while
+consuming the Starknet privacy SDK as a dependency. They never store the Sepolia account private key
 in the repository.
 
 Until the upstream package is available from the configured npm registry, operational scripts load
 its built output from `FACET_PRIVACY_SDK_ROOT` (default: `/Users/user/starknet-privacy/sdk`). Run
-`npm run build` in that upstream SDK checkout before Gate A.
+`npm run build` in that upstream SDK checkout before running a private transaction.
 
 ```bash
 npm run gate-a:preflight
 npm run gate-a:run
 ```
 
-`gate-a:run` requires `FACET_PAYMASTER_API_KEY`, a tunnel to the trusted prover, and the local Gate
+`gate-a:run` requires `FACET_PAYMASTER_API_KEY`, a tunnel to the trusted prover, and the local Sepolia
 A keystore. For the isolated self-hosted path, configure `FACET_PAYMASTER_URL` and
 `FACET_USE_TEST_POOL=1`. Setup scripts are exposed as `gate-a:test-pool` and
 `gate-a:paymaster-setup`; do not repeat deployments when their mode-0600 profiles already exist.

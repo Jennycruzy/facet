@@ -137,8 +137,9 @@ Valid because of three independent facts:
 
 The funding leg's sender is the pool. No personal address appears anywhere in it.
 
-**This sequence had never been executed by anyone.** It was executed on 25 August 2026; the
-transactions and their event-level decode are `FINDINGS.md` §6.17.
+**Before 25 August 2026, this sequence had not been executed by this project.** It was
+then executed twice on Sepolia; the transactions and their event-level decode are
+`FINDINGS.md` §§6.17–6.18.
 
 ### 5.3 The empty-constructor requirement
 
@@ -160,7 +161,9 @@ State this before anyone asks.
   not *that it exists*.
 - **The dapp call is public.** If the call itself names you — sending to your own address,
   for instance — the receipt links the facet to you no matter how private the funding was.
-  This is easy to do by accident in a smoke test.
+  This is easy to do by accident in a smoke test. Facet's first Sepolia smoke test did
+  exactly that; the second facet used `facet-second` and sent its 1 wei call to
+  `0x…dead` instead. See `FINDINGS.md` §§6.17–6.18.
 - **A reverting dapp call takes the whole invoke down.** The pool applies actions through
   `call_contract_syscall(...).unwrap_syscall()`, so the panic propagates out of
   `apply_actions` and the same-transaction `Withdraw` reverts with it. Nothing strands on
@@ -219,13 +222,25 @@ itself should not be trusted.
 - We read the pool address in a `SENDER_NOT_REGISTERED` error as one of our own anonymizers.
   It was the official Sepolia pool.
 
-## 10. What is still unknown
+## 10. Browser key derivation — resolved
 
-- **Where the private key can live for a browser-based product.** Derivation needs
-  `user_private_key` inside the proved execution, and a browser wallet will not release one.
-  `privacy-bridge/packages/bridge-core` derives client-side key material from a single wallet
-  signature and is probably the intended pattern, but we have not confirmed it against the
-  SDK's proving path.
+**Yes: a facet can be derived from a wallet signature alone.** The wallet does not release
+its raw private key. Instead, the browser asks the wallet to sign one canonical,
+chain-and-pool-bound message, then derives the private viewing-key scalar from the returned
+signature in memory. The current local runner shows the corresponding shape in
+`packages/sdk/scripts/gate-a-sepolia.mjs:181-188`: signature components are reduced through
+Poseidon and canonicalized before they become the `user_private_key` supplied to the proof.
+
+This matches `privacy-bridge`'s stated design: its bridge-core takes the raw wallet signature
+in memory and derives the Starknet key, viewing key, per-account keys, and commitments; it
+does not log or persist the signature or private keys. See the upstream
+[`privacy-bridge` README](https://github.com/starkware-libs/privacy-bridge#what-it-does)
+and [`bridge-core` README](https://github.com/starkware-libs/privacy-bridge/tree/main/packages/bridge-core#secrets).
+
+The answer is about feasibility, not completion of a web launcher. Facet still needs to use
+one canonical wallet-signing format and message, verify the wallet signature before proving,
+and keep the derived key in memory. A read-only viewing key may be persisted; a signing
+capability may not.
 - **Whether slippage survives the proving window.** Calls are built before proving. A swap
   quote computed five minutes before execution may fail its slippage check.
 - Whether a user can submit directly, without a relayer, and at what cost.

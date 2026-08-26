@@ -898,7 +898,7 @@ The accounts used in this project are deliberately separated by network and purp
 
 | Account | Network | Purpose |
 |---|---|---|
-| `facet-sepolia-gate-a` — `0x0397ca8056ff3e65790b4f85b58c7e6590055b2e94ae8800025214ba5351b904` | Sepolia | Current Gate A rehearsal signer and fee payer; deployment pending |
+| `starknet-gate-a-new` — `0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135` | Sepolia | Active private-transaction signer and fee payer; two facets verified |
 | `facet-sepolia` — `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5` | Sepolia | Retired historical replay signer; no longer authorized |
 | `starknet-gate2` — `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` | Mainnet | Funded deployment account reserved for later Facet/Mainnet work |
 | Ready X — `0x0470c4cca0dd62caecaeb3f9bf047aa3e65fc2f6aa64c6c06ca85929306714fa` | Mainnet | Eligibility shield wallet; not the Facet deployment account |
@@ -918,14 +918,15 @@ separate transaction before being counted.
 
 The owner confirmed the following operational authorization on 19 August 2026:
 
-- use the newly created Sepolia `facet-sepolia-gate-a` account for Gate A;
+- use the newly created Sepolia `starknet-gate-a-new` account for private transactions;
 - target 0.5 STRK for the initial private note, plus fees;
 - treat 30 STRK as the maximum total exposure for the end-to-end work, not as a
   requirement to spend the full amount;
 - trust VPS `38.49.216.59` as the prover host.
 
-This is authorization to proceed, not evidence that Gate A has passed. The prover remains
-trusted infrastructure and must not be exposed as an unauthenticated public endpoint.
+This is authorization to proceed, not authorization to spend the full ceiling. The private
+transaction path has since passed twice on Sepolia. The prover remains trusted infrastructure
+and must not be exposed as an unauthenticated public endpoint.
 The current SDK proof invocation places the viewing key in the proof input sent to the
 prover, so wallet signing material and viewing-key derivation remain outside the repo and
 must never be logged or committed.
@@ -934,13 +935,11 @@ The first read-only Sepolia preflight, using the versioned RPC endpoint
 `https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10`, returned `0x5589683b1ad782c20`
 low and `0x0` high for STRK, equal to **0.055896839199782920 STRK**. The account's ETH
 balance was `0x0` low and `0x0` high. No transaction was sent. This is insufficient for
-the planned 0.5 STRK note plus fees, so Gate A waits for a Sepolia STRK top-up; Mainnet
+the planned 0.5 STRK note plus fees, so it waits for a Sepolia STRK top-up; Mainnet
 funds do not satisfy this preflight.
 
-The replacement Gate A account `0x0397ca8056ff3e65790b4f85b58c7e6590055b2e94ae8800025214ba5351b904`
-was then checked read-only and returned **100 STRK**. Its account-creation output quoted
-an estimated deployment fee of `0.092555872811068264 STRK`. The account is funded but
-not yet deployed; no transaction has been sent from it.
+The active Sepolia account `0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135`
+was funded and used for the two successful Sepolia facets recorded in §§6.17–6.18.
 
 ---
 
@@ -1017,6 +1016,54 @@ the SDK's documentation:
 seconds after a five-to-six minute proof had already been generated, so every configuration
 error costs a full proof before it surfaces. Any integration should estimate against the
 paymaster with a trivial call before spending prover time.
+
+### 6.18 A second, clean facet on Sepolia — 25 August 2026
+
+The first smoke call in §6.17 sent one wei to the Sepolia transaction account's owner, which is a real-world
+linkage and is recorded as a limitation rather than hidden. A second run used a different
+dapp name and an unrelated recipient to test that the linkage is avoidable.
+
+| Item | Result |
+|---|---|
+| Dapp name | `facet-second` |
+| Dapp recipient | `0x000000000000000000000000000000000000000000000000000000000000dead` |
+| Owner excluded from call | `0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135` |
+| Predicted shadow account | `0x560b198338b9e7cef36d8c775725e10a8e4fb6a5acfb54fe868a7d07f89e2b8` |
+| Deposit transaction | `0x4cee84654535d0f98f7a8e0402fce4c47aab1ff62b6b132d725184e5eb30a07`, block 14,027,039 |
+| Private transaction | `0x68510769914a25f6dc9d90fa7f5672bd83908c4ddafc77b1fd6ff3782286b3a`, block 14,028,014 |
+| Status | Both accepted on L2; the dapp call delivered 1 wei to the unrelated recipient |
+| Proof wall time | 400 seconds |
+| Actual fees | 2.700103764871909120 STRK (deposit), 2.888034439422903072 STRK (private transaction) |
+
+Receipt verification showed the pool withdrawing 0.5 STRK to the predicted account, the
+shadow account sending 1 wei to `0x…dead`, and the remainder returning to the anonymizer.
+The owner's address does not appear as the dapp recipient. This is the clean comparison
+run required to shrink the first facet's recipient-linkage limitation.
+
+### 6.19 Facet contracts deployed to mainnet — 25 August 2026
+
+The mainnet deployment is complete. The package now has a real `starknet-contract` target; the classes used
+for deployment are production artifacts rather than Starknet Foundry test classes. The
+test classes had trace instrumentation that mainnet's audited Sierra compiler rejects.
+After rebuilding the production target, both classes were declared and deployed from the
+encrypted `starknet-gate2` account.
+
+| Contract | Address | Class hash | Compiled class hash | Declaration transaction | Deployment transaction |
+|---|---|---|---|---|---|
+| Immutable anonymizer | `0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc` | `0x85fbf40e535f188b695c1c3b4492c3045de7305c94e2ce7de4d0f9551adb21` | `0x47ba3ac050abb5b4b94f80bf512afb5c36a623669656134666bf709b09f6706` | `0x708f7621502bf317d0e184c0edc47efc9300651129fc9667c24b3075d4bbeef` | `0x277a84c5b063c235acdd5b5e866e2c6078554517e984536b3bb889b26f07922` |
+| FacetAccount | `0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45` | `0x5d07634600fff340d733946c2c8f925ee4c3c637c33f61e33e187b9024de46d` | `0x147d6e959eada2c5dcd90745a62f968a0ac8813499f9f82ba64de0db2db4793` | `0x384426545f8f59e9603674f309acd1fa749911d6f8573dbd9752f40b4294669` | `0x4e9305a7b362901c0ccd1017bba3269993e724383c1fa9608ba94a63011732f` |
+
+Both deployment receipts are `SUCCEEDED` and `ACCEPTED_ON_L2`: the anonymizer is in block
+13,850,369 with an actual fee of `0.073135974514343200 STRK`; `FacetAccount` is in block
+13,850,382 with an actual fee of `0.073136283779715200 STRK`. The deployed addresses return
+the class hashes shown above from `starknet_getClassHashAt`.
+
+The immutable anonymizer constructor is fixed to the mainnet pool
+`0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` and shadow-account
+class `0x346e143e3b353473a0d6f681c31ffcf2866537898008027fb3b57335bad7b5f`. Its compiled ABI
+contains no upgrade, proxy, governance, role, or admin entrypoint. The deployment account
+was not used as a DeFi recipient. The mainnet DeFi interaction remains controlled until the
+owner supplies the exact STRK amount.
 
 ## 7. Toolchain
 
