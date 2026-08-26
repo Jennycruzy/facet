@@ -62,6 +62,16 @@ addresses already linked to the user and refuse a matching protocol recipient wi
 prove, or broadcast. Quote Ekubo immediately before starting a proof because its minimum output
 can decay during the proving window.
 
+## Wallet-derived viewing key
+
+`deriveViewingKeyFromSignature` accepts the validated 65-byte result of `personal_sign` and returns
+the canonical pool viewing key. It uses the versioned `viewing-key:v1` label, two
+Starknet-Keccak limbs, reduction by the Stark curve order, and the pool's strict lower-half fold.
+The function is pure and does not persist or log the signature. The browser launcher carries a
+dependency-free equivalent in `packages/web/assets/js/wallet-derivation.js`; both implementations
+share a golden vector. Deriving the key does not by itself discover notes, prove an action, or
+authorize a transaction.
+
 ## Sepolia private-transaction runner
 
 The operational private-transaction scripts live in this package so the project owns its integration code while

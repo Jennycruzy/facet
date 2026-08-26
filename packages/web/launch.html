@@ -29,7 +29,7 @@
     <div class="eyebrow">Staged launcher · wallet binding</div>
     <h1>Give every app<br>a different face.</h1>
     <p class="launch-lede">Bind one EOA wallet to a private Facet session, then choose the context
-    that an application will see. The signature authorizes no transaction and is held only in memory.</p>
+    that an application will see. The signature and derived viewing key stay only in memory.</p>
     <div class="launch-status" id="wallet-status" data-state="idle" role="status" aria-live="polite">
       <span class="dot"></span><span id="wallet-status-text">checking for an EOA wallet…</span>
     </div>
@@ -46,7 +46,7 @@
           <span class="pill" id="bound-pill">not bound</span>
         </div>
         <p class="launch-copy">Facet uses one explicit EOA signature as the browser-side identity
-        boundary. It never asks an injected wallet for a raw private key. Argent X and Braavos
+        boundary, then derives the pool viewing key locally. It never asks an injected wallet for a raw private key. Argent X and Braavos
         smart-account signatures are not accepted by this derivation path yet.</p>
         <div class="launch-kv">
           <span>account</span><strong id="wallet-address">not connected</strong>
@@ -94,8 +94,8 @@
 
   <section class="block launch-boundary">
     <div class="head"><h2>Honest boundary</h2><div class="aside">This page is intentionally staged</div></div>
-    <p class="note">Wallet binding is implemented as an in-memory browser flow. Identity derivation,
-    note discovery, asynchronous proving, and broadcast are not wired to this public page yet.
+    <p class="note">Wallet binding and viewing-key derivation are implemented as an in-memory browser flow.
+    Note discovery, asynchronous proving, and broadcast are not wired to this public page yet.
     Signing the message above does not move funds or authorize a transaction. The existing
     <a href="proof.html">evidence page</a> remains the place to verify the two completed Sepolia runs.</p>
   </section>

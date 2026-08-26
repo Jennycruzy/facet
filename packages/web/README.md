@@ -32,9 +32,10 @@ page reads Starknet RPC from the visitor's browser. Nothing else on the host is 
 the site.
 
 The staged wallet-binding preview is available at `launch.html`. It can connect to an injected
-EIP-1193 EOA provider and request one origin/network/pool-bound `personal_sign` message. The
-signature is held in memory only; identity derivation, proving, and broadcast are deliberately
-disabled until the browser path is wired to the reviewed SDK.
+EIP-1193 EOA provider, request one origin/network/pool-bound `personal_sign` message, and derive
+the pool viewing key in memory using the same two-limb recipe as the SDK. The signature and key
+are never persisted; note discovery, proving, and broadcast are deliberately disabled until the
+browser path is wired to the reviewed SDK.
 
 ## Structure
 
@@ -49,6 +50,7 @@ disabled until the browser path is wired to the reviewed SDK.
 | `assets/js/app-ui.js` | The app: strip, faces, tiles |
 | `assets/js/launcher.js` | The staged browser wallet boundary and in-memory session state |
 | `assets/js/wallet-binding.js` | Canonical binding message, EIP-1193 account handling, and signature validation |
+| `assets/js/wallet-derivation.js` | Dependency-free Keccak and bridge-compatible viewing-key derivation |
 | `assets/js/app.js` | Wires chain data into the proof page's acts |
 | `data/facets.json` | Addresses, transaction hashes, RPC endpoints |
 
@@ -66,7 +68,7 @@ disabled until the browser path is wired to the reviewed SDK.
 - **The limits section is not optional.** Among sixty submissions, the one that states its
   own limits is the one believed on everything else.
 - **The launcher states its stage.** A wallet signature is not a transaction approval, and no
-  private key or signature is persisted by the page.
+  private key, viewing key, or signature is persisted by the page.
 
 ## Testing
 

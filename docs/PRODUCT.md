@@ -152,10 +152,11 @@ product layer:
   operational runbooks;
 - fork-backed contract tests and source/chain findings document the behavior.
 
-The browser launcher, portfolio index, production prover service, and a mainnet DeFi
-interaction are still product work. The development prover currently takes roughly
-five to seven minutes on the small reference host. That is an infrastructure measurement,
-not the intended user experience: a production service should prove asynchronously,
+The staged browser launcher now binds an EOA and derives a viewing key in memory. Note
+discovery, the portfolio index, production prover service, and a mainnet DeFi interaction
+are still product work. The development prover currently takes roughly five to seven minutes
+on the small reference host. That is an infrastructure measurement, not the intended user
+experience: a production service should prove asynchronously,
 reuse warm workers, report progress, and target a materially shorter interaction window.
 
 ## Design principles

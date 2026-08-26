@@ -2,9 +2,8 @@
  * The browser-side wallet boundary for the staged launcher.
  *
  * This module deliberately stops at a wallet signature. It does not derive or persist a private
- * key, and it never asks an injected wallet for one. The eventual proving client can consume the
- * signature from the caller's in-memory session once its derivation implementation is wired and
- * tested against the upstream bridge.
+ * key, and it never asks an injected wallet for one. `wallet-derivation.js` consumes the signature
+ * in the same live session to derive the read-only viewing key needed by the proving client.
  */
 
 export const WALLET_BINDING_DOMAIN = "Facet";

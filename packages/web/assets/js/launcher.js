@@ -7,6 +7,7 @@ import {
   requestEoaAccount,
   signWalletBinding,
 } from "./wallet-binding.js";
+import { deriveViewingKeyFromSignature } from "./wallet-derivation.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -26,13 +27,15 @@ const mark = createGem($("mark"), { segments: 6 });
 mark.setFacets(data.facets);
 mark.start();
 
-// The signature is intentionally held only in this module's live session object. It is never put
-// in localStorage, sessionStorage, the URL, the DOM, or a log. A refresh asks the wallet again.
+// The signature and derived viewing key are intentionally held only in this module's live session
+// object. They are never put in localStorage, sessionStorage, the URL, the DOM, or a log. A refresh
+// asks the wallet again.
 const session = {
   provider: detectEoaProvider(),
   account: null,
   message: null,
   signature: null,
+  viewingKey: null,
   state: "idle",
 };
 
@@ -48,7 +51,7 @@ function short(address) {
 
 function render() {
   const connected = Boolean(session.account);
-  const bound = Boolean(session.signature);
+  const bound = Boolean(session.signature && session.viewingKey !== null);
   const busy = session.state === "signing";
   $("wallet-address").textContent = connected ? short(session.account) : "not connected";
   $("wallet-address").title = connected ? session.account : "";
@@ -58,7 +61,7 @@ function render() {
   $("sign").textContent = bound ? "Binding signed" : "Sign binding message";
   $("binding-message").textContent = session.message ??
     "Connect an EOA wallet to preview the exact message. Nothing is signed on page load.";
-  $("bound-pill").textContent = bound ? "bound · this tab only" : "not bound";
+  $("bound-pill").textContent = bound ? "bound · key in memory" : "not bound";
   $("bound-pill").className = `pill ${bound ? "pill-good" : ""}`;
   $("reset").hidden = !connected;
   // Binding is only the identity boundary. Keep protocol actions disabled until the reviewed
@@ -72,6 +75,7 @@ function clearSession(text = "Wallet disconnected from this launcher.") {
   session.account = null;
   session.message = null;
   session.signature = null;
+  session.viewingKey = null;
   setStatus("idle", text);
   render();
 }
@@ -97,12 +101,16 @@ async function sign() {
   try {
     setStatus("signing", "Waiting for the wallet to approve the binding message…");
     render();
-    // Keep this value private to the live session. The next derivation integration will consume it.
-    session.signature = await signWalletBinding(session.provider, session.account, session.message);
-    setStatus("bound", "Wallet bound for this tab. No transaction was authorized.");
+    const signature = await signWalletBinding(session.provider, session.account, session.message);
+    // Derive and retain the viewing key only in this live module session. Never render or log it.
+    const viewingKey = deriveViewingKeyFromSignature(signature);
+    session.signature = signature;
+    session.viewingKey = viewingKey;
+    setStatus("bound", "Wallet bound. Viewing key derived in memory; no transaction was authorized.");
     render();
   } catch (error) {
     session.signature = null;
+    session.viewingKey = null;
     setStatus("error", error instanceof Error ? error.message : "Wallet signature failed.");
     render();
   }

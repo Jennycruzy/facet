@@ -30,3 +30,11 @@ export {
   type BuildVesuDepositPlanOptions,
   type EkuboRouteOptions,
 } from "./adapters.js";
+
+export {
+  deriveViewingKeyFromSignature,
+  foldViewingKey,
+  MAX_VIEWING_KEY,
+  normalizeWalletSignature,
+  VIEWING_KEY_LABEL,
+} from "./wallet-identity.js";

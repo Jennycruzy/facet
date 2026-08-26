@@ -242,11 +242,11 @@ derivation depends on. A browser product built this way therefore connects an EO
 derives its Starknet identity from that signature; it does not derive facets from the user's
 existing Starknet wallet. That onboarding distinction must be explicit.
 
-Facet still needs one fixed domain-separated message, signature recovery/identity verification,
-rejection of unsupported smart-account signatures, and in-memory handling only. Do not persist
-the signature or a derived signing key; a read-only viewing key may be persisted. This answer is
-about feasibility, not completion of a web launcher, and the adapter has not yet been exercised
-end to end.
+Facet now has one fixed domain-separated message, strict EVM signature-shape/recovery-byte checks,
+and an in-memory viewing-key derivation matching the preserved bridge-core recipe. The browser
+launcher still needs cryptographic signer/address recovery, rejection of contract-owned EOA
+addresses, note discovery, and the end-to-end proving/submission path. Do not persist the
+signature or a derived signing key; the current launcher keeps the viewing key in memory too.
 - **Whether slippage survives the proving window.** Calls are built before proving. A swap
   quote computed five minutes before execution may fail its slippage check.
 - Whether a user can submit directly, without a relayer, and at what cost.
