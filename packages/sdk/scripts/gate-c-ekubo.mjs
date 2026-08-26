@@ -70,10 +70,14 @@ const TOKEN1 = ETH;
 const ROUTER = IS_MAINNET ? MAINNET_ROUTER : SEPOLIA_ROUTER;
 const DEFAULT_POOL = IS_MAINNET ? MAINNET_POOL : OFFICIAL_SEPOLIA_POOL;
 let pool = DEFAULT_POOL;
-const MAINNET_ROUTE_FEE = 34028236692093847977029636859101184n; // 0.01%
+// These are pool-key parameters, not arbitrary slippage settings. The live Starknet
+// mainnet STRK/ETH pool is the 0.05% / 1000-tick pool; the previous 0.01% / 200-tick
+// key is deployed infrastructure but is not initialized for this pair and fails with
+// NOT_INITIALIZED during quote_swap.
+const MAINNET_ROUTE_FEE = 170141183460469235273462165868118016n; // 0.05%
 const SEPOLIA_ROUTE_FEE = 170141183460469231731687303715884105n; // 0.05%
 const ROUTE_FEE = IS_MAINNET ? MAINNET_ROUTE_FEE : SEPOLIA_ROUTE_FEE;
-const TICK_SPACING = IS_MAINNET ? 200n : 50n;
+const TICK_SPACING = IS_MAINNET ? 1000n : 50n;
 const SWAP_AMOUNT = BigInt(process.env.FACET_GATE_C_AMOUNT ?? "100000000000000000"); // 0.1 STRK
 const DEPOSIT_AMOUNT = BigInt(
   process.env.FACET_GATE_C_DEPOSIT_AMOUNT ?? SWAP_AMOUNT.toString(),

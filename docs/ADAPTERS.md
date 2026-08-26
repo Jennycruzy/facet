@@ -84,6 +84,8 @@ the unused input token and the xSTRK output, because those are different balance
 | | |
 |---|---|
 | Core | `0x00000005dd3d2f4429af886cd1a3b08289dbcea99a294197e9eb43b0e0325b4b` |
+| Mainnet STRK/ETH route | `0.05%` fee · `1000` tick spacing · extension `0x0` |
+| Sepolia STRK/ETH route | `0.05%` fee · `50` tick spacing · extension `0x0` |
 
 The router's single-hop `swap` call is now pinned to the live ABI and the Sepolia rehearsal:
 
@@ -98,6 +100,10 @@ input to the router, `swap`, and `clear_minimum` for the output token. `quote_sw
 as a separate read-only call builder so the minimum can be read immediately before proving.
 The implementation is `buildEkuboQuoteCall` and `buildEkuboSwapPlan`; the latter returns
 independent `diff` settlement hints for the input remainder and output token.
+
+The mainnet route was checked against the live router on 26 August 2026. The earlier
+`0.01%` / `200` pool key returned `NOT_INITIALIZED`; the runner now uses the initialized
+`0.05%` / `1000` STRK/ETH pool key and refuses to proceed if the live quote fails.
 
 ## Funding denominations
 
