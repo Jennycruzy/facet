@@ -22,6 +22,8 @@
     "gate-a:selfhost:run": "node scripts/gate-a-selfhost.mjs run",
     "gate-a:test-pool": "node scripts/gate-a-test-pool-setup.mjs",
     "gate-a:pool-upgrade": "node scripts/gate-a-pool-upgrade-rc5.mjs",
+    "gate-c:ekubo": "node scripts/gate-c-ekubo.mjs",
+    "contracts:deploy:mainnet": "node scripts/deploy-facet-mainnet.mjs",
     "gate-a:paymaster-setup": "node scripts/gate-a-selfhost-paymaster-setup.mjs",
     "paymaster:refresh": "node scripts/gate-a-selfhost-paymaster-refresh.mjs",
     "paymaster:topup": "node scripts/gate-a-selfhost-paymaster-topup.mjs",

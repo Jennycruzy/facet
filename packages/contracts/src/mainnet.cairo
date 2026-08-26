@@ -49,3 +49,20 @@ pub const OBSERVED_EXACT_AMOUNT: felt252 = 0x6f05b59d3b20000;
 /// differs from the mainnet pool's, so action encodings must not be assumed identical.
 pub const SEPOLIA_POOL: felt252 =
     0x0254a6b2997ef52e9f830ce1f543f6b29768295e8d17e2267d672c552cfe0d91;
+
+/// Facet's immutable anonymizer, deployed by the Mainnet deployment account on 25 August
+/// 2026. The deployment transaction is recorded in `docs/FINDINGS.md` §6.19.
+pub const FACET_ANONYMIZER: felt252 =
+    0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc;
+
+/// FacetAccount, configured to call `FACET_ANONYMIZER`, deployed on 25 August 2026.
+pub const FACET_ACCOUNT: felt252 =
+    0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45;
+
+/// Mainnet class hash of Facet's immutable anonymizer.
+pub const FACET_ANONYMIZER_CLASS_HASH: felt252 =
+    0x85fbf40e535f188b695c1c3b4492c3045de7305c94e2ce7de4d0f9551adb21;
+
+/// Mainnet class hash of FacetAccount.
+pub const FACET_ACCOUNT_CLASS_HASH: felt252 =
+    0x5d07634600fff340d733946c2c8f925ee4c3c637c33f61e33e187b9024de46d;

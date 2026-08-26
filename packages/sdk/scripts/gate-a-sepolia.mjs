@@ -50,10 +50,11 @@ const ACCOUNT_FILE = `${ACCOUNT_DIR}/account.json`;
 const KEYSTORE_FILE = `${ACCOUNT_DIR}/keystore.json`;
 const TEST_POOL_FILE = `${ACCOUNT_DIR}/test-pool.json`;
 const GATE_A_POOL_CLASS_HASH = "0x56ab118a8a6e38efc93ad758cefe909fee421fa931ce3cf72df624d345623b2";
-const DAPP_NAME = "facet";
+const DAPP_NAME = process.env.FACET_DAPP_NAME ?? "facet";
 const NONCE = 0n;
 const AMOUNT = 500_000_000_000_000_000n; // 0.5 STRK
 const DEMO_TRANSFER_AMOUNT = 1n; // Safe Sepolia state-changing smoke test.
+const FORCE_NEW_DEPOSIT = process.env.FACET_FORCE_NEW_DEPOSIT === "1";
 
 if (!PAYMASTER_API_KEY) {
   throw new Error(
@@ -418,6 +419,14 @@ const accountSigner = {
   signDeclareTransaction: (...args) => baseSigner.signDeclareTransaction(...args),
 };
 const account = new Account({ provider, address, signer: accountSigner, cairoVersion: "1" });
+const demoRecipient = process.env.FACET_DEMO_RECIPIENT ??
+  "0x000000000000000000000000000000000000000000000000000000000000dead";
+if (BigInt(demoRecipient) === BigInt(address)) {
+  throw new Error("FACET_DEMO_RECIPIENT must not be the Gate A owner address.");
+}
+if (BigInt(demoRecipient) === 0n) {
+  throw new Error("FACET_DEMO_RECIPIENT must be a non-zero Starknet address.");
+}
 const balance = BigInt(first(await provider.callContract({
   contractAddress: STRK,
   entrypoint: "balance_of",
@@ -426,6 +435,8 @@ const balance = BigInt(first(await provider.callContract({
 console.log(`Account: ${address}`);
 console.log(`Starting STRK balance: ${balance} wei`);
 console.log(`Prover: ${PROVER_URL}`);
+console.log(`Dapp name: ${DAPP_NAME}`);
+console.log(`Dapp recipient: ${demoRecipient}`);
 
 let anonymizer = process.env.FACET_ANONYMIZER_ADDRESS ?? testPool?.anonymizerAddress;
 if (!anonymizer && process.env.FACET_DEPLOY_ANONYMIZER !== "1") {
@@ -534,9 +545,9 @@ const discoveredBeforeDeposit = await transfers.discoverNotes({ tokens: [BigInt(
 const existingNotes = (discoveredBeforeDeposit.notes.get(BigInt(STRK)) ?? [])
   .filter((note) => note.amount >= AMOUNT)
   .sort((a, b) => Number(b.amount - a.amount));
-let depositedNote = existingNotes[0];
+let depositedNote = FORCE_NEW_DEPOSIT ? undefined : existingNotes[0];
 let depositResult;
-let depositTx = "existing on-chain note (deposit skipped)";
+let depositTx = FORCE_NEW_DEPOSIT ? undefined : "existing on-chain note (deposit skipped)";
 
 if (depositedNote) {
   console.log(`Existing unspent Gate A note found: ${hex(depositedNote.id)} (${depositedNote.amount} wei).`);
@@ -608,14 +619,14 @@ gateBuilder.shadowAccounts(DAPP_NAME).invoke(NONCE, {
   calls: [{
     contractAddress: STRK,
     entrypoint: "transfer",
-    calldata: [address, num.toHex(DEMO_TRANSFER_AMOUNT), "0x0"],
+    calldata: [demoRecipient, num.toHex(DEMO_TRANSFER_AMOUNT), "0x0"],
   }],
   collectPolicy: { type: "all" },
 });
 
 console.log(
   `Building and proving Gate A: UseNote -> Withdraw -> ComputeAndInvoke -> ` +
-  `STRK.transfer(${DEMO_TRANSFER_AMOUNT} wei)...`,
+  `STRK.transfer(${demoRecipient}, ${DEMO_TRANSFER_AMOUNT} wei)...`,
 );
 const gateFeeAmount = BigInt(gateQuote.fee_action.amount);
 if (gateFeeAmount > 0n) {

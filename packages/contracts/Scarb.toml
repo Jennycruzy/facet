@@ -17,10 +17,11 @@ allow-prebuilt-plugins = ["snforge_std"]
 
 [lib]
 
-[profile.dev.cairo]
-unstable-add-statements-functions-debug-info = true
-unstable-add-statements-code-locations-debug-info = true
-panic-backtrace = true
+# Keep deployable Sierra on the audited libfunc list. Debug statement instrumentation
+# introduces `trace`, which a mainnet declare rejects; local debugging can use a separate
+# temporary profile outside the deployable artifact path.
+
+[[target.starknet-contract]]
 
 [scripts]
 test = "snforge test"
