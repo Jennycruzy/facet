@@ -6,6 +6,12 @@ protocol's own frontend would build and runs them through a shadow account, so t
 receives an ordinary interaction from an ordinary-looking address and never has to know Facet
 exists.
 
+The adapter boundary is also the safety boundary. An adapter may select a known route and
+construct known calldata; it must not accept arbitrary calls from a browser or a queue service.
+The launcher should describe these as **compatible Starknet applications**, not arbitrary
+applications. Compatibility means that the protocol action can be represented as ordinary
+account-level calls and that Facet has a tested policy for its balances or persistent position.
+
 Every address below was read from Starknet **mainnet** on 25 August 2026 — the ABIs were
 fetched with `starknet_getClassAt` and the function signatures taken from them, not from
 documentation and not from memory. The SDK call serializers were checked against those ABI
@@ -13,9 +19,11 @@ layouts on 26 August. Verify any of them yourself with the command at the end.
 
 ## Order, and why
 
-Every Facet action needs a proof, and proving takes five to six minutes. Calls are built
-*before* the proof exists, so anything whose parameters decay inside that window is a bad fit.
-Adapters are therefore ordered by parameter decay rather than by prominence.
+Every private pool action needs a proof, including `SetViewingKey` registration, private
+deposits, and application actions. Proving takes roughly five to seven minutes on the current
+development host. Calls are built *before* the proof exists, so anything whose parameters decay
+inside that window is a bad fit. Adapters are therefore ordered by parameter decay rather than
+by prominence.
 
 | Order | Protocol | Action | Decay |
 |---|---|---|---|
@@ -113,27 +121,33 @@ The funding leg is public: it names the token and the exact figure. An arbitrary
 fingerprint, and it survives across every identity that uses it. Funding one identity with
 137.42 STRK and another with 137.42 STRK links them as surely as reusing an address.
 
-Identities are therefore funded in fixed steps, currently **10, 25, 50, 100, 250 STRK**. The
-step is the anonymity set: an identity funded with 50 STRK is indistinguishable from every
-other identity funded with 50 STRK. Change is collected back into the shield, so the amount
-that leaves the pool never reveals what was actually spent.
-
-This closes `PROGRESS.md` open question 3, which asked how funding amounts should be chosen
-and warned that leaving it to the user was not an answer.
+The intended policy is to fund identities in fixed steps such as **10, 25, 50, 100, and 250
+STRK**. The step is the anonymity set: an identity funded with 50 STRK is indistinguishable
+from every other identity funded with 50 STRK. Change is collected back into the shield, so the
+amount that leaves the pool never reveals what was actually spent. The current launcher and
+Mainnet runner do not yet enforce the full denomination policy; it must remain documented as a
+policy/roadmap item until the queue and adapter path reject arbitrary amounts in code.
 
 ## Timing separation
 
 Two identities created in one sitting, funded seconds apart, correlate on timing no matter
-how good the denominations are. Funding and acting are therefore spaced, and the interface is
-explicit that the delay is deliberate rather than a stall. A user who thinks it is broken
-will retry and destroy the property.
+how good the denominations are. Funding and acting should therefore be spaced, and the
+interface must be explicit that a delay is deliberate rather than a stall. The current code
+does not yet enforce randomized timing separation; do not describe it as a guarantee until it
+does.
 
 ## Proving starts early
 
-Proving takes five to six minutes and cannot be shortened on modest hardware. It can,
-however, begin when the user picks an app rather than when they confirm an amount, so most of
-the wait is spent while they are still deciding. This changes nothing on chain and costs
-nothing to build. Show real stages throughout; a spinner at six minutes reads as broken.
+Proving takes five to seven minutes and cannot be shortened on modest hardware. The product
+response is asynchronous rather than deceptive: after exact intent and preflight checks, the
+launcher submits an allowlisted job, returns a job id, and lets a warm worker prove while the
+user leaves the page. The UI polls `queued → preflight → proving → proof_ready → broadcasting
+→ confirmed`, with a typed failure state. This improves page lifetime and prevents duplicate
+work; it does not reduce the cryptographic proof wall time. See [`ASYNC_PROVING.md`](ASYNC_PROVING.md).
+
+For a delay-tolerant deposit or stake, the worker can start as soon as the reviewed intent is
+complete. For Ekubo, a quote and minimum output must be captured immediately before proving
+and checked again at `proof_ready`; a stale quote fails closed and requires a new proof.
 
 ## The recipient guard
 
@@ -159,7 +173,8 @@ and what to do instead, because a user who cannot see why will work around it.
 
 ## Collect policy
 
-Each adapter must state its `CollectPolicy` and the reasoning:
+Each adapter must state its `CollectPolicy` and the reasoning. A fungible balance delta is not
+the same asset class as a persistent protocol position:
 
 - **Vesu deposit** — the STRK leaves the facet and becomes a position. `Diff` settles whatever
   remains rather than assuming the balance is zero.
@@ -167,12 +182,15 @@ Each adapter must state its `CollectPolicy` and the reasoning:
   policy must be reasoned about per token, not per interaction.
 
 Do not copy a policy between adapters. `All` on an account that still holds a position token
-does something different from `All` on an emptied one.
+does something different from `All` on an emptied one. LP positions, debt, NFTs, staking
+receipts, and protocol shares stay attached to the facet until an explicit protocol exit is
+performed; they are not automatically recoverable into a shielded balance.
 
 The SDK builders in `packages/sdk/src/adapters.ts` do not prove or broadcast. They only return
 canonical calls and settlement metadata for composition with `buildGateAActionSet` and the
 upstream privacy client. Vesu and Endur builders enforce the recipient guard; Ekubo has no
-user-supplied recipient in its tested single-hop path.
+user-supplied recipient in its tested single-hop path. The browser queue must call these
+reviewed builders through a narrow allowlist rather than serializing arbitrary calldata.
 
 ## Verify any address here
 

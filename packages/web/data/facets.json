@@ -92,6 +92,8 @@
     {
       "id": "vesu",
       "name": "Vesu",
+      "dappName": "facet-mainnet-vesu-v1",
+      "nonce": 0,
       "kind": "savings",
       "action": "Deposit",
       "tolerates_delay": true,
@@ -106,6 +108,8 @@
     {
       "id": "endur",
       "name": "Endur",
+      "dappName": "facet-mainnet-endur-v1",
+      "nonce": 0,
       "kind": "staking",
       "action": "Stake",
       "tolerates_delay": true,
@@ -120,6 +124,8 @@
     {
       "id": "ekubo",
       "name": "Ekubo",
+      "dappName": "facet-mainnet-ekubo-v1",
+      "nonce": 0,
       "kind": "trading",
       "action": "Swap",
       "tolerates_delay": false,
@@ -141,9 +147,9 @@
       100,
       250
     ],
-    "why": "Identities are funded only in these amounts. An arbitrary figure such as 137.42 STRK identifies you across every identity that uses it; a fixed step does not."
+    "why": "The intended policy uses these shared amounts. An arbitrary figure such as 137.42 STRK identifies you across every identity that uses it; a fixed step does not. The current launcher does not yet enforce the full policy."
   },
   "timing": {
-    "why": "Funding and acting are separated by a random delay, so two identities created in one sitting do not appear on chain seconds apart."
+    "why": "Funding and acting should be separated by deliberate timing. The current launcher does not yet enforce a random delay, so this is a product policy rather than a guarantee."
   }
 }

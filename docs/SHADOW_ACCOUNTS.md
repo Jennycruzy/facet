@@ -18,8 +18,9 @@ source and chain, this is prose.
 
 A shadow account is a contract account that acts on your behalf, whose address is derived
 from a secret you never reveal. You hold one shielded balance in the privacy pool; from it
-you can materialise an unlimited number of shadow accounts, one per context, and nothing on
-chain connects them to you or to each other.
+you can materialise an account per application or strategy. The private funding path does
+not publish the link to you or to another facet, but public behaviour, amounts, timing,
+recipients, and downstream protocol state can still create a link.
 
 The anonymizer is live on mainnet at
 `0x4f33230dc57855c6e7eabe66dfa0fde82c5458fd0e54827cdb7cb4c474888a7`, deployed at block
@@ -184,8 +185,16 @@ rejects the **entire transaction** with `SENDER_NOT_REGISTERED`. The failure sur
 the prover, *after* the proof work has already been spent — minutes wasted per attempt.
 
 Registration is `SetViewingKey`, which is `ACCOUNT_PHASE` (0), earlier than use-note,
-withdraw and invoke. **Queue it in the same action set** rather than sending a separate
-transaction.
+withdraw and invoke. It is still part of a proved `apply_actions` transaction; it is not a
+proof-free public registration. The same is true of a private note deposit. The deployed pool
+does not expose a public write that lets this path avoid the prover.
+
+For an already registered account, registration can be included in the same action set as
+the rest of the private sequence. The current Mainnet runner deliberately submits registration
+as a separate **proved** transaction when the account is new: the compiler cannot read the
+deferred registry write while compiling the later self-channel setup, and combining them
+produces `SENDER_NOT_REGISTERED`. That is an implementation constraint of the current route,
+not evidence that registration is cheap or proof-free.
 
 ## 8. Practical notes on proving and submission
 
@@ -199,6 +208,10 @@ These cost us a day each and are invisible in the SDK documentation.
 - **Fee estimation runs *after* proving.** A misconfigured paymaster or forwarder rejects the
   transaction seconds after a five-minute proof has already been generated. Estimate with a
   trivial call *before* spending prover time.
+- **A queue changes the wait users experience, not the proof cost.** The product should return
+  a job id, keep a compatible worker warm, expose `queued`, `preflight`, `proving`,
+  `proof_ready`, `broadcasting`, and `confirmed` stages, and resume polling after a page
+  closes. It must still re-check quote expiry and proof-aware preflight before broadcast.
 - **The proved transaction hash is not the on-chain transaction hash.** The prover proves the
   user's invoke, whose hash never appears on chain; what is broadcast is the relayer's
   `apply_actions` call, under a different hash. Looking up the proved hash returns

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Facet · one balance, a different face in every app</title>
-<meta name="description" content="A private account and portfolio layer for Starknet. One shielded balance, unlimited unlinkable identities, one per app.">
+<meta name="description" content="A private account and portfolio layer for Starknet. One shielded balance, a persistent identity per compatible app or strategy.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -32,7 +32,7 @@
       <div class="eyebrow">Private account &amp; portfolio layer</div>
       <h1>One balance.<br>A different face<br>in every app.</h1>
       <p class="tagline">Hide My Email, for your money.</p>
-      <p class="sub">Externally unlinkable, internally one portfolio.</p>
+      <p class="sub">Unlinkable by the funding path. One portfolio underneath.</p>
       <div class="live" id="live" data-state="loading" role="status" aria-live="polite"><span class="dot"></span><span id="live-text">connecting</span></div>
     </div>
     <div class="stage"><canvas id="stone" aria-label="A cut stone. Lit faces are identities that exist on chain."></canvas></div>
@@ -47,7 +47,7 @@
     <div class="cut accent-violet"><div class="cut-in stat">
       <div class="k">Identities</div>
       <div class="v" id="stat-faces">&nbsp;</div>
-      <div class="n">Separate on-chain accounts. No limit.</div>
+      <div class="n">Separate on-chain accounts, persistent per app or strategy.</div>
     </div></div>
     <div class="cut accent-emerald"><div class="cut-in stat">
       <div class="k">Links between them</div>
@@ -67,7 +67,7 @@
   <section class="block">
     <div class="head">
       <h2>Apps</h2>
-      <div class="aside">Each opens with a fresh identity</div>
+      <div class="aside">Each keeps an app-specific identity</div>
     </div>
     <div class="grid" id="tiles"></div>
   </section>
@@ -79,26 +79,26 @@
     </div>
     <div class="fine">
       <div>
-        <h4>Fixed amounts, not yours</h4>
-        <p>Identities are funded only in set steps, never a figure you type. An arbitrary
-        amount like 137.42 STRK identifies you across every identity that uses it. A step
-        everyone else uses does not.</p>
+        <h4>Fixed amounts, by policy</h4>
+        <p>The intended policy uses shared funding steps, never a figure you type. An arbitrary
+        amount like 137.42 STRK identifies you across every identity that uses it. The current
+        launcher does not yet enforce the denomination policy.</p>
       </div>
       <div>
-        <h4>Separated in time</h4>
-        <p>Funding and acting are spaced apart, so two identities made in one sitting do not
-        appear on chain seconds apart wearing the same amount.</p>
+        <h4>Timing is visible</h4>
+        <p>Funding and acting should be separated because two identities made seconds apart can
+        correlate. Timing separation is a product policy, not a current guarantee of this page.</p>
       </div>
       <div>
-        <h4>Self-linking calls are refused</h4>
-        <p>Facet will not build an action that pays your wallet, an address that funded your
-        pool, or another of your identities. It refuses rather than warns, because a warning
-        gets clicked through.</p>
+        <h4>Self-linking calls are guarded</h4>
+        <p>The tested Vesu and Endur builders refuse a call that pays your wallet, an address
+        that funded your pool, or another identity. The browser path must use those builders
+        before this is a launcher-wide guarantee.</p>
       </div>
       <div>
-        <h4>Proving starts before you ask</h4>
-        <p>The six minutes begin when you pick an app, not when you confirm. Most of the wait
-        is spent while you are still deciding.</p>
+        <h4>Proving is asynchronous</h4>
+        <p>Private actions still take minutes to prove on the current host. The target launcher
+        queues a job, shows its stages, and lets you leave the page instead of hiding the wait.</p>
       </div>
     </div>
 
@@ -114,8 +114,8 @@
       </div>
       <div>
         <h4>Six minutes is the real cost</h4>
-        <p>Proving cannot be skipped. It can be started early and shown honestly, and that is
-        what Facet does. It cannot be made to disappear.</p>
+        <p>Proving cannot be skipped. A warm worker and resumable job id can make the wait easier
+        to live with, but they do not make the cryptographic work disappear.</p>
       </div>
     </div>
   </section>

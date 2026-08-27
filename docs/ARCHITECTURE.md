@@ -8,8 +8,9 @@ possible.
 Status: the private account sequence and the Ekubo adapter are verified on Sepolia; the
 immutable anonymizer and `FacetAccount` are deployed on mainnet. The browser launcher is
 staged locally with wallet binding and in-memory viewing-key derivation, but note discovery,
-browser proving, and submission are not complete. A mainnet DeFi interaction is deliberately
-not reported until its exact amount is authorized and the path is rehearsed end to end.
+browser proving, and submission are not complete. The 7 STRK Ready X eligibility shield is a
+successful Mainnet pool transaction; no Facet shadow-account DeFi receipt has passed Mainnet
+proof-aware preflight yet.
 
 For the product model and user-facing privacy boundary, see [`PRODUCT.md`](PRODUCT.md).
 
@@ -29,10 +30,10 @@ without changing its value.
 ## Execution authorization
 
 - Initial private-note target: 0.5 STRK, plus fees.
-- Current owner-approved maximum exposure for the mainnet run: 15 STRK total.
+- Current owner-approved maximum exposure for the mainnet run: 20 STRK total.
 - The maximum is a safety ceiling, not a reason to spend the full amount.
-- No Mainnet DeFi transaction is authorized until the owner confirms that transaction's
-  exact STRK amount. The 15 STRK ceiling is not an instruction to spend it all.
+- The current approved test principal is 0.1 STRK for the private deposit and 0.1 STRK for
+  the Ekubo action, plus fees. The 20 STRK ceiling is not an instruction to spend it all.
 
 ## Preflight status
 
@@ -82,6 +83,20 @@ The `privacy-bridge` pattern is the reference for secret hygiene: obtain the wal
 signature in memory, derive re-creatable client material in memory, and persist only
 non-secret state or a deliberately read-only capability. It is not reused as a Facet
 identity formula without matching it to the Starknet wallet and the privacy SDK source.
+
+## Asynchronous execution boundary
+
+The current CLI is deliberately synchronous because it is an operator tool. The product
+path must not hold a browser request open for a five-to-seven-minute proof. It should submit
+an allowlisted intent to an authenticated service, return an opaque job id, and let a warm
+worker move through `queued → preflight → proving → proof_ready → broadcasting → confirmed`.
+The browser may leave and later resume polling with only the job id and a public summary.
+
+The service must not accept arbitrary calldata or persist the wallet-to-facet map. It must
+keep viewing-key material out of durable job records and logs, enforce quote/nonce/recipient
+expiry, and require proof-aware preflight before broadcast. This changes the user-visible
+wait and prevents duplicate proofs; it does not reduce the raw proof wall time. The complete
+contract is [`ASYNC_PROVING.md`](ASYNC_PROVING.md).
 
 ## Private transaction sequence
 

@@ -4,6 +4,11 @@
 docs, the page — is only reachable through it. This file records exactly what each field
 needs, what is in it now, and how to verify a value before it is added.
 
+The sprint closes on **31 August 2026 at 23:59 UTC**. The judging-critical evidence is a
+working Mainnet product, integration, and a short reproducible demo. A queued proof is a UX
+feature, not a Mainnet hash: only a successful receipt with the required STRK20 pool event
+counts as transaction evidence.
+
 ## Current state
 
 ```json
@@ -25,9 +30,15 @@ pool.** There is no cap, and more is better evidence.
 
 | # | Transaction | State |
 |---|---|---|
-| 1 | `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a` | **Done** — 7 STRK eligibility shield, block 13,538,709 |
-| 2 | — | A mainnet contract interaction that touches the STRK20 pool |
-| 3 | — | First DeFi interaction through a shadow account |
+| 1 | `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a` | **Done** — 7 STRK eligibility shield through Ready X, block 13,538,709; valid pool evidence but not a Facet DeFi action |
+| 2 | — | A successful Facet Mainnet pool transaction, preferably registration or private deposit, with receipt/event verification |
+| 3 | — | A successful Facet-to-protocol Mainnet action through a shadow account |
+
+The working target is **four usable hashes** so that the three strongest can be submitted:
+the existing eligibility shield, a Facet setup transaction, the first Facet protocol action,
+and a second Facet protocol action if the route is safe and genuinely verified. Registration,
+deposit, and protocol action all require proofs on the deployed pool; none is a proof-free
+shortcut.
 
 **Sepolia hashes do not belong in this file.** The two transactions that prove the §6.6
 sequence — `0x5faace1d…dedef` and `0x111b815a…f3693` — are Sepolia. They are the project's
@@ -69,10 +80,11 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9 \
 
 ## `demo_url`
 
-**Done — `https://usefacet.xyz`.** Certificate issued 25 August 2026 (Let's Encrypt, ECDSA,
-covers apex and `www`), HTTP redirects to HTTPS, and the page was loaded cold in a browser
-with no wallet and no extensions: 200, no console errors, and its live Sepolia and mainnet
-reads all resolved.
+**Configured — `https://usefacet.xyz`; current checkout deployment pending.** The existing
+domain and HTTPS service are available, but the current local launcher and documentation must
+still be deployed from this frozen checkout. Mark this done only after `/launch.html` returns
+200, the current assets load, no secrets are present in the bundle, and a clean desktop/mobile
+browser smoke test passes.
 
 ```bash
 curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
@@ -80,12 +92,31 @@ curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
 
 ## `demo_video`
 
-Empty. Under two minutes, real mainnet, hashes visible, screen recording only.
+Empty. Target: under two minutes, real Mainnet evidence, hashes visible, and a screen recording
+with no hidden success claim. The proof may be pre-generated for the recording if the description
+says so; the live product must still show the honest queued/proving stages.
 
-**State the proving time honestly.** Proving takes five to six minutes; pre-generating
+**State the proving time honestly.** Proving takes roughly five to seven minutes on the
+current self-hosted development host; pre-generating
 proofs for the recording is fine, and saying so in the video description is what keeps it
 honest. A judge who discovers a demo was cut to hide a six-minute wait discounts everything
 else — and by this project's own stated standard, that is disqualifying.
+
+## Product claims the submission may make
+
+- “One balance. A different face in every app.”
+- Facet provides unlinkability between the shielded balance and app-specific identities.
+- A facet is persistent per application or strategy; the nonce is for deliberate rotation.
+- Facet reaches compatible Starknet applications through account-level execution and does not
+  require protocol contract changes.
+- Downstream activity from a facet is public or inferable once it touches a protocol.
+- Fungible token deltas may be recoverable into shielded notes; LP positions, debt, NFTs,
+  staking receipts, and other persistent protocol positions are not automatically swept back.
+- The current prover is self-hosted. Hosted or client-side acceleration is future work unless
+  a supported service is verified before submission.
+
+Do not call an app live because its tile exists. It is live only after its calldata, preflight,
+proof, receipt, expected pool event, protocol event, and post-action state have been checked.
 
 ## Before submitting
 
@@ -97,3 +128,10 @@ else — and by this project's own stated standard, that is disqualifying.
 - [ ] Fresh clone installs, builds and tests with no manual steps
 - [ ] Every claim in the README traceable to a hash, a source reference or a test run
 - [ ] The limitations section still states what is *not* done
+- [ ] `transactions` contains three verified Mainnet hashes, each with a successful receipt and
+      STRK20 pool event; the strongest one or two demonstrate Facet's own protocol path
+- [ ] `demo_url` serves the current checkout, including `/launch.html`, over HTTPS
+- [ ] `demo_video` is public, under two minutes, and states the real proving/queue behaviour
+- [ ] Async queue records contain no private keys, signatures, viewing keys, passwords, or proof blobs
+- [ ] Any second application shown as live has a real network rehearsal and receipt; otherwise it
+      is labelled preview-only

@@ -44,6 +44,8 @@ const CHAIN_ID = IS_MAINNET ? constants.StarknetChainId.SN_MAIN : constants.Star
 const PROVER_URL = process.env.FACET_PROVER_URL ?? "http://127.0.0.1:3017";
 const PROVER_SSH_HOST = process.env.FACET_PROVER_SSH_HOST ?? "root@38.49.216.59";
 const PROVER_SSH_KEY = process.env.FACET_PROVER_SSH_KEY ?? "/Users/user/.ssh/devfun_jennycruzy";
+const PROVER_REMOTE_PORT = Number(process.env.FACET_PROVER_REMOTE_PORT ?? "3100");
+const PROVER_CONTAINER = process.env.FACET_PROVER_CONTAINER ?? "facet-prover-gate-a";
 
 const SEPOLIA_GATE_DIR = "/Users/user/.facet-secrets/starknet-gate-a-new";
 const MAINNET_GATE_DIR = "/Users/user/.facet-secrets/starknet-gate2";
@@ -86,9 +88,8 @@ const DAPP_NAME = process.env.FACET_DAPP_NAME ?? "facet-gate-c-ekubo-v1";
 const NONCE = BigInt(process.env.FACET_GATE_C_NONCE ?? "0");
 const SLIPPAGE_BPS = BigInt(process.env.FACET_GATE_C_SLIPPAGE_BPS ?? "1000");
 const MAX_MAINNET_SPEND_STRK = BigInt(process.env.FACET_MAINNET_MAX_SPEND_STRK ?? "5");
+const MAINNET_PREFLIGHT_ONLY = process.env.FACET_MAINNET_PREFLIGHT_ONLY === "1";
 const MAX_MAINNET_SPEND = MAX_MAINNET_SPEND_STRK * 1_000_000_000_000_000_000n;
-const PROOF_VERSION_V0 = "0x50524f4f4630";
-const PROOF_VERSION_V1 = "0x50524f4f4631";
 const MAINNET_FEE_SAFETY_PERCENT = 20n;
 let mainnetPriorFeesWei = 0n;
 let mainnetPrincipalWei = SWAP_AMOUNT;
@@ -244,11 +245,11 @@ async function preflightInvocation(provider, invocation, label) {
   console.log(`${label} preflight passed.`);
 }
 
-function callProverWithCurl(method, params) {
+function callProverWithCurl(method, params, maxTimeSeconds = 1800) {
   const body = JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params });
   return new Promise((resolve, reject) => {
     const child = spawn("curl", [
-      "--silent", "--show-error", "--max-time", "1800",
+      "--silent", "--show-error", "--max-time", String(maxTimeSeconds),
       "--header", "Content-Type: application/json", "--data-binary", "@-", PROVER_URL,
     ], { stdio: ["pipe", "pipe", "pipe"] });
     const stdout = [];
@@ -278,6 +279,46 @@ function callProverWithCurl(method, params) {
   });
 }
 
+let proverTunnel;
+
+async function proverHealthCheck() {
+  try {
+    const version = await callProverWithCurl("starknet_specVersion", [], 10);
+    return typeof version === "string" && version.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureProverTunnel() {
+  if (!PROVER_URL.startsWith("http://127.0.0.1:")) return;
+  if (await proverHealthCheck()) return;
+
+  if (!proverTunnel) {
+    const localPort = new URL(PROVER_URL).port || "80";
+    proverTunnel = spawn("ssh", [
+      "-i", PROVER_SSH_KEY,
+      "-o", "IdentitiesOnly=yes",
+      "-o", "ExitOnForwardFailure=yes",
+      "-o", "ServerAliveInterval=30",
+      "-o", "ServerAliveCountMax=3",
+      "-N",
+      "-L", `${localPort}:127.0.0.1:${PROVER_REMOTE_PORT}`,
+      PROVER_SSH_HOST,
+    ], { stdio: "ignore", detached: true });
+    proverTunnel.unref();
+  }
+
+  for (let attempt = 1; attempt <= 36; attempt += 1) {
+    if (await proverHealthCheck()) {
+      console.log(`Prover tunnel ready on ${PROVER_URL}.`);
+      return;
+    }
+    await delay(5_000);
+  }
+  throw new Error(`Prover tunnel did not become ready on ${PROVER_URL} within three minutes.`);
+}
+
 function runProcess(command, args, label) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
@@ -295,23 +336,20 @@ function runProcess(command, args, label) {
 
 async function recycleLocalProver(nextProof) {
   if (!PROVER_URL.startsWith("http://127.0.0.1:")) return;
+  await ensureProverTunnel();
   console.log(`Recycling the prover to release proof memory before ${nextProof}...`);
   await runProcess("ssh", [
     "-i", PROVER_SSH_KEY, "-o", "IdentitiesOnly=yes", PROVER_SSH_HOST,
-    "docker", "restart", "--timeout", "30", "facet-prover-gate-a",
+    "docker", "restart", "--timeout", "30", PROVER_CONTAINER,
   ], "Prover restart");
-  for (let attempt = 1; attempt <= 24; attempt += 1) {
+  for (let attempt = 1; attempt <= 36; attempt += 1) {
     await delay(5_000);
-    try {
-      await callProverWithCurl("rpc.discover", {});
-    } catch (error) {
-      if (String(error).includes("Method not found")) {
-        console.log("Prover restarted and ready.");
-        return;
-      }
+    if (await proverHealthCheck()) {
+      console.log("Prover restarted and ready.");
+      return;
     }
   }
-  throw new Error("Prover did not become ready within two minutes after restart.");
+  throw new Error("Prover did not become ready within three minutes after restart.");
 }
 
 async function proveWithCurl(invocation) {
@@ -323,14 +361,11 @@ async function proveWithCurl(invocation) {
     (message) => message.from_address?.toLowerCase() === String(invocation.sender_address).toLowerCase(),
   );
   const proofFacts = [...(result.proof_facts ?? [])];
-  // The deployed mainnet privacy pool predates the Starknet proof-version
-  // transition and accepts PROOF0. The V0/V1 proof-facts payload layout is
-  // identical; only the marker changed. Normalize the marker before the
-  // transaction is signed so the node and pool can parse the facts.
-  if (IS_MAINNET && proofFacts.length > 0 && String(proofFacts[0]).toLowerCase() === PROOF_VERSION_V1) {
-    proofFacts[0] = PROOF_VERSION_V0;
-    console.log("Normalized mainnet proof facts from PROOF1 to the deployed pool's PROOF0 format.");
-  }
+  // Preserve the proof facts emitted by the prover. The proof-version marker
+  // and virtual OS hash are a versioned pair; rewriting only the marker makes
+  // the proof facts internally inconsistent. Let Mainnet proof-aware preflight
+  // validate the original pair instead of trying to make an incompatible
+  // prover response look like the deployed pool's legacy format.
   return {
     data: result.proof,
     output: poolMessage?.payload ?? [],
@@ -415,6 +450,7 @@ async function buildSignedProofTransaction(account, callAndProof, details, label
     throw new Error(`${label} signed transaction has no proof_facts; refusing to broadcast.`);
   }
   console.log(`${label} signed transaction contains ${proofFacts.length} proof facts.`);
+  console.log(`${label} proof facts: version ${proofFacts[0]}; virtual OS ${proofFacts[2]}.`);
   return signed;
 }
 
@@ -458,6 +494,12 @@ async function submitSignedProofTransaction(provider, signed, label) {
   const proofFacts = signed.proof_facts ?? signed.proofFacts;
   if (!Array.isArray(proofFacts) || proofFacts.length === 0) {
     throw new Error(`${label} signed transaction has no proof_facts; refusing to broadcast.`);
+  }
+  if (IS_MAINNET && process.env.FACET_ALLOW_MAINNET_BROADCAST !== "1") {
+    throw new Error(
+      `${label} is ready but mainnet broadcast is disabled. ` +
+      "Set FACET_ALLOW_MAINNET_BROADCAST=1 only after reviewing the displayed amount, recipient, and calldata.",
+    );
   }
   const sent = await provider.invokeSignedTx(signed);
   console.log(`${label} transaction submitted: ${sent.transaction_hash}`);
@@ -631,6 +673,12 @@ const ownerPublicKey = BigInt(first(await provider.callContract({
   entrypoint: "get_public_key",
   calldata: [address],
 })));
+if (IS_MAINNET && MAINNET_PREFLIGHT_ONLY) {
+  console.log(`Mainnet preflight only: registration ${ownerPublicKey === 0n ? "required" : "present"}.`);
+  console.log(`Mainnet preflight only: ${notes.length} unspent STRK note(s); usable note ${usable[0] ? hex(usable[0].id) : "none"}.`);
+  console.log("Mainnet preflight passed without proving or broadcasting.");
+  process.exit(0);
+}
 if (IS_MAINNET && ownerPublicKey === 0n) {
   console.log("Mainnet account is not registered in the privacy pool; registering it in a separate transaction first...");
   // Keep the read-only simulation from mutating the registry that will be used

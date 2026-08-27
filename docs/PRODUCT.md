@@ -1,6 +1,7 @@
 # Facet: a private account and portfolio layer
 
-Facet is a privacy layer for Starknet applications.
+Facet provides unlinkability between a shielded balance and the application-specific
+identities that use it. It is not an invisibility layer for downstream protocol activity.
 
 The simplest way to understand it is **Hide My Email for your money**: one person can
 keep a unified private portfolio while presenting a separate account to every app,
@@ -10,7 +11,12 @@ An exchange, lending market, game, or trading venue sees a Facet account. It doe
 see the user's primary wallet, the user's other Facet accounts, or the rest of the
 portfolio. The user still has one shielded balance and one recovery identity underneath.
 
-> **One private portfolio. A different account for every context.**
+> **One balance. A different face in every app.**
+
+The precise promise is narrow: Facet keeps the relationship between a user's shielded
+portfolio and a compatible application's public account from being published by the
+funding path. Once that account touches a protocol, its caller, calldata, balances,
+timing, and downstream activity are public or inferable like any other Starknet account.
 
 This is an account and portfolio product, not a new cryptographic protocol. Facet uses
 the STRK20 privacy pool, proved execution, and shadow accounts as its substrate, then
@@ -55,7 +61,9 @@ Facet + app A + nonce 1  →  shadow account A2
 
 These accounts are deterministic for recovery and unlinkable by construction across
 their derivation contexts, assuming the user does not voluntarily link them through
-their own behavior.
+their own behavior. A facet is scoped to an application or strategy and is normally
+retained across that application's actions. The nonce is a deliberate rotation control,
+not a new identity that should be generated for every transaction.
 
 ### Private application actions
 
@@ -75,6 +83,35 @@ private STRK note
 The product boundary is important: the application call is public, but the owner of the
 calling account is not published by the private funding path.
 
+### Compatible applications, not arbitrary applications
+
+Facet supports compatible Starknet applications: applications whose action can be encoded
+as ordinary account-level calls and whose input/output balances or positions have an
+adapter policy. A protocol may still require an adapter even when its contracts are
+deployed and unchanged.
+
+Applications that depend on off-chain signatures, callbacks, session-bound behaviour,
+opaque account assumptions, or an application-specific account registry may not work
+without additional integration. Persistent protocol state can work when the same facet
+is retained, but it must be tested rather than assumed. The launcher should label an
+integration as live only after its calldata, balances, settlement, and receipt have been
+verified on the target network.
+
+### Asset lifecycle
+
+Facet must distinguish two asset classes in both its state model and its copy:
+
+- **Recoverable fungible assets.** Token balances and per-interaction deltas can be
+  collected into fresh shielded notes when the adapter's `CollectPolicy` supports it.
+- **Persistent application positions.** LP positions, debt, NFTs, staking receipts, and
+  other protocol-owned positions remain attached to the facet until the protocol's exit
+  action is executed. They are not automatically swept back into a shielded balance.
+
+The unified view may show both classes, but it must not promise that every visible position
+can be withdrawn into STRK20 notes. Retaining, rotating, or retiring a facet with a live
+position is a user decision; the position normally has to be exited before its value can
+be recovered as a fungible note.
+
 ## How it works
 
 Facet combines the following layers:
@@ -88,7 +125,7 @@ Facet combines the following layers:
 | Shadow account / `FacetAccount` | Acts as the public Starknet caller for the selected application context. |
 | Application adapter | Encodes a protocol-specific call, quote, slippage policy, and output-note policy. |
 | Relayer or paymaster | Submits the proof-bearing transaction and pays network execution costs where supported. |
-| Portfolio index | Reconstructs the user's private view from local state and shielded-note metadata; it does not expose the user's context map to applications. |
+| Portfolio view | Planned client-side or encrypted-local state reconstructs the user's private view; no server should be the only copy of the user-to-facet map. |
 
 The identity commitment is scoped in two steps:
 
@@ -110,7 +147,9 @@ user's portfolio or the relationship between the user's other commitments.
 4. The privacy pool spends the note and withdraws the requested asset to that address.
 5. The shadow account is deployed if necessary and executes the application call.
 6. The adapter clears or settles application balances into output notes.
-7. The portfolio layer records the result locally without publishing the user's context map.
+7. The client records the result locally without publishing the user's context map. A
+   future encrypted backup may replicate recovery state, but it must not turn the service
+   into a deanonymising registry.
 
 The ordering is not cosmetic. Withdrawal occurs before invocation, which allows a new
 account to be funded and used in the same transaction. A failed application call reverts
@@ -118,8 +157,9 @@ the full transaction, including the funding leg.
 
 ## Privacy model
 
-Facet hides the relationship between a user's private portfolio and an application's
-public caller. It does not make the application call invisible.
+Facet provides unlinkability between the user's shielded balance and an app-specific
+identity. It does not hide the app-specific identity or the activity that identity
+performs after it reaches a protocol.
 
 Public or inferable information includes:
 
@@ -133,10 +173,32 @@ The most important operational rule is simple: **never make a private call to an
 that identifies the owner.** A private funding path cannot undo a public dapp call that
 sends directly to the owner's known address.
 
-The current anonymizer contract is upgradeable in the upstream deployment, so the
-anonymizer and prover are part of the trust boundary until a production governance and
-verification model is established. The private SDK also sends viewing-key material into
-the proving path; the current prover must therefore remain authenticated infrastructure.
+### Correlation hygiene is a product policy
+
+The SDK currently enforces a linked-recipient guard for the adapters that expose a public
+`user` or `receiver` field. The following are product safeguards, not claims of current
+enforcement across every route: fixed funding denominations, deliberate timing separation,
+refusing facet-to-facet transfers, and withdrawal hygiene. They remain roadmap work until
+the relevant path enforces them in code and has a test or receipt behind the claim.
+
+The same rule applies to discovery. A backend must not be the sole database mapping a
+wallet to its facets. Deterministic derivation plus client-side or encrypted-local state
+keeps that mapping recoverable without making it a public service record.
+
+### Why not use several wallets?
+
+Several manually managed wallets can approximate separation, but each one requires its own
+funding trail, gas balance, recovery process, and privacy discipline. Funding or moving
+between them creates links, and users have to remember which wallet belongs to which app.
+Facet automates that discipline while preserving one shielded balance and one recovery
+identity underneath. It does not claim that manually created wallets are impossible to
+correlate; it makes the safer workflow easier to maintain.
+
+The official upstream anonymizer deployment is upgradeable with no timelock, so that
+deployment and its prover are part of the trust boundary until a production governance and
+verification model is established. Facet's own Mainnet anonymizer deployment is the immutable
+class recorded in `docs/ARCHITECTURE.md`; the private SDK still sends viewing-key material
+into the proving path, so the current prover must remain authenticated infrastructure.
 
 ## Current implementation status
 
@@ -152,12 +214,23 @@ product layer:
   operational runbooks;
 - fork-backed contract tests and source/chain findings document the behavior.
 
-The staged browser launcher now binds an EOA and derives a viewing key in memory. Note
-discovery, the portfolio index, production prover service, and a mainnet DeFi interaction
-are still product work. The development prover currently takes roughly five to seven minutes
-on the small reference host. That is an infrastructure measurement, not the intended user
-experience: a production service should prove asynchronously,
-reuse warm workers, report progress, and target a materially shorter interaction window.
+The staged browser launcher now binds an EOA, derives a viewing key in memory, and previews
+persistent application contexts. Note discovery, a production proving service, browser
+submission, and a Facet-to-protocol Mainnet receipt are still product work. The existing
+eligibility shield is a successful Mainnet STRK20 transaction, but it was made through the
+Ready X wallet and is not evidence that Facet has completed its own DeFi route. Two attempted
+Facet Mainnet proofs were stopped by proof-facts virtual-OS allowlist rejection before
+broadcast; no Facet Mainnet DeFi hash is claimed yet.
+
+The development prover currently takes roughly five to seven minutes on the small reference
+host. That is an infrastructure measurement, not the intended user experience. The intended
+launcher submits an allowlisted job, returns immediately with a job id, keeps a warm worker
+proving asynchronously, lets the user leave the page, and resumes by polling. This improves
+the visible wait and avoids duplicate work; it does not make the cryptographic proof faster.
+Only faster hardware or a supported hosted/client-side proving implementation changes the
+raw proof wall time.
+
+The product execution contract is documented in [`ASYNC_PROVING.md`](ASYNC_PROVING.md).
 
 ## Design principles
 

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facet · Ready X bridge</title>
+<meta name="description" content="Read-only capability check for the Facet and Ready X mainnet path.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<div class="wrap ready-probe">
+  <header class="appbar">
+    <a class="brand" href="./">
+      <span class="wordmark">Facet<small>private accounts</small></span>
+    </a>
+    <nav class="appnav">
+      <a href="./">The app</a>
+      <a href="launch.html">Launch</a>
+      <a href="ready-probe.html" aria-current="page">Ready path</a>
+      <a href="proof.html">How it works</a>
+    </nav>
+  </header>
+
+  <section class="launch-hero ready-hero">
+    <div class="eyebrow">Facet mainnet path · Ready X</div>
+    <h1>Use the wallet that already holds the private balance.</h1>
+    <p class="launch-lede">This page checks the native wallet route Facet needs: the existing Ready X account,
+    its Starknet network, its shielded STRK balance, and its advertised STRK20 API versions.</p>
+    <div class="launch-status" id="ready-status" data-state="idle" role="status" aria-live="polite">
+      <span class="dot"></span><span id="ready-status-text">No wallet request has been made.</span>
+    </div>
+  </section>
+
+  <section class="ready-safety" aria-label="Safety boundary">
+    <div class="ready-safety-mark">READ-ONLY</div>
+    <div>
+      <strong>No transaction is possible from this page.</strong>
+      <p>It requests an account connection and private-balance read only. It does not request a private key,
+      create a proof, sign a transaction, or broadcast anything.</p>
+    </div>
+  </section>
+
+  <section class="ready-grid">
+    <div class="cut accent-sapphire">
+      <div class="cut-in ready-card">
+        <div class="launch-card-head">
+          <div><div class="mono-badge">01</div><h2>Wallet identity</h2></div>
+          <span class="pill" id="wallet-pill">not connected</span>
+        </div>
+        <div class="ready-kv">
+          <span>wallet</span><strong id="wallet-name">—</strong>
+          <span>account</span><strong id="wallet-address">—</strong>
+          <span>network</span><strong id="wallet-network">—</strong>
+          <span>injection</span><strong id="wallet-injection">—</strong>
+        </div>
+        <button class="btn" id="connect" type="button">Connect Ready X</button>
+      </div>
+    </div>
+
+    <div class="cut accent-emerald">
+      <div class="cut-in ready-card">
+        <div class="launch-card-head">
+          <div><div class="mono-badge">02</div><h2>Shielded state</h2></div>
+          <span class="pill" id="balance-pill">not checked</span>
+        </div>
+        <p class="launch-copy">The balance below comes from Ready’s wallet-managed STRK20 state. Facet never
+        receives the viewing key or note registry.</p>
+        <div class="ready-balance" id="balance-value"><span id="balance-amount">—</span> <small>STRK</small></div>
+        <div class="ready-kv compact">
+          <span>token</span><strong id="balance-token">0x0471…938d</strong>
+          <span>source</span><strong id="balance-source">wallet_strk20Balances</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="cut accent-violet">
+      <div class="cut-in ready-card">
+        <div class="launch-card-head">
+          <div><div class="mono-badge">03</div><h2>Facet capability gate</h2></div>
+          <span class="pill" id="capability-pill">not checked</span>
+        </div>
+        <p class="launch-copy">The current Facet action is a shadow-account invoke routed through the STRK20
+        wallet API. A version can make it eligible, but only a no-spend prepare test can prove the wallet accepts
+        the action shape.</p>
+        <div class="ready-kv compact">
+          <span>advertised API</span><strong id="api-versions">—</strong>
+          <span>shadow action</span><strong id="shadow-support">not tested</strong>
+          <span>next gate</span><strong>simulate only, then review</strong>
+        </div>
+        <p class="ready-warning" id="capability-note">Connect first. This page will not infer support from a wallet name.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block ready-details">
+    <div class="head"><h2>What the result means</h2><div class="aside">Mainnet route · no spend</div></div>
+    <div class="ready-result" id="result-panel">
+      <p>Connect Ready X on Starknet Mainnet. The next step is only enabled after the actual wallet response is
+      visible here.</p>
+    </div>
+    <div class="ready-actions">
+      <button class="btn ghost" id="refresh" type="button" disabled>Refresh read-only state</button>
+      <button class="text-button" id="copy-diagnostics" type="button" disabled>Copy safe diagnostics</button>
+      <span class="copy-status" id="copy-status" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <section class="block launch-boundary">
+    <div class="head"><h2>Before any transaction</h2><div class="aside">The approval gate stays manual</div></div>
+    <p class="note">A successful read proves that the existing Ready X account and its shielded state are reachable.
+    It does not prove that Ready accepts Facet’s shadow-account action. We will construct the exact Ekubo action,
+    run a no-proof simulation, and show amount, route, recipient, minimum output, and preflight result before any
+    live approval is requested.</p>
+  </section>
+
+  <footer>
+    <nav><a href="./">The app</a><a href="launch.html">Launcher</a><a href="proof.html">Proof</a></nav>
+    <div>MIT · STRK20 Private Sprint · unaudited</div>
+  </footer>
+</div>
+
+<noscript><p class="noscript">JavaScript is required for the wallet capability check. No transaction can be made without JavaScript.</p></noscript>
+<script type="module" src="assets/js/ready-probe.js"></script>
+</body>
+</html>

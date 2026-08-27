@@ -660,7 +660,8 @@ sprint's own judging rubric.
 
 ### 6.12 Fork tests against the live contract — the funding pattern holds
 
-`packages/contracts/tests/fork_shadow_account.cairo`, 269 lines, 10 tests. These execute
+`packages/contracts/tests/fork_shadow_account.cairo`, 269 lines, 10 tests (20 across the
+workspace). These execute
 the **real deployed bytecode** at mainnet block 13,329,863 — the block every measurement
 in this document is taken against — so each assertion is a statement about the contract
 users actually interact with, not about a local redeployment. They need no key and cost
@@ -670,6 +671,10 @@ no fees.
 $ snforge test
 Tests: 10 passed, 0 failed, 0 ignored, 0 filtered out
 ```
+
+This is a recorded run from the pinned toolchain, not a claim that a fresh checkout currently
+reproduces it. The current sprint still has a Sierra compiler/toolchain resolution issue to
+close before presenting Cairo tests as reproducibly passing.
 
 Funding is sourced by impersonating the pool (`start_cheat_caller_address` on STRK, then
 `transfer`), so the tokens arrive at the shadow account from the same address the real
@@ -720,8 +725,9 @@ equal the selectors decoded in §6.5, confirming that attribution independently.
 **What these tests still do not prove.** They impersonate the pool rather than reaching
 the anonymizer through it, so the proved-execution half of §6.6 — `UseNote`, `Withdraw`,
 and the `ClientAction` → `ServerAction` translation of §4 — is not exercised and cannot
-be in a fork test. That gap is now the only one left; the §6.4 decode was closed
-separately by the replay recorded there.
+be in a fork test. That gap is closed for the Sepolia route by the receipts in §6.17–§6.18;
+Mainnet proof-facts compatibility and the browser product remain separate gates. The §6.4
+decode was closed separately by the replay recorded there.
 
 ### 6.13 Sepolia carries the classes but no anonymizer; hosted prover URL is not published
 
@@ -917,12 +923,15 @@ owner's earlier 76 STRK description is retained as an unverified wallet-level re
 while the chain value is authoritative. Any additional funding must be verified as a
 separate transaction before being counted.
 
-The owner confirmed the following operational authorization on 19 August 2026:
+The owner confirmed the following operational authorization on 19 August 2026, later narrowed
+to the current 27 August test plan:
 
 - use the newly created Sepolia private-transaction account for private transactions;
 - target 0.5 STRK for the initial private note, plus fees;
-- treat 30 STRK as the maximum total exposure for the end-to-end work, not as a
+- treat 20 STRK as the current maximum total exposure for the approved Mainnet run, not as a
   requirement to spend the full amount;
+- approve at most registration, a 0.1 STRK private deposit, and a 0.1 STRK Ekubo action, plus
+  gas, subject to the displayed route, amount, recipient, and proof-aware preflight matching;
 - trust VPS `38.49.216.59` as the prover host.
 
 This is authorization to proceed, not authorization to spend the full ceiling. The private
@@ -1063,8 +1072,58 @@ The immutable anonymizer constructor is fixed to the mainnet pool
 `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` and shadow-account
 class `0x346e143e3b353473a0d6f681c31ffcf2866537898008027fb3b57335bad7b5f`. Its compiled ABI
 contains no upgrade, proxy, governance, role, or admin entrypoint. The deployment account
-was not used as a DeFi recipient. The mainnet DeFi interaction remains controlled until the
-owner supplies the exact STRK amount.
+was not used as a DeFi recipient. The owner has approved the exact 0.1 STRK test amounts for
+the pending Mainnet registration/deposit/Ekubo sequence, but no Facet Mainnet DeFi receipt is
+claimed until proof-aware preflight and the final manual gate pass.
+
+### 6.20 Mainnet proof-facts compatibility gate — 28 August 2026
+
+The first direct Facet Mainnet run used the deployed pool, the funded `starknet-gate2`
+account, a 0.1 STRK target, and the exact Ekubo route pinned in the adapter. Read-only
+preflight passed: the account was deployed, the pool and anonymizer were present, the live
+Ekubo quote succeeded, and the account was not yet registered. The runner generated a full
+registration proof and then stopped at proof-aware simulation before broadcast.
+
+The first two attempts rewrote the prover's `PROOF1` marker to `PROOF0` and were rejected
+because the accompanying virtual-OS hashes were not allowed. A later attempt preserved the
+current prover's original `PROOF1` facts and was rejected because the deployed Mainnet
+proof-facts parser expects `PROOF0`. No Mainnet transaction was submitted and no funds moved:
+
+| Attempt | Proof facts | Virtual-OS fact | Wall time | Result |
+|---|---|---|---:|---|
+| 1 | `PROOF0` after rewrite | `0x53f6c9fcfd31d27279ff7d7e422b44623550a732b59fe193354a7316a96daa1` | 367s | Virtual-OS program hash not allowed |
+| 2 | `PROOF0` after rewrite | `0x47fb7a3dfec1ede12156a1dfeec3b2b9c7e549e0ae208d1b760dea41c248901` | 393s | Virtual-OS program hash not allowed |
+| 3 | Original `PROOF1` | `0x53f6c9fcfd31d27279ff7d7e422b44623550a732b59fe193354a7316a96daa1` | 375s | Proof-facts parser expected `PROOF0`, received `PROOF1` |
+| 4 | `PROOF0` after rewrite | `0x39f55918423cade9e95a6a52286b56bed1c5c9b6fe39aa00301361457a3c604` | 508s | Virtual-OS program hash not allowed |
+
+The source-level `0x3e98c2d7703b03a7edb73ed7f075f97f1dcbaa8f717cdf6e1a57bf058265473`
+value remains an untested PROOF0 candidate, not a live compatibility result. The VPS
+`facet-prover-gate-a-53f6` container currently emits the incompatible PROOF1/`0x53f6c9…`
+pair. A genuine PROOF0 prover whose complete facts are accepted by the live Mainnet node is
+still required. Candidate selection is not a transaction receipt and is not submission
+evidence.
+
+This failure establishes an infrastructure/version gate, not a failure of the Facet action
+design. It also establishes why a warm queue matters: the current host spends several minutes
+before the rejection becomes visible. The queue can avoid keeping a browser request open and
+can prevent duplicate retries, but it cannot bypass proof validation or reduce the raw proof
+computation. The complete proof-version/hash pair must be compatible with both the deployed
+pool and the live node.
+
+### 6.21 No proof-free registration shortcut on the deployed pool — 27 August 2026
+
+The deployed pool's external write surface routes non-admin actions through `apply_actions`,
+which validates proof facts before applying `SetViewingKey`, deposit, withdrawal, or invoke
+actions. The deployed ABI does not expose a separate public `register`, `shield`, or `deposit`
+entrypoint that avoids proving. Consequently, a headless RPC-only service can read state and
+construct an intent, but it cannot move value into this private pool without a proof-bearing
+transaction. The Ready X wallet may manage its own STRK20 state, but its currently advertised
+Wallet API does not expose Facet's `shadow_account_invoke` action shape.
+
+This corrects the earlier assumption that registration or shielding could be used as a
+proof-free workaround. The implementation and issue context are tracked in
+[STRK20 issue #156](https://github.com/starkience/strk20-hackathon/issues/156); the hosted
+prover requests remain separate infrastructure work.
 
 ## 7. Toolchain
 

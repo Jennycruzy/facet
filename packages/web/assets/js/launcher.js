@@ -8,6 +8,7 @@ import {
   signWalletBinding,
 } from "./wallet-binding.js";
 import { deriveViewingKeyFromSignature } from "./wallet-derivation.js";
+import { applicationContext, contextLabel } from "./app-context.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -67,6 +68,7 @@ function render() {
   $("bound-pill").className = `pill ${bound ? "pill-good" : ""}`;
   $("reset").hidden = !connected;
   const selected = data.apps.find((app) => app.id === session.selectedApp) ?? null;
+  const context = selected ? applicationContext(selected) : null;
   const activeQueueStep = selected ? "quote" : "context";
   document.querySelectorAll("[data-queue-step]").forEach((step) => {
     const active = step.dataset.queueStep === activeQueueStep;
@@ -80,8 +82,13 @@ function render() {
     button.setAttribute("aria-pressed", String(isSelected));
     button.classList.toggle("selected", isSelected);
   });
+  $("context-detail").hidden = !context;
+  if (context) {
+    $("context-dapp").textContent = context.dappName;
+    $("context-nonce").textContent = String(context.nonce);
+  }
   $("selection-note").textContent = selected
-    ? `${selected.name} selected. The adapter is previewed; no transaction was prepared.`
+    ? `${selected.name} selected. ${contextLabel(context)} is retained for this application; no transaction was prepared.`
     : bound
       ? "Choose an application context. Selection only previews the next step; no transaction is prepared."
       : "Sign the binding message to choose an application context. No transaction is prepared here.";

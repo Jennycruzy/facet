@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Facet · launch a private account</title>
-<meta name="description" content="A staged Facet launcher: bind an EOA wallet in memory, choose an application context, and prepare a private account action.">
+<meta name="description" content="Facet launcher: bind an EOA wallet in memory and choose a persistent application context.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -27,10 +27,10 @@
   </header>
 
   <section class="launch-hero">
-    <div class="eyebrow">Staged launcher · wallet binding</div>
+    <div class="eyebrow">Facet launcher · wallet binding</div>
     <h1>Give every app<br>a different face.</h1>
-    <p class="launch-lede">Bind one EOA wallet to a private Facet session, then choose the context
-    that an application will see. The signature and derived viewing key stay only in memory.</p>
+    <p class="launch-lede">Bind one EOA wallet to a private Facet session, then choose the persistent
+    application context that a protocol will see. The signature and derived viewing key stay only in memory.</p>
     <div class="launch-status" id="wallet-status" data-state="idle" role="status" aria-live="polite">
       <span class="dot"></span><span id="wallet-status-text">checking for an EOA wallet…</span>
     </div>
@@ -84,15 +84,21 @@
   </section>
 
   <section class="block launch-next">
-    <div class="head"><h2>What happens next</h2><div class="aside">Submission remains disabled</div></div>
+    <div class="head"><h2>What happens next</h2><div class="aside">Async queue · Mainnet gated</div></div>
     <div class="launch-queue">
-      <div class="queue-step active" data-queue-step="context"><span>03</span><div><strong>Choose an application context</strong><small>Ekubo, Vesu, or Endur will receive a fresh shadow account.</small></div></div>
+      <div class="queue-step active" data-queue-step="context"><span>03</span><div><strong>Choose an application context</strong><small>Ekubo, Vesu, or Endur keeps one stable shadow account per app.</small></div></div>
       <div class="queue-step" data-queue-step="quote"><span>04</span><div><strong>Quote, build, and safety-check</strong><small>The adapter refuses linked recipients and records per-token settlement policy.</small></div></div>
-      <div class="queue-step" data-queue-step="prove"><span>05</span><div><strong>Prove asynchronously</strong><small>The current development prover takes minutes; progress must be visible.</small></div></div>
-      <div class="queue-step" data-queue-step="review"><span>06</span><div><strong>Review before any broadcast</strong><small>Proof-aware preflight must pass before a wallet or relayer can submit.</small></div></div>
+      <div class="queue-step" data-queue-step="prove"><span>05</span><div><strong>Queue a proof job</strong><small>A warm worker proves asynchronously; the job id survives a closed page.</small></div></div>
+      <div class="queue-step" data-queue-step="review"><span>06</span><div><strong>Re-check, then broadcast</strong><small>Quote expiry, recipient, route, and proof-aware preflight must pass first.</small></div></div>
     </div>
     <div class="launch-selection" id="selection-note" role="status" aria-live="polite">
       Sign the binding message to choose an application context. No transaction is prepared here.
+    </div>
+    <div class="launch-context" id="context-detail" hidden>
+      <span>persistent application context</span>
+      <code id="context-dapp">—</code>
+      <span>rotation nonce</span>
+      <code id="context-nonce">—</code>
     </div>
     <div class="launch-integrations" aria-label="Application contexts">
       <button class="launch-app" data-launch-action data-app-id="ekubo" type="button" disabled aria-pressed="false"><span>EK</span><strong>Ekubo</strong><small>shielded swap · adapter ready</small></button>
@@ -102,11 +108,13 @@
   </section>
 
   <section class="block launch-boundary">
-    <div class="head"><h2>Honest boundary</h2><div class="aside">This page is intentionally staged</div></div>
+    <div class="head"><h2>Honest boundary</h2><div class="aside">No silent signing</div></div>
     <p class="note">Wallet binding and viewing-key derivation are implemented as an in-memory browser flow.
-    Note discovery, asynchronous proving, and broadcast are not wired to this public page yet.
-    Signing the message above does not move funds or authorize a transaction. The existing
-    <a href="proof.html">evidence page</a> remains the place to verify the two completed Sepolia runs.</p>
+    The async queue shown above is the intended product path, but note discovery, job submission,
+    proving, and broadcast are not wired to this public page yet. The current development prover
+    takes roughly five to seven minutes; a warm worker improves the page experience, not the raw
+    proof computation. Signing the message above does not move funds or authorize a transaction.
+    The <a href="proof.html">evidence page</a> remains the place to verify the completed Sepolia runs.</p>
   </section>
 
   <footer>

@@ -34,21 +34,35 @@ the site.
 The staged wallet-binding preview is available at `launch.html`. It can connect to an injected
 EIP-1193 EOA provider, request one origin/network/pool-bound `personal_sign` message, derive the
 pool viewing key in memory using the same two-limb recipe as the SDK, and preview an Ekubo, Vesu,
-or Endur context. The signature and key are never persisted; note discovery, proving, and
-broadcast are deliberately disabled until the browser path is wired to the reviewed SDK.
+or Endur context. The signature and key are never persisted. Note discovery, proving, and
+broadcast are deliberately disabled until the browser path is wired to the reviewed SDK and
+the narrow asynchronous job contract.
+
+The intended execution path is `proof queued` → visible stages → user may leave → resumable
+job polling → proof-aware review → receipt. The queue improves the page experience around the
+current five-to-seven-minute proof; it does not claim to make the proof itself faster. See
+[`../../docs/ASYNC_PROVING.md`](../../docs/ASYNC_PROVING.md) for the contract and security
+requirements.
+
+The native Ready X gate is available at `ready-probe.html`. It uses the injected Starknet Wallet
+API to read the connected account, chain, advertised Wallet API versions, and shielded STRK
+balance. It never requests a private key, proof, signature, or transaction. Use it before wiring
+Facet's shadow-account action to the wallet-managed proving path.
 
 ## Structure
 
 | File | Contents |
 |---|---|
 | `index.html` | **The app** — Facet's grid: your private account contexts, their live on-chain state, and the application tiles |
-| `launch.html` | Staged launcher — wallet binding and the visible proof/submission queue; no transaction submission |
+| `launch.html` | Staged launcher — wallet binding, persistent app-context preview, and the visible async queue model; no transaction submission yet |
+| `ready-probe.html` | Read-only Ready X capability gate for the mainnet Wallet API path |
 | `proof.html` | How it works and the evidence, in seven acts. One click behind the app, for the reader who wants to verify rather than use |
 | `assets/css/facet.css` | Design tokens and layout. Dark, single accent, no framework |
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
 | `assets/js/chain.js` | The only module that talks to an RPC node. `sessionStorage` cache, five-minute TTL |
 | `assets/js/app-ui.js` | The app: live strip, identity cards, app tiles, and dated RPC fallbacks |
-| `assets/js/launcher.js` | The staged browser wallet boundary and in-memory session state |
+| `assets/js/launcher.js` | The staged browser wallet boundary, persistent app-context preview, and in-memory session state |
+| `assets/js/ready-probe.js` | Read-only Ready X account, chain, STRK20 balance, and API capability check |
 | `assets/js/wallet-binding.js` | Canonical binding message, EIP-1193 account handling, and signature validation |
 | `assets/js/wallet-derivation.js` | Dependency-free Keccak and bridge-compatible viewing-key derivation |
 | `assets/js/app.js` | Wires chain data into the proof page's acts |
@@ -69,6 +83,9 @@ broadcast are deliberately disabled until the browser path is wired to the revie
   own limits is the one believed on everything else.
 - **The launcher states its stage.** A wallet signature is not a transaction approval, and no
   private key, viewing key, or signature is persisted by the page.
+- **The launcher must state the proof wait.** A warm worker and a job id let a user leave the
+  page, but they do not turn a five-minute proof into a synchronous interaction or authorize
+  an unreviewed broadcast.
 
 ## Testing
 

@@ -321,14 +321,39 @@ enough.
 The SDK's mainnet runner now does three things before any broadcast:
 
 1. generates the proof from a signed Invoke V3;
-2. normalizes only the marker when the deployed pool requires `PROOF0`;
-3. runs a proof-aware simulation of the exact signed transaction and stops if the pool
+2. preserves the prover's complete proof-facts version/hash pair;
+3. runs a proof-aware simulation of the exact signed transaction and stops if the node or pool
    rejects the facts.
 
-Do not bypass the proof-aware simulation or rewrite arbitrary proof fields. A compatible
-prover must be built from a Cairo/Starknet toolchain whose virtual-OS hash is in the
-deployed pool's allowlist. This compatibility check belongs in infrastructure validation,
-not in a user's first transaction attempt.
+Do not bypass the proof-aware simulation or rewrite proof fields. A compatible prover must
+produce a complete proof-facts pair accepted by both the live node and the deployed pool. This
+compatibility check belongs in infrastructure validation, not in a user's first transaction
+attempt.
+
+### 8.1 Current candidate check — 28 August 2026
+
+The first two Facet Mainnet registration attempts reached full proof generation but were
+stopped before broadcast by the exact proof-aware simulation:
+
+| Proof facts | Candidate virtual-OS hash | Result | Proof wall time |
+|---|---|---|---:|
+| `PROOF0` after rewrite | `0x53f6c9fcfd31d27279ff7d7e422b44623550a732b59fe193354a7316a96daa1` | Virtual-OS hash rejected | 367s |
+| `PROOF0` after rewrite | `0x47fb7a3dfec1ede12156a1dfeec3b2b9c7e549e0ae208d1b760dea41c248901` | Virtual-OS hash rejected | 393s |
+| Original `PROOF1` | `0x53f6c9fcfd31d27279ff7d7e422b44623550a732b59fe193354a7316a96daa1` | Parser expected `PROOF0` | 375s |
+| `PROOF0` after rewrite | `0x39f55918423cade9e95a6a52286b56bed1c5c9b6fe39aa00301361457a3c604` | Virtual-OS hash rejected | 508s |
+| Genuine `PROOF0` | `0x3e98c2d7703b03a7edb73ed7f075f97f1dcbaa8f717cdf6e1a57bf058265473` | Untested source-level candidate | — |
+
+The current VPS diagnostic container is `facet-prover-gate-a-53f6`, using the
+`605c29361962` image on loopback port `3100`; it is not currently compatible with the
+deployed pool because it emits `PROOF1`. This is a compatibility investigation, not a
+proving-speed fix. It does not change the measured five-to-seven-minute proof cost.
+The exact Facet registration, deposit, and Ekubo action must each pass proof-aware preflight
+before a receipt can be claimed. No Mainnet DeFi transaction is recorded from the rejected
+runs.
+
+The SDK preserves the complete proof facts returned by the prover. It must not rewrite the
+marker, virtual-OS hash, or any other proof fact merely to make a transaction look acceptable.
+The proof must come from a build whose complete facts the live node and pool allow.
 
 ---
 
@@ -341,4 +366,11 @@ not in a user's first transaction attempt.
 | Fix for SIGILL | pull `ghcr.io/jennycruzy/facet-prover:znver2`, or rebuild with your own `TARGET_CPU` — omit it for a portable build |
 | Memory floor | ~2.29 GiB idle, ~6.58 GiB peak per proof |
 | Verified version | `starknet_specVersion` → `0.10.3-rc.2` |
-| Reference timing | 485s on 2 vCPU Zen 2 — an upper bound, not a spec |
+| Reference timing | 355–485s on 2 vCPU Zen 2 — an upper bound, not a spec |
+
+For a user-facing product, keep a compatible worker warm and place proofs behind an
+authenticated asynchronous job API. That lets the user leave the page and prevents a
+refresh from queueing duplicate work. It does not reduce the cryptographic wall time; only
+faster hardware, a supported hosted service, or future client-side acceleration can do that.
+The service design and its fail-closed quote/expiry rules are in
+[`ASYNC_PROVING.md`](ASYNC_PROVING.md).

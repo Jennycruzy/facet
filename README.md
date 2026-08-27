@@ -3,10 +3,15 @@
 **Hide My Email, for your money.**
 
 Facet is a private account and portfolio layer for Starknet: one shielded balance, a
-fresh context-specific account for every application, and a portfolio view that does
-not require the user to publicly reuse one wallet everywhere.
+persistent context-specific account for each application or strategy, and a portfolio view
+that does not require the user to publicly reuse one wallet everywhere.
 
-> **Externally unlinkable, internally one portfolio.**
+> **One balance. A different face in every app.**
+
+Facet's precise guarantee is unlinkability between the shielded balance and app-specific
+identities. It does not hide an app account's downstream protocol activity: its address,
+calls, balances, timing, and user-chosen recipients are public or inferable once it reaches
+Starknet.
 
 Vesu sees one account. Ekubo sees another. A future application sees a third. The user
 still has one private portfolio underneath, with deterministic recovery instead of a
@@ -28,8 +33,9 @@ That is not an abstract problem:
   and in some jurisdictions that is a physical safety problem rather than a privacy
   preference.
 
-Facet gives you one identity per context instead of one identity forever. The funding never
-names you, and the identities are not linked to each other on chain.
+Facet gives you one persistent identity per application or strategy instead of one identity
+forever. The private funding path does not name you, but public behaviour, repeated amounts,
+timing, recipients, or transfers between facets can still create a link.
 
 Built on STRK20 **shadow accounts** — a primitive that lets a proved private transaction
 fund a deterministic account, have it call a normal Starknet application, and settle the
@@ -50,24 +56,26 @@ and how the protocol makes it possible.
 
 ## Quick validation
 
-The fork-backed contract checks can be run locally from the repository root:
+The fork-backed contract checks are intended to run locally from the repository root once the
+pinned Sierra compiler is available:
 
 ```bash
 cd packages/contracts
 snforge test
 ```
 
-The suite currently covers 20 tests against recorded mainnet and Sepolia state. It does not
-prove the full transaction path — that path is proved on chain instead, in
-[`docs/FINDINGS.md`](docs/FINDINGS.md) §6.17.
+The last pinned environment recorded 20 tests against mainnet and Sepolia state. A fresh
+checkout currently has a Sierra compiler/toolchain resolution issue, so do not claim the Cairo
+suite is reproducibly passing until that is fixed. The suite does not prove the full transaction
+path — that path is proved on chain instead, in [`docs/FINDINGS.md`](docs/FINDINGS.md) §6.17.
 
 ---
 
 ## The primitive
 
-The STRK20 privacy pool can run arbitrary dapp calls on a user's behalf through a
-per-user *shadow account*, without linking those calls back to the user. The pool
-derives an identity key inside a proved execution:
+The STRK20 privacy pool can run compatible dapp calls on a user's behalf through a
+per-user *shadow account*, without publishing the private funding link back to the user.
+The pool derives an identity key inside a proved execution:
 
 ```
 identity_key = poseidon(IDENTITY_KEY_TAG:V1, user_addr, user_private_key, anonymizer_addr)
@@ -82,8 +90,8 @@ identity_commitment = poseidon(partial_commitment, nonce)
 ```
 
 The result is one identity per user, per anonymizer, per dapp, per nonce — each backed
-by its own contract account, none of them linkable to the others or to the person
-behind them.
+by its own contract account. The derivation separates contexts; it cannot prevent a user
+from linking them later through public behaviour.
 
 That is a **facet**: one visible face of a single private portfolio, different from
 every angle, still one portfolio.
@@ -166,11 +174,13 @@ Everything asserted above is recorded with a file:line reference or a block heig
 The funding pattern above is also exercised as a test suite against the **live deployed
 anonymizer**, forked at mainnet block 13,329,863 — a predicted address is funded before
 any code exists at it, and the shadow account deploys exactly there and collects the
-balance. `snforge test` in `packages/contracts` runs **20 tests, all passing** against
-recorded mainnet and Sepolia state, including the decoded invocation replayed against real
-bytecode with a control that breaks the decode as it must. What those tests cannot cover is
-the proved half — `UseNote`, `Withdraw`, and the `ClientAction` → `ServerAction` translation
-are unreachable from a fork test. That half is proved on chain instead: `FINDINGS.md` §6.17.
+balance. The pinned environment has run 20 Cairo tests successfully against recorded
+mainnet and Sepolia state, including the decoded invocation replayed against real bytecode
+with a control that breaks the decode as it must. Reproducing those tests in a fresh
+environment still needs the Sierra compiler/toolchain issue resolved; do not treat a prior
+local run as final CI evidence. What those tests cannot cover is the proved half — `UseNote`,
+`Withdraw`, and the `ClientAction` → `ServerAction` translation are unreachable from a fork
+test. That half is proved on chain instead: `FINDINGS.md` §6.17.
 
 ## Running the prover yourself
 
@@ -216,7 +226,10 @@ the facet.
 The claim made here is narrow and checkable: **Facet provides a private account and
 portfolio layer by funding context-specific shadow accounts from shielded notes, then
 settling application results back into shielded notes.** The implementation evidence,
-known limits, and unfinished product layers are all called out below.
+known limits, and unfinished product layers are all called out below. The intended product
+journey is asynchronous because proving takes minutes: queue an allowlisted action, return a
+job id, keep a compatible worker warm, and resume by polling. A queue improves the user's
+wait experience; it does not make the proof computation faster.
 
 ## What exists today
 
@@ -226,13 +239,13 @@ What is not built is listed as plainly as what is.
 | | |
 |---|---|
 | Research | `docs/FINDINGS.md` — pool, anonymizer, identity derivation, all 39 invocations decoded |
-| Contracts | `packages/contracts` — 20 fork tests against live mainnet and Sepolia state, all passing |
+| Contracts | `packages/contracts` — 20 fork tests recorded as passing in the pinned environment; fresh-clone Sierra toolchain reproduction pending |
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
 | SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 20 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
-| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, and a staged wallet launcher exist; note discovery, proving UI, and portfolio index remain to be built |
+| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, and a staged wallet launcher exist; note discovery, async job service, browser proving/submission, and portfolio view remain to be built |
 | Mainnet contracts | **deployed** — immutable anonymizer and `FacetAccount`; deployment evidence is in `docs/ARCHITECTURE.md` |
-| Mainnet interaction | **not yet claimed** — the prover is benchmarked, but no mainnet DeFi broadcast has been authorized or executed |
+| Mainnet interaction | **not yet claimed** — the 7 STRK Ready X eligibility shield is verified, but no Facet shadow-account DeFi broadcast has passed proof-aware Mainnet preflight |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted
@@ -262,6 +275,7 @@ built, and nothing here claims otherwise.
 | [`docs/FINDINGS.md`](docs/FINDINGS.md) | Everything verified from source and chain data |
 | [`docs/PROVER.md`](docs/PROVER.md) | Self-hosting the transaction prover, start to finish |
 | [`docs/PRIVATE_DEFI.md`](docs/PRIVATE_DEFI.md) | The complete shielded STRK20-to-DeFi path, prover, proof facts, paymaster, timing, and safe runbook |
+| [`docs/ASYNC_PROVING.md`](docs/ASYNC_PROVING.md) | The warm-worker job contract, resumable polling flow, quote expiry rules, and service security boundary |
 | [`docs/PROGRESS.md`](docs/PROGRESS.md) | Dated record of what was established, and when |
 
 ## License

@@ -24,6 +24,13 @@ Facet combines five Starknet components:
    and fee sponsor. Mainnet uses the deployment account directly in the current runner, so
    the mainnet fee is charged to that account rather than to the Sepolia sponsor.
 
+Every private pool write in this path is proved. In particular, `SetViewingKey` registration,
+private note deposits, withdrawals, and `ComputeAndInvoke` are not proof-free public shortcuts
+on the deployed pool. The current runner separates Mainnet registration from the first deposit
+because the compiler cannot read a deferred registration write while compiling the later channel
+setup; combining them produces `SENDER_NOT_REGISTERED` before execution. Do not plan the UX around
+an ordinary public registration or shield transaction that avoids the prover.
+
 The deployed mainnet contracts are:
 
 | Component | Address |
@@ -61,8 +68,24 @@ proof facts for another pool or network.
 
 The amount is expressed in STRK wei; STRK uses 18 decimals. The cap is a safety ceiling, not
 an amount the script is expected to spend. Set it only to an amount explicitly approved for
-the current run. For the current owner-approved run, the total cap is 15 STRK and the swap
-input is 0.1 STRK.
+the current run. For the current owner-approved run, the total cap is **20 STRK** and the
+planned private deposit and swap input are each **0.1 STRK**. The cap includes fees and is not
+an instruction to spend the balance.
+
+Run the read-only mainnet check first. It validates the account, network, pool, anonymizer,
+live Ekubo quote, registration state, and available notes without proving or broadcasting:
+
+```bash
+cd /Users/user/facet/packages/sdk
+unset FACET_USE_SELFHOST FACET_PAYMASTER_CLIENT_FILE FACET_FORCE_NEW_DEPOSIT FACET_ALLOW_MAINNET_BROADCAST
+export FACET_NETWORK=mainnet
+export FACET_MAINNET_PREFLIGHT_ONLY=1
+export FACET_MAINNET_MAX_SPEND_STRK=20
+export FACET_DAPP_NAME=facet-mainnet-ekubo-v1
+export FACET_GATE_C_AMOUNT=100000000000000000
+export FACET_GATE_C_DEPOSIT_AMOUNT=100000000000000000
+npm run private:defi:ekubo
+```
 
 From `packages/sdk`, paste this block. Each line is a complete shell command, so normal
 terminal wrapping cannot split an option or an environment-variable assignment:
@@ -71,11 +94,19 @@ terminal wrapping cannot split an option or an environment-variable assignment:
 cd /Users/user/facet/packages/sdk
 unset FACET_USE_SELFHOST FACET_PAYMASTER_CLIENT_FILE FACET_FORCE_NEW_DEPOSIT
 export FACET_NETWORK=mainnet
-export FACET_MAINNET_MAX_SPEND_STRK=15
+export FACET_PROVER_CONTAINER=facet-prover-gate-a-53f6
+export FACET_PROVER_REMOTE_PORT=3100
+export FACET_MAINNET_MAX_SPEND_STRK=20
 export FACET_DAPP_NAME=facet-mainnet-ekubo-v1
 export FACET_GATE_C_AMOUNT=100000000000000000
+export FACET_GATE_C_DEPOSIT_AMOUNT=100000000000000000
+export FACET_ALLOW_MAINNET_BROADCAST=1
 npm run private:defi:ekubo
 ```
+
+The runner refuses to broadcast a mainnet proof unless `FACET_ALLOW_MAINNET_BROADCAST=1` is
+present. Omit that line when preparing or reviewing a run. Before adding it, confirm the
+displayed input amount, predicted shadow account, router calldata, and recipient policy.
 
 The command prompts for the encrypted keystore password. Enter it locally; it is never
 needed in chat, source, logs, or the prover command line. The expected order is:
@@ -88,6 +119,14 @@ signed transaction submission
 receipt verification
 ```
 
+When `FACET_PROVER_URL` is the default loopback URL, the runner establishes an authenticated
+SSH tunnel from local port `3017` to the VPS prover's loopback port `3100`, checks
+`starknet_specVersion`, and waits for the selected container to become ready after a restart.
+The current diagnostic container is `facet-prover-gate-a-53f6`; it emits `PROOF1`, which the
+deployed pool currently rejects. Do not broadcast from this configuration. A genuine PROOF0
+prover whose complete facts pass proof-aware preflight is still required. The tunnel is
+operational plumbing for this development runner; it is not the intended user experience.
+
 A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with
 an unintended newline and an environment assignment was split. It does not indicate an
 on-chain failure.
@@ -96,10 +135,25 @@ on-chain failure.
 
 The local Zen 2 development prover takes roughly five to seven minutes for a full proof and
 uses about 6.6 GiB at peak. That is development infrastructure, not the intended interactive
-product experience. A production launcher should submit asynchronously through a hosted or
-dedicated prover, show progress, and separate proving from wallet confirmation. The current
-repository documents the working path and its measured cost; it does not claim a one-to-two
-minute production benchmark yet.
+product experience. A production launcher must submit asynchronously through a hosted or
+dedicated warm prover, show progress, and separate proving from wallet confirmation. The
+browser should enqueue an allowlisted action, return a job id, let the user leave the page,
+poll status, and show the final receipt; it must never hold a page request open for the proof
+duration. A warm worker avoids queue and restart overhead and prevents duplicate work, but it
+does not shorten the proof itself. The current repository does not claim a one-to-two-minute
+production benchmark. See [`ASYNC_PROVING.md`](ASYNC_PROVING.md) for the service contract.
+
+## Current Mainnet evidence state
+
+One successful Mainnet STRK20 transaction exists: the 7 STRK Ready X eligibility shield,
+`0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`. It touched the live
+pool and is useful submission evidence, but it was not a Facet shadow-account DeFi action.
+
+The direct Facet runner has not yet produced a qualifying Mainnet receipt. Four full proofs were
+generated and correctly stopped by proof-aware simulation because the proof-version/hash pair
+was incompatible with the deployed Mainnet path. Those attempts moved no funds. The next run
+must use a genuinely compatible prover, retain the proof-aware preflight, and stop on any
+mismatch in amount, route, recipient, pool, or proof facts.
 
 ## Security boundary
 
