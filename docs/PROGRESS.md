@@ -8,8 +8,8 @@ working sprint is being treated as a compressed four-day window ending at that d
 
 ## Current sprint truth — 28 August 2026
 
-The local checkout is the source of truth on branch `main` at commit
-`a65d29040fe80be3ae0e2d36956d4f313e5bb515`, with the original freeze tag `freeze-20260827`
+The local checkout is the source of truth on branch `strk20-sprint-20260828` at commit
+`648cd70e7c6f22bf4f5d91172f3514353289d066`, with the original freeze tag `freeze-20260827`
 and baseline commit `cdeba32e1051c4ae1304a3d23feb254e62244128`. The working tree is clean.
 The VPS copy is behind and has a dirty
 `packages/contracts/Scarb.toml`; its diff is preserved outside the repository before any
@@ -22,14 +22,15 @@ The Mainnet evidence position is:
 | Ready X eligibility shield | **Verified** — 7 STRK, `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, successful pool event |
 | Facet Mainnet registration | **Not completed** — the compatible proof reached AVNU, but the initial deposit path was rejected because no screening attestation was attached |
 | Facet Mainnet private deposit | **Not completed** — latest AVNU response was `SCREENING_REQUIRED`; no transaction hash returned |
-| Facet Mainnet protocol action | **Not completed** |
-| Mainnet Facet hash count | **Zero qualifying Facet protocol hashes; one qualifying eligibility hash** |
+| Facet Mainnet protocol action | **Verified** — Ready X Wallet API Ekubo action `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049 |
+| Mainnet Facet hash count | **One qualifying Facet protocol hash plus one qualifying eligibility hash** |
 | Current Mainnet cap | **40 STRK ceiling**, with 0.1 STRK approved for the private deposit and 0.1 STRK for the Ekubo action, plus fees |
 
-The rejected proofs consumed proving time but moved no funds. The running VPS
-`facet-prover-gate-a-53f6` container emits the current Mainnet-compatible PROOF1/hash pair. The
-remaining blocker is the live pool's required screening attestation: the VPS has no configured
-proof-interceptor/authorized screener, so the next deposit proof must wait for that service.
+The rejected direct-runner proofs consumed proving time but moved no funds. The running VPS
+`facet-prover-gate-a-53f6` container emits the current Mainnet-compatible PROOF1/hash pair, but
+the direct AVNU path still lacks the live pool's required screening attestation. The supported
+Ready X Wallet API route completed the reviewed Facet/Ekubo action separately; see the verified
+hash above and `FINDINGS.md` §6.29.
 
 The user-facing speed plan is asynchronous proving: a warm worker, opaque job id, visible
 stages, resumable polling, quote/expiry re-checks, and a final review gate. This improves
@@ -55,7 +56,7 @@ stored here.
 | Mainnet funded account | `starknet-gate2`, `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` |
 | Mainnet purpose | Later Facet/Mainnet work; distinct from the Sepolia account and the Ready X eligibility wallet |
 | Trusted prover host | VPS `38.49.216.59` (`jennycruzy`), prover bound to the trusted host rather than exposed publicly |
-| Mainnet DeFi approval | Owner approved up to three Mainnet transactions: registration, a 0.1 STRK private deposit, and a 0.1 STRK Ekubo action, plus gas; the 40 STRK runner cap is a ceiling. No Facet Mainnet receipt exists yet. |
+| Mainnet DeFi approval | Owner approved up to three Mainnet transactions: registration, a 0.1 STRK private deposit, and a 0.1 STRK Ekubo action, plus gas; the 40 STRK runner cap is a ceiling. The reviewed Wallet API Ekubo action is now verified. |
 
 The Mainnet account is not the Sepolia account. Starknet permits omitted leading zeroes,
 so `0x033ce…` and `0x33ce…` refer to the same Mainnet address. The public funding

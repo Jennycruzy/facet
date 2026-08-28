@@ -13,7 +13,10 @@ counts as transaction evidence.
 
 ```json
 {
-  "transactions": ["0x0721505c…5716a"],
+  "transactions": [
+    "0x0721505c…5716a",
+    "0x2d3c449e…36ab"
+  ],
   "contracts": [
     "0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc",
     "0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45",
@@ -32,8 +35,8 @@ pool.** There is no cap, and more is better evidence.
 | # | Transaction | State |
 |---|---|---|
 | 1 | `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a` | **Done** — 7 STRK eligibility shield through Ready X, block 13,538,709; valid pool evidence but not a Facet DeFi action |
-| 2 | — | A successful Facet Mainnet pool transaction, preferably registration or private deposit, with receipt/event verification |
-| 3 | — | A successful Mainnet Facet integration action through the reviewed helper/Wallet API path; if the direct shadow-account route is used, its Facet account must be visible in the receipt |
+| 2 | `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` | **Done** — reviewed Ready X Wallet API action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,004,049; receipt contains STRK20 pool events, and transaction data carries the Facet helper plus Ekubo router |
+| 3 | — | A second successful Mainnet Facet/protocol transaction is still needed |
 
 The working target is **four usable hashes** so that the three strongest can be submitted:
 the existing eligibility shield, a Facet setup transaction, the first Facet protocol action,
@@ -49,7 +52,7 @@ page, but putting them in `transactions` would claim mainnet activity that has n
 Verify before adding:
 
 ```bash
-curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9 \
+curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"starknet_getTransactionReceipt","params":["<hash>"]}' \
   | grep -o '"execution_status":"[^"]*"'

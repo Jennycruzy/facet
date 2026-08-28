@@ -245,7 +245,7 @@ What is not built is listed as plainly as what is.
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
 | Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, a staged EOA launcher, and a reviewed Wallet API Ekubo page exist; the generic async service and portfolio view remain to be built |
 | Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, and the Ekubo helper; deployment evidence is in `docs/ARCHITECTURE.md` |
-| Mainnet interaction | **not yet claimed** — the 7 STRK Ready X eligibility shield and helper deployment are verified, but no Facet protocol receipt has yet been verified |
+| Mainnet interaction | **verified** — the 7 STRK Ready X eligibility shield and a reviewed Facet/Ekubo Wallet API action are confirmed on Mainnet; a second qualifying action is still needed for the three-hash submission target |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted
@@ -263,10 +263,12 @@ transaction prover and submitted through a self-hosted paymaster:
   named `facet-second`; its one-wei call went to an unrelated `0x…dead` recipient rather
   than the owner. The predicted shadow account is `0x560b1983…e2b8`.
 
-The event-level decode is `docs/FINDINGS.md` §6.17. The direct Facet shadow-account application
-route is not yet a verified Mainnet receipt. A separate reviewed Wallet API page for the Ekubo
-helper is available, but it remains pending a successful pool/helper/protocol receipt; nothing
-here claims otherwise.
+The event-level decode is `docs/FINDINGS.md` §6.17. The reviewed Wallet API Ekubo action is now
+verified in Mainnet transaction
+`0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049:
+the receipt succeeded and emitted STRK20 pool and Ekubo core events, while the transaction data
+contains the deployed helper and router. The direct Facet runner remains a separate path blocked
+by AVNU screening.
 
 ## Documentation
 

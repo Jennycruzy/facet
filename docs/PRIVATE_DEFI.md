@@ -161,15 +161,15 @@ production benchmark. See [`ASYNC_PROVING.md`](ASYNC_PROVING.md) for the service
 
 ## Current Mainnet evidence state
 
-One successful Mainnet STRK20 transaction exists: the 7 STRK Ready X eligibility shield,
-`0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`. It touched the live
-pool and is useful submission evidence, but it was not a Facet shadow-account DeFi action.
+Two successful Mainnet STRK20 transactions are now verified. The 7 STRK Ready X eligibility
+shield remains setup evidence. The reviewed Wallet API Ekubo action
+`0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` succeeded in block
+14,004,049 (`ACCEPTED_ON_L2`); its receipt contains STRK20 pool events and Ekubo core events,
+and its transaction data contains the deployed Facet helper and Ekubo router.
 
-The direct Facet runner has not yet produced a qualifying Mainnet receipt. Four full proofs were
-generated and correctly stopped by proof-aware simulation because the proof-version/hash pair
-was incompatible with the deployed Mainnet path. Those attempts moved no funds. The next run
-must use a genuinely compatible prover, retain the proof-aware preflight, and stop on any
-mismatch in amount, route, recipient, pool, or proof facts.
+The direct Facet runner remains blocked by AVNU's `SCREENING_REQUIRED` requirement; it was not
+used for the successful browser action. One more successful Mainnet pool transaction is still
+needed for the three-hash submission target.
 
 ## Security boundary
 

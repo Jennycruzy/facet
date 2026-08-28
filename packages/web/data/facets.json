@@ -144,7 +144,9 @@
       "contractLabel": "Ekubo \u00b7 Core",
       "entrypoint": "swap",
       "verified": "class hash confirmed on mainnet, 25 Aug 2026",
-      "status": "wallet-mediated-pending-receipt",
+      "status": "wallet-mediated-verified",
+      "mainnetTransaction": "0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab",
+      "mainnetBlock": 14004049,
       "executionPage": "mainnet-ekubo.html",
       "monogram": "Ek",
       "accent": "amber"

@@ -1268,8 +1268,31 @@ class before waiting for the deployment receipt. `packages/web/mainnet-ekubo.htm
 reviewed action sequence: withdraw `0.1 STRK` to the helper, create one `OPEN` ETH note for the
 Ready account, and invoke the helper with a live Ekubo quote and 10% slippage floor. The final
 write is still a manual Ready X approval; the page does not receive a key or proof. The helper
-deployment is verified, but no Mainnet DeFi transaction is claimed until the wallet action has a
-successful receipt with STRK20 pool, helper, and protocol events.
+deployment is verified, and the successful wallet action is recorded below with STRK20 pool,
+helper, and protocol evidence.
+
+### 6.29 The reviewed Ready X Facet/Ekubo action succeeded on Mainnet — 28 August 2026
+
+The browser launcher completed the reviewed native STRK20 action through Ready X. The wallet
+withdrew `0.1 STRK` to Facet's stateless helper, invoked the helper with the live Mainnet Ekubo
+quote, and returned the ETH result to an open note. The transaction was verified through the
+Mainnet RPC:
+
+| Item | Result |
+|---|---|
+| Transaction | [`0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`](https://voyager.online/tx/0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab) |
+| Sender | `0x6cc0a8a10349f4296d3b4b948f754080cc993d72b68fc341de087ba6ccbb558` (Ready-managed shadow account) |
+| Block | 14,004,049 |
+| Finality | `ACCEPTED_ON_L2` |
+| Execution | `SUCCEEDED` |
+| STRK20 pool event source | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
+| Ekubo core event source | `0x00000005dd3d2f4429af886cd1a3b08289dbcea99a294197e9eb43b0e0325b4b` |
+| Helper and router evidence | Transaction calldata contains the deployed helper `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537` and Ekubo router `0x0199741822c2dc722f6f605204f35e56dbc23bceed54818168c4c49e4fb8737e` |
+
+The receipt also contains STRK and ETH token events. The transaction data contains the expected
+STRK20 pool and helper/router addresses; the receipt contains pool events and an Ekubo core event.
+This is the first verified Facet protocol action on Mainnet. The direct self-hosted runner remains
+a separate path and still stops at AVNU's `SCREENING_REQUIRED` response.
 
 ## 7. Toolchain
 
