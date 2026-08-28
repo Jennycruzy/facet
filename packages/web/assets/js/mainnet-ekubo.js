@@ -422,7 +422,10 @@ async function execute() {
     }
     const result = await request(state.wallet, {
       type: "wallet_strk20InvokeTransaction",
-      params: { actions: actionsForQuote(quote), api_version: "0.10.3" },
+      // Match starknet.js' native WalletAccountV6 request shape. Ready selects the
+      // highest API version it advertises; including an explicit version here makes
+      // the current Ready implementation reject an otherwise valid action payload.
+      params: { actions: actionsForQuote(quote) },
     });
     const transactionHash = result?.transaction_hash;
     if (typeof transactionHash !== "string" || !transactionHash) throw new Error("Ready returned no transaction hash.");
