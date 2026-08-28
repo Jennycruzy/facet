@@ -332,8 +332,8 @@ attempt.
 
 ### 8.1 Current candidate check — 28 August 2026
 
-The first two Facet Mainnet registration attempts reached full proof generation but were
-stopped before broadcast by the exact proof-aware simulation:
+Four Facet Mainnet registration attempts reached full proof generation but were stopped before
+broadcast by the exact proof-aware simulation:
 
 | Proof facts | Candidate virtual-OS hash | Result | Proof wall time |
 |---|---|---|---:|

@@ -57,9 +57,9 @@ records the signed transaction that submits the privacy-pool action.
 The deployed mainnet pool was built for the legacy `PROOF0` proof-facts marker
 (`0x50524f4f4630`). Current upstream prover builds emit `PROOF1`
 (`0x50524f4f4631`) even though the payload fields used by this pool have the same layout.
-The SDK's mainnet path converts only that first marker before signing and runs a proof-aware
-preflight before broadcasting. If the proof-aware preflight fails, the script stops before
-submitting a transaction.
+The SDK preserves the complete facts returned by the prover and runs a proof-aware preflight
+before broadcasting. If the proof-version/hash pair is incompatible, the script stops before
+submitting a transaction; it does not rewrite proof facts to force acceptance.
 
 This compatibility rule is specific to the deployed mainnet pool. Do not blindly rewrite
 proof facts for another pool or network.
@@ -92,7 +92,7 @@ terminal wrapping cannot split an option or an environment-variable assignment:
 
 ```bash
 cd /Users/user/facet/packages/sdk
-unset FACET_USE_SELFHOST FACET_PAYMASTER_CLIENT_FILE FACET_FORCE_NEW_DEPOSIT
+unset FACET_USE_SELFHOST FACET_PAYMASTER_CLIENT_FILE FACET_FORCE_NEW_DEPOSIT FACET_ALLOW_MAINNET_BROADCAST FACET_MAINNET_PREFLIGHT_ONLY
 export FACET_NETWORK=mainnet
 export FACET_PROVER_CONTAINER=facet-prover-gate-a-53f6
 export FACET_PROVER_REMOTE_PORT=3100
@@ -100,7 +100,6 @@ export FACET_MAINNET_MAX_SPEND_STRK=20
 export FACET_DAPP_NAME=facet-mainnet-ekubo-v1
 export FACET_GATE_C_AMOUNT=100000000000000000
 export FACET_GATE_C_DEPOSIT_AMOUNT=100000000000000000
-export FACET_ALLOW_MAINNET_BROADCAST=1
 npm run private:defi:ekubo
 ```
 
@@ -123,8 +122,8 @@ When `FACET_PROVER_URL` is the default loopback URL, the runner establishes an a
 SSH tunnel from local port `3017` to the VPS prover's loopback port `3100`, checks
 `starknet_specVersion`, and waits for the selected container to become ready after a restart.
 The current diagnostic container is `facet-prover-gate-a-53f6`; it emits `PROOF1`, which the
-deployed pool currently rejects. Do not broadcast from this configuration. A genuine PROOF0
-prover whose complete facts pass proof-aware preflight is still required. The tunnel is
+deployed pool currently rejects. Do not run a proof or broadcast from this configuration. A
+genuine PROOF0 prover whose complete facts pass proof-aware preflight is still required. The tunnel is
 operational plumbing for this development runner; it is not the intended user experience.
 
 A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with

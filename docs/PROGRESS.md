@@ -6,12 +6,12 @@ file path, or command output. A missing prerequisite blocks the dependent work.
 Sprint window: 14–31 August 2026. Submissions close 31 August, 23:59 UTC. The final
 working sprint is being treated as a compressed four-day window ending at that deadline.
 
-## Current sprint truth — 27 August 2026
+## Current sprint truth — 28 August 2026
 
-The local checkout is the source of truth on branch `hackathon/final-sprint-20260827`,
-frozen at tag `freeze-20260827` and baseline commit `cdeba32e1051c4ae1304a3d23feb254e62244128`.
-The working tree has deliberate local edits for the launcher, adapter runner, and docs;
-do not reset or overwrite them. The VPS copy is behind and has a dirty
+The local checkout is the source of truth on branch `main` at commit
+`a65d29040fe80be3ae0e2d36956d4f313e5bb515`, with the original freeze tag `freeze-20260827`
+and baseline commit `cdeba32e1051c4ae1304a3d23feb254e62244128`. The working tree is clean.
+The VPS copy is behind and has a dirty
 `packages/contracts/Scarb.toml`; its diff is preserved outside the repository before any
 sync or deployment.
 
@@ -27,7 +27,7 @@ The Mainnet evidence position is:
 | Current Mainnet cap | **20 STRK ceiling**, with 0.1 STRK approved for the private deposit and 0.1 STRK for the Ekubo action, plus fees |
 
 The rejected proofs consumed proving time but moved no funds. The `0x3e98…` value is only an
-untested source-level PROOF0 candidate; no compatible prover is selected yet. The latest VPS
+untested source-level PROOF0 candidate; no compatible prover is selected yet. The running VPS
 diagnostic container emits PROOF1, while the deployed Mainnet path expects PROOF0. The next
 run must use a genuine compatible proof-version/hash pair and pass proof-aware preflight
 before any broadcast.
@@ -121,7 +121,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | Existing SDK shadow support catalogued | Partial | Confirmed present: `sdk/src/internal/shadow-accounts.ts` (98 lines, `ShadowAccountsBuilderImpl`), `ShadowAccountAnonymizerABI` exported at `index.ts:4`, plus references in `interfaces.ts`, `factory.ts`, `internal/builders.ts`, `internal/anonymizer-abi.ts`, `testing/mocknet.ts`. What each one does is not yet catalogued. |
 | Prior-art check | Done | Nothing in the hackathon README, `IDEAS.md`, or `projects.json` mentions shadow or stealth accounts. Field at 35 projects; three have mainnet transactions recorded (cutout 4, redpocket 3, veilpass 1). |
 | Commit identity single-valued | Done | `user.name jennycruzy`, `user.email jennycruzy@users.noreply.github.com` configured and used by the local commits. |
-| Secret scan clean | Pending first commit | |
+| Secret scan clean | Current-tree scan done; full-history final scan pending | |
 
 ---
 
@@ -234,7 +234,7 @@ Carried forward until answered from a primary source or by the user.
 
    The remaining infrastructure question is Mainnet proof-facts compatibility, not whether
    self-hosting works. Two Mainnet Facet proofs were generated but rejected by the deployed
-   pool's proof-facts compatibility checks before broadcast. The current failures and the
+   pool's proof-facts compatibility checks before broadcast. The four current failures and the
    untested PROOF0 candidate are recorded in `FINDINGS.md` §6.20 and must pass exact Facet
    proof-aware preflight.
 
