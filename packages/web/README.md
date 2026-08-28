@@ -31,12 +31,12 @@ There is no build step, no runtime dependency, and no upstream: nginx serves the
 page reads Starknet RPC from the visitor's browser. Nothing else on the host is reachable through
 the site.
 
-The staged wallet-binding preview is available at `launch.html`. It can connect to an injected
+The staged wallet-binding boundary is available at `launch.html`. It can connect to an injected
 EIP-1193 EOA provider, request one origin/network/pool-bound `personal_sign` message, derive the
-pool viewing key in memory using the same two-limb recipe as the SDK, and preview an Ekubo, Vesu,
-or Endur context. The signature and key are never persisted. Note discovery, proving, and
-broadcast are deliberately disabled until the browser path is wired to the reviewed SDK and
-the narrow asynchronous job contract.
+pool viewing key in memory using the same two-limb recipe as the SDK, and open the selected
+Ekubo, Vesu, or Endur review route. The signature and key are never persisted. The reviewed
+Mainnet pages use Ready X's native STRK20 proving/screening API; they only request a transaction
+after the user checks the exact route and amount.
 
 The intended execution path is `proof queued` → visible stages → user may leave → resumable
 job polling → proof-aware review → receipt. The queue improves the page experience around the
@@ -54,9 +54,10 @@ Facet's shadow-account action to the wallet-managed proving path.
 | File | Contents |
 |---|---|
 | `index.html` | **The app** — Facet's grid: your private account contexts, their live on-chain state, and the application tiles |
-| `launch.html` | Staged launcher — wallet binding, persistent app-context preview, and the visible async queue model; no transaction submission yet |
+| `launch.html` | Staged launcher — wallet binding, persistent app-context selection, and reviewed route links |
 | `ready-probe.html` | Read-only Ready X capability gate for the mainnet Wallet API path |
 | `mainnet-ekubo.html` | Reviewed wallet-mediated Mainnet Ekubo swap using the deployed privacy helper |
+| `mainnet-defi.html` | Shared reviewed wallet-mediated Mainnet Vesu vSTRK and Endur xSTRK deposit routes |
 | `proof.html` | How it works and the evidence, in seven acts. One click behind the app, for the reader who wants to verify rather than use |
 | `assets/css/facet.css` | Design tokens and layout. Dark, single accent, no framework |
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
