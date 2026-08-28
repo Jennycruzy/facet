@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facet · Mainnet application</title>
+<meta name="description" content="Wallet-mediated Mainnet application action through Facet.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<div class="wrap ready-probe">
+  <header class="appbar">
+    <a class="brand" href="./">
+      <span class="wordmark">Facet<small>private accounts</small></span>
+    </a>
+    <nav class="appnav">
+      <a href="./">The app</a>
+      <a href="launch.html">Launch</a>
+      <a href="mainnet-ekubo.html">Ekubo</a>
+      <a href="mainnet-defi.html?protocol=vesu">Vesu</a>
+      <a href="mainnet-defi.html?protocol=endur">Endur</a>
+      <a href="proof.html">How it works</a>
+    </nav>
+  </header>
+
+  <section class="launch-hero ready-hero">
+    <div class="eyebrow" id="protocol-eyebrow">Facet Mainnet application path</div>
+    <h1 id="hero-title">Use a real protocol route.</h1>
+    <p class="launch-lede" id="hero-lede">Facet supplies the allowlisted helper and the private wallet supplies
+    the proof. The selected protocol receives an ordinary ERC-4626 deposit from that helper.</p>
+    <div class="launch-status" id="ready-status" data-state="idle" role="status" aria-live="polite">
+      <span class="dot"></span><span id="ready-status-text">Connect Ready X to begin the review.</span>
+    </div>
+  </section>
+
+  <section class="ready-safety" aria-label="Transaction boundary">
+    <div class="ready-safety-mark">MANUAL GATE</div>
+    <div>
+      <strong>No transaction is requested until you approve the review.</strong>
+      <p>This page never receives a private key, viewing key, or proof. The only live write is the explicit
+      <code>0.1 STRK</code> wallet action after the checkbox and Ready X approval. The direct Facet deployment
+      account is not the signer for this browser flow.</p>
+    </div>
+  </section>
+
+  <section class="ready-grid">
+    <div class="cut accent-sapphire">
+      <div class="cut-in ready-card">
+        <div class="launch-card-head">
+          <div><div class="mono-badge">01</div><h2>Wallet</h2></div>
+          <span class="pill" id="wallet-pill">not connected</span>
+        </div>
+        <div class="ready-kv">
+          <span>wallet</span><strong id="wallet-name">—</strong>
+          <span>signer / prover</span><strong>Ready X</strong>
+          <span>account</span><strong id="wallet-address">—</strong>
+          <span>network</span><strong id="wallet-network">—</strong>
+          <span>Wallet API</span><strong id="api-versions">—</strong>
+        </div>
+        <button class="btn" id="connect" type="button">Connect Ready X</button>
+      </div>
+    </div>
+
+    <div class="cut accent-emerald">
+      <div class="cut-in ready-card">
+        <div class="launch-card-head">
+          <div><div class="mono-badge">02</div><h2>Private input</h2></div>
+          <span class="pill" id="balance-pill">not checked</span>
+        </div>
+        <p class="launch-copy">The route withdraws exactly 0.1 STRK from the Ready-managed private balance
+        to the Facet helper. The protocol shares return as an open note to this wallet.</p>
+        <div class="ready-balance" id="balance-value"><span id="balance-amount">—</span> <small>STRK</small></div>
+        <div class="ready-kv compact">
+          <span>input</span><strong>0.1 STRK</strong>
+          <span>source</span><strong>wallet_strk20Balances</strong>
+          <span>output</span><strong id="output-symbol">—</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="cut accent-violet">
+      <div class="cut-in ready-card">
+        <div class="launch-card-head">
+          <div><div class="mono-badge">03</div><h2>Facet helper</h2></div>
+          <span class="pill" id="helper-pill">checking</span>
+        </div>
+        <p class="launch-copy">The helper is a separate deterministic contract reserved from Facet’s Mainnet
+        account. Once deployed, it receives the private withdrawal and calls only the selected protocol vault.</p>
+        <div class="ready-kv compact">
+          <span>helper</span><strong id="helper-address">—</strong>
+          <span>class</span><strong id="helper-class">—</strong>
+          <span>pool</span><strong id="pool-address">—</strong>
+          <span>Facet path</span><strong id="facet-path">pool → helper → protocol</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block ready-details">
+    <div class="head"><h2>Transaction review</h2><div class="aside">quote refreshed at approval</div></div>
+    <div class="ready-result" id="review-panel">
+      <p>Connect Ready X. The page will verify Mainnet, the helper, the shielded STRK balance, and the live
+      protocol vault before enabling the review.</p>
+    </div>
+    <div class="ready-kv compact review-kv">
+      <span>application</span><strong id="protocol-label">—</strong>
+      <span>deposit</span><strong>0.1 STRK</strong>
+      <span>estimated shares</span><strong id="quoted-output">—</strong>
+      <span>recipient</span><strong id="output-recipient">—</strong>
+    </div>
+    <label class="ready-check"><input id="confirm" type="checkbox" disabled>
+      <span>I reviewed this route and approve a private 0.1 STRK withdrawal to the displayed Facet helper.
+      Ready X will show the final wallet approval before signing.</span>
+    </label>
+    <div class="ready-actions">
+      <button class="btn" id="execute" type="button" disabled>Request reviewed action</button>
+      <button class="btn ghost" id="refresh" type="button" disabled>Refresh state and quote</button>
+      <button class="text-button" id="copy-diagnostics" type="button" disabled>Copy safe diagnostics</button>
+      <span class="copy-status" id="copy-status" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <section class="block launch-boundary">
+    <div class="head"><h2>What happens next</h2><div class="aside">wallet proves + screens</div></div>
+    <p class="note" id="protocol-note">Ready X proves and screens the private action. The receipt must touch the
+    STRK20 pool, the Facet helper, and the selected protocol contract before it is counted as integration evidence.</p>
+    <div class="ready-result" id="result-panel"><p>No transaction has been requested.</p></div>
+  </section>
+
+  <footer>
+    <nav><a href="./">The app</a><a href="launch.html">Launch</a><a href="proof.html">Proof</a></nav>
+    <div>MIT · STRK20 Private Sprint · unaudited</div>
+  </footer>
+</div>
+
+<noscript><p class="noscript">JavaScript is required for the wallet-mediated Mainnet action.</p></noscript>
+<script type="module" src="assets/js/mainnet-defi.js?v=20260828-1"></script>
+</body>
+</html>

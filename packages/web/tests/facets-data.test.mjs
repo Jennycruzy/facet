@@ -29,3 +29,20 @@ test("launcher contexts are the same three cards documented by the product", () 
     assert.ok(app.monogram);
   }
 });
+
+test("Vesu and Endur are bound to reviewed Mainnet ERC-4626 routes", () => {
+  const mainnet = data.networks.mainnet;
+  for (const id of ["vesu", "endur"]) {
+    const app = data.apps.find((candidate) => candidate.id === id);
+    assert.ok(app);
+    assert.equal(app.executionPage, `mainnet-defi.html?protocol=${id}`);
+    assert.match(app.contract, /^0x[0-9a-f]{60,}$/i);
+    assert.match(app.outputToken, /^0x[0-9a-f]{60,}$/i);
+    assert.match(app.helper, /^0x[0-9a-f]{60,}$/i);
+    assert.match(app.helperClassHash, /^0x[0-9a-f]{60,}$/i);
+    const helper = mainnet[id === "vesu" ? "vesuHelper" : "endurHelper"];
+    assert.equal(BigInt(helper.constructorCalldata[1]), BigInt(data.strk));
+    assert.equal(BigInt(helper.constructorCalldata[2]), BigInt(app.outputToken));
+    assert.equal(app.status, "declaration-pending");
+  }
+});

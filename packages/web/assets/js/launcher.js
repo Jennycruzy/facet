@@ -146,8 +146,9 @@ function selectApp(id) {
   const app = data.apps.find((candidate) => candidate.id === id);
   if (!app) return;
   session.selectedApp = app.id;
-  setStatus("selected", `${app.name} selected. No transaction was authorized.`);
+  setStatus("selected", `${app.name} selected. Opening its reviewed Mainnet route…`);
   render();
+  if (app.executionPage) window.location.assign(app.executionPage);
 }
 
 async function copyMessage() {

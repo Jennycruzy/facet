@@ -8,7 +8,7 @@
     },
     "mainnet": {
       "label": "Starknet Mainnet",
-      "rpc": "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9",
+      "rpc": "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10",
       "explorer": "https://voyager.online",
       "ekuboHelper": {
         "address": "0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537",
@@ -17,6 +17,32 @@
         "status": "deployed",
         "deploymentTransaction": "0x188808f3c11914c6ada25cae55defe4d34332f4ff955d1eb272ce9962f08dfc",
         "deploymentBlock": 14000701
+      },
+      "vesuHelper": {
+        "address": "0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6",
+        "classHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
+        "compiledClassHash": "0x74f090a448998ae228ea2294d8e007d83174f36ca8498d152b6f4c53692eb05",
+        "salt": "0x46414345545f564553555f7631",
+        "constructorCalldata": [
+          "0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a",
+          "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+          "0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2"
+        ],
+        "status": "declaration-pending",
+        "protocol": "Vesu V1.1 vSTRK"
+      },
+      "endurHelper": {
+        "address": "0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240",
+        "classHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
+        "compiledClassHash": "0x74f090a448998ae228ea2294d8e007d83174f36ca8498d152b6f4c53692eb05",
+        "salt": "0x46414345545f454e4455525f7631",
+        "constructorCalldata": [
+          "0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a",
+          "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+          "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a"
+        ],
+        "status": "declaration-pending",
+        "protocol": "Endur xSTRK"
       }
     }
   },
@@ -105,12 +131,18 @@
       "kind": "savings",
       "action": "Deposit",
       "tolerates_delay": true,
-      "note": "Every action takes about six minutes to prove. A deposit does not mind the wait: the amount you asked for is the amount that lands.",
-      "contract": "0x451fe483d5921a2919ddd81d0de6696669bccdacd859f72a4fba7656b97c3b5",
-      "contractLabel": "Vesu V2 \u00b7 Prime pool",
-      "entrypoint": "modify_position",
-      "verified": "read from mainnet ABI, 25 Aug 2026",
-      "status": "preview-only",
+      "note": "The live route supplies STRK to Vesu V1.1's Genesis vSTRK vault and returns vSTRK shares as an open note. Vesu positions remain protocol state until an explicit redeem action.",
+      "contract": "0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2",
+      "contractLabel": "Vesu V1.1 \u00b7 Genesis vSTRK",
+      "entrypoint": "deposit",
+      "pool": "0x000d8d6dfec4d33bfb6895de9f3852143a17c6f92fd2a21da3d6924d34870160",
+      "outputToken": "0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2",
+      "outputSymbol": "vSTRK",
+      "helper": "0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6",
+      "helperClassHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
+      "verified": "vSTRK asset(), preview_deposit(), Mainnet ABI, and pinned helper artifact read on 28 Aug 2026; declaration pending",
+      "status": "declaration-pending",
+      "executionPage": "mainnet-defi.html?protocol=vesu",
       "monogram": "Ve",
       "accent": "emerald"
     },
@@ -122,12 +154,17 @@
       "kind": "staking",
       "action": "Stake",
       "tolerates_delay": true,
-      "note": "Preview only until its funded-network rehearsal and receipt are verified; a stake is unaffected by the proving delay.",
+      "note": "The live route supplies STRK to Endur xSTRK and returns xSTRK shares as an open note. The exchange-rate quote is refreshed immediately before approval.",
       "contract": "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
       "contractLabel": "Endur \u00b7 xSTRK",
       "entrypoint": "deposit",
-      "verified": "read from mainnet ABI, 25 Aug 2026",
-      "status": "preview-only",
+      "outputToken": "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
+      "outputSymbol": "xSTRK",
+      "helper": "0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240",
+      "helperClassHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
+      "verified": "asset(), preview_deposit(), Mainnet ABI, and pinned helper artifact read on 28 Aug 2026; declaration pending",
+      "status": "declaration-pending",
+      "executionPage": "mainnet-defi.html?protocol=endur",
       "monogram": "En",
       "accent": "violet"
     },

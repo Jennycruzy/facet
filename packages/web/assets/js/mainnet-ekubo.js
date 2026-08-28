@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
 const MAINNET_CHAIN_IDS = new Set(["SN_MAIN", "0X534E5F4D41494E"]);
-const MAINNET_RPC = "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9";
+const MAINNET_RPC = "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10";
 const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 const ETH = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 const POOL = "0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a";
