@@ -32,7 +32,7 @@ pool.** There is no cap, and more is better evidence.
 |---|---|---|
 | 1 | `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a` | **Done** — 7 STRK eligibility shield through Ready X, block 13,538,709; valid pool evidence but not a Facet DeFi action |
 | 2 | — | A successful Facet Mainnet pool transaction, preferably registration or private deposit, with receipt/event verification |
-| 3 | — | A successful Facet-to-protocol Mainnet action through a shadow account |
+| 3 | — | A successful Mainnet Facet integration action through the reviewed helper/Wallet API path; if the direct shadow-account route is used, its Facet account must be visible in the receipt |
 
 The working target is **four usable hashes** so that the three strongest can be submitted:
 the existing eligibility shield, a Facet setup transaction, the first Facet protocol action,

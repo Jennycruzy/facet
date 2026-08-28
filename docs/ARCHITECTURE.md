@@ -7,10 +7,10 @@ possible.
 
 Status: the private account sequence and the Ekubo adapter are verified on Sepolia; the
 immutable anonymizer and `FacetAccount` are deployed on mainnet. The browser launcher is
-staged locally with wallet binding and in-memory viewing-key derivation, but note discovery,
-browser proving, and submission are not complete. The 7 STRK Ready X eligibility shield is a
-successful Mainnet pool transaction; no Facet shadow-account DeFi receipt has passed Mainnet
-proof-aware preflight yet.
+staged locally with wallet binding and in-memory viewing-key derivation. A separate reviewed
+Wallet API Ekubo page is ready for the Mainnet helper route, but no helper/protocol receipt is
+claimed until it is verified. The 7 STRK Ready X eligibility shield is a successful Mainnet
+pool transaction and remains separate evidence, not Facet DeFi activity.
 
 For the product model and user-facing privacy boundary, see [`PRODUCT.md`](PRODUCT.md).
 
@@ -30,10 +30,10 @@ without changing its value.
 ## Execution authorization
 
 - Initial private-note target: 0.5 STRK, plus fees.
-- Current owner-approved maximum exposure for the mainnet run: 20 STRK total.
+- Current owner-approved maximum exposure for the mainnet run: 40 STRK total.
 - The maximum is a safety ceiling, not a reason to spend the full amount.
 - The current approved test principal is 0.1 STRK for the private deposit and 0.1 STRK for
-  the Ekubo action, plus fees. The 20 STRK ceiling is not an instruction to spend it all.
+  the Ekubo action, plus fees. The 40 STRK ceiling is not an instruction to spend it all.
 
 ## Preflight status
 

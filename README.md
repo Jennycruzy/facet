@@ -243,9 +243,9 @@ What is not built is listed as plainly as what is.
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
 | SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 20 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
-| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, and a staged wallet launcher exist; note discovery, async job service, browser proving/submission, and portfolio view remain to be built |
+| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, a staged EOA launcher, and a reviewed Wallet API Ekubo page exist; the generic async service and portfolio view remain to be built |
 | Mainnet contracts | **deployed** — immutable anonymizer and `FacetAccount`; deployment evidence is in `docs/ARCHITECTURE.md` |
-| Mainnet interaction | **not yet claimed** — the 7 STRK Ready X eligibility shield is verified, but no Facet shadow-account DeFi broadcast has passed proof-aware Mainnet preflight |
+| Mainnet interaction | **not yet claimed** — the 7 STRK Ready X eligibility shield is verified and a wallet-mediated Facet helper route is prepared, but no Facet protocol receipt has yet been verified |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted
@@ -263,8 +263,10 @@ transaction prover and submitted through a self-hosted paymaster:
   named `facet-second`; its one-wei call went to an unrelated `0x…dead` recipient rather
   than the owner. The predicted shadow account is `0x560b1983…e2b8`.
 
-The event-level decode is `docs/FINDINGS.md` §6.17. The application on top of this is not
-built, and nothing here claims otherwise.
+The event-level decode is `docs/FINDINGS.md` §6.17. The direct Facet shadow-account application
+route is not yet a verified Mainnet receipt. A separate reviewed Wallet API page for the Ekubo
+helper is available, but it remains pending the helper deployment and a successful pool/helper/
+protocol receipt; nothing here claims otherwise.
 
 ## Documentation
 

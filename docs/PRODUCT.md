@@ -214,13 +214,14 @@ product layer:
   operational runbooks;
 - fork-backed contract tests and source/chain findings document the behavior.
 
-The staged browser launcher now binds an EOA, derives a viewing key in memory, and previews
-persistent application contexts. Note discovery, a production proving service, browser
-submission, and a Facet-to-protocol Mainnet receipt are still product work. The existing
-eligibility shield is a successful Mainnet STRK20 transaction, but it was made through the
-Ready X wallet and is not evidence that Facet has completed its own DeFi route. Two attempted
-Facet Mainnet proofs were stopped by proof-facts virtual-OS allowlist rejection before
-broadcast; no Facet Mainnet DeFi hash is claimed yet.
+The staged browser launcher binds an EOA, derives a viewing key in memory, and previews
+persistent application contexts. A reviewed Wallet API page now provides the narrow Mainnet
+Ekubo path: Ready X signs and proves the privacy actions, while Facet supplies the allowlisted
+helper and protocol calldata. It is not a direct `FacetAccount`-signer flow, and no Mainnet
+protocol receipt is claimed until the helper deployment and the wallet action each succeed with
+the expected pool, helper, and Ekubo evidence. The existing eligibility shield is a successful
+Mainnet STRK20 transaction, but it was made through the Ready X wallet and is not being relabelled
+as Facet DeFi activity.
 
 The development prover currently takes roughly five to seven minutes on the small reference
 host. That is an infrastructure measurement, not the intended user experience. The intended

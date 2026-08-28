@@ -928,7 +928,7 @@ to the current 27 August test plan:
 
 - use the newly created Sepolia private-transaction account for private transactions;
 - target 0.5 STRK for the initial private note, plus fees;
-- treat 20 STRK as the current maximum total exposure for the approved Mainnet run, not as a
+- treat 40 STRK as the current maximum total exposure for the approved Mainnet run, not as a
   requirement to spend the full amount;
 - approve at most registration, a 0.1 STRK private deposit, and a 0.1 STRK Ekubo action, plus
   gas, subject to the displayed route, amount, recipient, and proof-aware preflight matching;

@@ -66,7 +66,7 @@ proof facts for another pool or network.
 
 The amount is expressed in STRK wei; STRK uses 18 decimals. The cap is a safety ceiling, not
 an amount the script is expected to spend. Set it only to an amount explicitly approved for
-the current run. For the current owner-approved run, the total cap is **20 STRK** and the
+the current run. For the current owner-approved run, the total cap is **40 STRK** and the
 planned private deposit and swap input are each **0.1 STRK**. The cap includes fees and is not
 an instruction to spend the balance.
 
@@ -127,6 +127,20 @@ The remaining Mainnet gate is deposit screening. The live pool requires a fresh 
 in the proof's `additional_data`; the current VPS has no proof-interceptor sidecar or
 `BLOCKING_CHECK_URL`, so the runner stops before spending proof time until an authorized screening
 service is configured.
+
+## Supported wallet-mediated Mainnet path
+
+The direct operator runner above is not the only supported integration boundary. A privacy wallet
+that implements the STRK20 Wallet API can own note discovery, proving, screening, and submission.
+For the reviewed Ekubo path, connect **Ready X on Starknet Mainnet**. The browser submits only
+the fixed action set: withdraw `0.1 STRK` to Facet's deployed stateless helper, create one open
+ETH note for the connected Ready account, and invoke the helper with a freshly checked Ekubo quote.
+
+This route is a Facet integration through the helper and Ekubo call path, but it is not a direct
+`FacetAccount`-signer transaction: the Ready wallet signs and proves it, while the Mainnet Facet
+deployment account is only used to deploy the helper. Do not reuse the existing Ready X eligibility
+shield as a Facet DeFi hash. Record a new hash only after its receipt is successful/finalized and
+contains the Mainnet STRK20 pool event, the Facet helper call, and the Ekubo protocol event.
 
 A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with
 an unintended newline and an environment assignment was split. It does not indicate an
