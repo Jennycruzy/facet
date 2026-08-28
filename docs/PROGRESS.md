@@ -20,17 +20,16 @@ The Mainnet evidence position is:
 | Evidence | State |
 |---|---|
 | Ready X eligibility shield | **Verified** — 7 STRK, `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, successful pool event |
-| Facet Mainnet registration | **Not completed** — four proof attempts were rejected by Mainnet proof-facts compatibility checks before broadcast |
-| Facet Mainnet private deposit | **Not completed** |
+| Facet Mainnet registration | **Not completed** — the compatible proof reached AVNU, but the initial deposit path was rejected because no screening attestation was attached |
+| Facet Mainnet private deposit | **Not completed** — latest AVNU response was `SCREENING_REQUIRED`; no transaction hash returned |
 | Facet Mainnet protocol action | **Not completed** |
 | Mainnet Facet hash count | **Zero qualifying Facet protocol hashes; one qualifying eligibility hash** |
-| Current Mainnet cap | **20 STRK ceiling**, with 0.1 STRK approved for the private deposit and 0.1 STRK for the Ekubo action, plus fees |
+| Current Mainnet cap | **40 STRK ceiling**, with 0.1 STRK approved for the private deposit and 0.1 STRK for the Ekubo action, plus fees |
 
-The rejected proofs consumed proving time but moved no funds. The `0x3e98…` value is only an
-untested source-level PROOF0 candidate; no compatible prover is selected yet. The running VPS
-diagnostic container emits PROOF1, while the deployed Mainnet path expects PROOF0. The next
-run must use a genuine compatible proof-version/hash pair and pass proof-aware preflight
-before any broadcast.
+The rejected proofs consumed proving time but moved no funds. The running VPS
+`facet-prover-gate-a-53f6` container emits the current Mainnet-compatible PROOF1/hash pair. The
+remaining blocker is the live pool's required screening attestation: the VPS has no configured
+proof-interceptor/authorized screener, so the next deposit proof must wait for that service.
 
 The user-facing speed plan is asynchronous proving: a warm worker, opaque job id, visible
 stages, resumable polling, quote/expiry re-checks, and a final review gate. This improves
@@ -145,6 +144,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | **§6.6 sequence executed on Sepolia** | **Done, 25 August 2026** | The first facet succeeded in `0x05faace1d…dedef` and `0x0111b815a…f3693`. A second clean facet named `facet-second` used deposit `0x4cee8465…0a07` and private transaction `0x68510769…6b3a`; shadow `0x560b1983…e2b8` sent 1 wei to `0x…dead`, not the owner, and collected the remainder. The second proof took 400s. Recorded as `FINDINGS.md` §6.17–§6.18. |
 | **Facet contracts on mainnet** | **Done, 25 August 2026** | Immutable anonymizer `0x741fe9dc…63bc`, deployment `0x277a84c5…922`; `FacetAccount` `0x42e9d345…1a45`, deployment `0x4e9305a7…732f`. Production classes were declared first and the immutable ABI was checked for privileged entrypoints. Recorded as `FINDINGS.md` §6.19. |
 | §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
+| **Mainnet screening attestation** | **Blocked, 28 August 2026** | Compatible proof completed, but AVNU returned `SCREENING_REQUIRED`; live pool screener key is configured and the VPS has no `BLOCKING_CHECK_URL`/proof-interceptor deployment. |
 
 ---
 
@@ -232,11 +232,9 @@ Carried forward until answered from a primary source or by the user.
    held the earlier obstacles — a paymaster forwarder missing the private entrypoint and an
    underfunded relayer, both recorded in §6.17.
 
-   The remaining infrastructure question is Mainnet proof-facts compatibility, not whether
-   self-hosting works. Two Mainnet Facet proofs were generated but rejected by the deployed
-   pool's proof-facts compatibility checks before broadcast. The four current failures and the
-   untested PROOF0 candidate are recorded in `FINDINGS.md` §6.20 and must pass exact Facet
-   proof-aware preflight.
+   Mainnet proof-facts compatibility is now answered: the `facet-prover-gate-a-53f6` worker emits
+   the live PROOF1/hash pair and completed the latest proof. The remaining infrastructure question
+   is the production screening attestation source, recorded in `FINDINGS.md` §6.27.
 
    `apply_actions` requires a proof, but no supported hosted Mainnet URL is published in the
    checked SDK/docs/configuration. Self-hosting remains valid: the official `linux/amd64`

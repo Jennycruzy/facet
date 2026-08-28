@@ -54,12 +54,10 @@ records the signed transaction that submits the privacy-pool action.
 
 ## Mainnet proof-version compatibility
 
-The deployed mainnet pool was built for the legacy `PROOF0` proof-facts marker
-(`0x50524f4f4630`). Current upstream prover builds emit `PROOF1`
-(`0x50524f4f4631`) even though the payload fields used by this pool have the same layout.
-The SDK preserves the complete facts returned by the prover and runs a proof-aware preflight
-before broadcasting. If the proof-version/hash pair is incompatible, the script stops before
-submitting a transaction; it does not rewrite proof facts to force acceptance.
+Earlier local checks used the wrong protocol-version conclusion. The live Mainnet 0.14.3 path
+accepts the PROOF1/hash pair emitted by `facet-prover-gate-a-53f6`. The SDK preserves the complete
+facts returned by the prover and refuses any other pair; it does not rewrite proof facts to force
+acceptance.
 
 This compatibility rule is specific to the deployed mainnet pool. Do not blindly rewrite
 proof facts for another pool or network.
@@ -119,12 +117,16 @@ receipt verification
 ```
 
 When `FACET_PROVER_URL` is the default loopback URL, the runner establishes an authenticated
-SSH tunnel from local port `3017` to the VPS prover's loopback port `3100`, checks
+SSH tunnel from a port derived from the selected VPS port, checks
 `starknet_specVersion`, and waits for the selected container to become ready after a restart.
-The current diagnostic container is `facet-prover-gate-a-53f6`; it emits `PROOF1`, which the
-deployed pool currently rejects. Do not run a proof or broadcast from this configuration. A
-genuine PROOF0 prover whose complete facts pass proof-aware preflight is still required. The tunnel is
-operational plumbing for this development runner; it is not the intended user experience.
+The current Mainnet container is `facet-prover-gate-a-53f6` on VPS port `3100`; it emits the
+accepted PROOF1/hash pair. The tunnel is operational plumbing for this development runner; it is
+not the intended user experience.
+
+The remaining Mainnet gate is deposit screening. The live pool requires a fresh screener signature
+in the proof's `additional_data`; the current VPS has no proof-interceptor sidecar or
+`BLOCKING_CHECK_URL`, so the runner stops before spending proof time until an authorized screening
+service is configured.
 
 A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with
 an unintended newline and an environment assignment was split. It does not indicate an

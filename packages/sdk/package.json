@@ -24,6 +24,7 @@
     "gate-a:pool-upgrade": "node scripts/gate-a-pool-upgrade-rc5.mjs",
     "gate-c:ekubo": "node scripts/gate-c-ekubo.mjs",
     "contracts:deploy:mainnet": "node scripts/deploy-facet-mainnet.mjs",
+    "contracts:deploy:ekubo-helper": "node scripts/deploy-ekubo-helper-mainnet.mjs",
     "gate-a:paymaster-setup": "node scripts/gate-a-selfhost-paymaster-setup.mjs",
     "paymaster:refresh": "node scripts/gate-a-selfhost-paymaster-refresh.mjs",
     "paymaster:topup": "node scripts/gate-a-selfhost-paymaster-topup.mjs",

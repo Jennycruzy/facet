@@ -14,6 +14,7 @@ import {
   ec,
   hash,
   num,
+  stark,
 } from "starknet";
 import { keccak_256 } from "@noble/hashes/sha3";
 
@@ -41,11 +42,17 @@ const RPC_URL = process.env.FACET_RPC_URL ?? (IS_MAINNET
   ? "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10"
   : "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10");
 const CHAIN_ID = IS_MAINNET ? constants.StarknetChainId.SN_MAIN : constants.StarknetChainId.SN_SEPOLIA;
-const PROVER_URL = process.env.FACET_PROVER_URL ?? "http://127.0.0.1:3017";
 const PROVER_SSH_HOST = process.env.FACET_PROVER_SSH_HOST ?? "root@38.49.216.59";
 const PROVER_SSH_KEY = process.env.FACET_PROVER_SSH_KEY ?? "/Users/user/.ssh/devfun_jennycruzy";
 const PROVER_REMOTE_PORT = Number(process.env.FACET_PROVER_REMOTE_PORT ?? "3100");
-const PROVER_CONTAINER = process.env.FACET_PROVER_CONTAINER ?? "facet-prover-gate-a";
+// Keep detached SSH forwards for different VPS workers on different local ports. A
+// prior run may have left a healthy tunnel open, but health alone does not identify
+// which remote worker it targets.
+const PROVER_LOCAL_PORT = process.env.FACET_PROVER_LOCAL_PORT
+  ?? String(30_000 + PROVER_REMOTE_PORT);
+const PROVER_URL = process.env.FACET_PROVER_URL ?? `http://127.0.0.1:${PROVER_LOCAL_PORT}`;
+const PROVER_CONTAINER = process.env.FACET_PROVER_CONTAINER
+  ?? (IS_MAINNET ? "facet-prover-gate-a-53f6" : "facet-prover-gate-a");
 
 const SEPOLIA_GATE_DIR = "/Users/user/.facet-secrets/starknet-gate-a-new";
 const MAINNET_GATE_DIR = "/Users/user/.facet-secrets/starknet-gate2";
@@ -89,11 +96,18 @@ const NONCE = BigInt(process.env.FACET_GATE_C_NONCE ?? "0");
 const SLIPPAGE_BPS = BigInt(process.env.FACET_GATE_C_SLIPPAGE_BPS ?? "1000");
 const MAX_MAINNET_SPEND_STRK = BigInt(process.env.FACET_MAINNET_MAX_SPEND_STRK ?? "5");
 const MAINNET_PREFLIGHT_ONLY = process.env.FACET_MAINNET_PREFLIGHT_ONLY === "1";
+const MAINNET_PAYMASTER_URL = process.env.FACET_MAINNET_PAYMASTER_URL
+  ?? "https://starknet.paymaster.avnu.fi";
+const MAINNET_PAYMASTER_MODE = process.env.FACET_MAINNET_PAYMASTER_MODE ?? "default";
 const MAX_MAINNET_SPEND = MAX_MAINNET_SPEND_STRK * 1_000_000_000_000_000_000n;
-const MAINNET_FEE_SAFETY_PERCENT = 20n;
-let mainnetPriorFeesWei = 0n;
-let mainnetPrincipalWei = SWAP_AMOUNT;
-let mainnetGateEstimate;
+// Starknet Mainnet currently runs the 0.14.3 protocol constants. The node validates
+// these facts before the privacy pool is called, so reject a worker from the legacy
+// 0.14.2/PROOF0 generation path before handing a proof to the paymaster.
+const MAINNET_PROOF_VERSION = "0x50524f4f4631"; // PROOF1
+const MAINNET_VIRTUAL_OS_PROGRAM_HASH =
+  "0x53f6c9fcfd31d27279ff7d7e422b44623550a732b59fe193354a7316a96daa1";
+const MAINNET_SCREENING_READY = process.env.FACET_MAINNET_SCREENING_READY === "1";
+let poolFeeWei = 0n;
 if (SWAP_AMOUNT <= 0n) throw new Error("FACET_GATE_C_AMOUNT must be positive.");
 if (DEPOSIT_AMOUNT < SWAP_AMOUNT) {
   throw new Error("FACET_GATE_C_DEPOSIT_AMOUNT must cover FACET_GATE_C_AMOUNT.");
@@ -158,27 +172,6 @@ function decryptKeystore(keystore, password) {
 const first = (values) => values[0];
 const hex = (value) => `0x${BigInt(value).toString(16)}`;
 const u256 = (value) => [hex(value & ((1n << 128n) - 1n)), hex(value >> 128n)];
-
-function padResourceBounds(resourceBounds, percent = MAINNET_FEE_SAFETY_PERCENT) {
-  const pad = (value) => {
-    const amount = BigInt(value);
-    return amount + amount * percent / 100n;
-  };
-  return {
-    l1_gas: {
-      max_amount: pad(resourceBounds.l1_gas.max_amount),
-      max_price_per_unit: pad(resourceBounds.l1_gas.max_price_per_unit),
-    },
-    l1_data_gas: {
-      max_amount: pad(resourceBounds.l1_data_gas.max_amount),
-      max_price_per_unit: pad(resourceBounds.l1_data_gas.max_price_per_unit),
-    },
-    l2_gas: {
-      max_amount: pad(resourceBounds.l2_gas.max_amount),
-      max_price_per_unit: pad(resourceBounds.l2_gas.max_price_per_unit),
-    },
-  };
-}
 
 function deriveViewingKey(privateKey, address) {
   const messageHash = hash.starknetKeccak(`${CHAIN_ID}:${pool}`);
@@ -311,7 +304,7 @@ async function ensureProverTunnel() {
 
   for (let attempt = 1; attempt <= 36; attempt += 1) {
     if (await proverHealthCheck()) {
-      console.log(`Prover tunnel ready on ${PROVER_URL}.`);
+      console.log(`Prover tunnel ready on ${PROVER_URL} -> VPS port ${PROVER_REMOTE_PORT}.`);
       return;
     }
     await delay(5_000);
@@ -363,15 +356,45 @@ async function proveWithCurl(invocation) {
   const proofFacts = [...(result.proof_facts ?? [])];
   // Preserve the proof facts emitted by the prover. The proof-version marker
   // and virtual OS hash are a versioned pair; rewriting only the marker makes
-  // the proof facts internally inconsistent. Let Mainnet proof-aware preflight
-  // validate the original pair instead of trying to make an incompatible
-  // prover response look like the deployed pool's legacy format.
+  // the proof facts internally inconsistent. Validate the original pair against
+  // the current Mainnet protocol instead of trying to make an incompatible
+  // prover response look like an older format.
+  if (IS_MAINNET) {
+    const proofVersion = String(proofFacts[0] ?? "").toLowerCase();
+    const virtualOsHash = String(proofFacts[2] ?? "").toLowerCase();
+    if (proofVersion !== MAINNET_PROOF_VERSION || virtualOsHash !== MAINNET_VIRTUAL_OS_PROGRAM_HASH) {
+      throw new Error(
+        "Mainnet prover emitted an incompatible proof-facts pair: "
+        + `version ${proofFacts[0] ?? "missing"}, virtual OS ${proofFacts[2] ?? "missing"}; `
+        + `expected ${MAINNET_PROOF_VERSION} / ${MAINNET_VIRTUAL_OS_PROGRAM_HASH}. `
+        + "Use the Mainnet 0.14.3-compatible prover worker.",
+      );
+    }
+  }
   return {
     data: result.proof,
     output: poolMessage?.payload ?? [],
     proofFacts,
     additionalData: result.additional_data,
   };
+}
+
+function requireMainnetScreeningAttestation(proofResult, label) {
+  if (!IS_MAINNET) return;
+  const signature = proofResult?.callAndProof?.proof?.additionalData?.signature;
+  if (
+    !signature
+    || signature.issued_at === undefined
+    || signature.sig_r === undefined
+    || signature.sig_s === undefined
+  ) {
+    throw new Error(
+      `${label} proof completed without a Mainnet screening attestation. `
+      + "The live privacy pool requires a fresh screener signature for the initial deposit. "
+      + "Configure the prover with the official screening sidecar and set "
+      + "FACET_MAINNET_SCREENING_READY=1 only after its /health and /metrics checks pass.",
+    );
+  }
 }
 
 function toPaymasterCall(call) {
@@ -383,9 +406,11 @@ function toPaymasterCall(call) {
 }
 
 async function paymasterRpc(url, apiKey, method, params) {
+  const headers = { "Content-Type": "application/json" };
+  if (apiKey) headers["x-paymaster-api-key"] = apiKey;
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-paymaster-api-key": apiKey },
+    headers,
     body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
     signal: AbortSignal.timeout(60_000),
   });
@@ -395,6 +420,56 @@ async function paymasterRpc(url, apiKey, method, params) {
   }`);
   if (body.result === undefined) throw new Error(`${method}: malformed response`);
   return body.result;
+}
+
+function paymasterParameters(mode) {
+  if (mode === "default") {
+    return {
+      version: "0x1",
+      fee_mode: { mode, gas_token: STRK, tip: "normal" },
+    };
+  }
+  return {
+    version: "0x1",
+    fee_mode: { mode, pool_fee_token: STRK, tip: "normal" },
+  };
+}
+
+async function buildPaymasterTransaction(url, apiKey, parameters, transaction) {
+  return paymasterRpc(url, apiKey, "paymaster_buildTransaction", {
+    transaction,
+    parameters,
+  });
+}
+
+async function submitPaymasterProof(provider, url, apiKey, parameters, result, label, invoke) {
+  if (IS_MAINNET && process.env.FACET_ALLOW_MAINNET_BROADCAST !== "1") {
+    throw new Error(
+      `${label} is ready but mainnet broadcast is disabled. ` +
+      "Set FACET_ALLOW_MAINNET_BROADCAST=1 only after reviewing the displayed amount, recipient, and calldata.",
+    );
+  }
+  const proofFacts = result.callAndProof.proof.proofFacts;
+  if (!Array.isArray(proofFacts) || proofFacts.length === 0) {
+    throw new Error(`${label} proof has no proof_facts; refusing to submit.`);
+  }
+  const applyAction = {
+    apply_actions_call: toPaymasterCall(result.callAndProof.call),
+    proof: result.callAndProof.proof.data,
+    proof_facts: proofFacts,
+  };
+  const transaction = invoke
+    ? { type: "invoke_and_apply_action", apply_action: applyAction, invoke }
+    : { type: "apply_action", apply_action: applyAction };
+  console.log(`Submitting ${label} through the privacy paymaster with ${proofFacts.length} proof facts...`);
+  const submission = await paymasterRpc(url, apiKey, "paymaster_executeTransaction", {
+    transaction,
+    parameters,
+  });
+  if (!submission.transaction_hash) throw new Error(`${label}: paymaster returned no transaction hash.`);
+  console.log(`${label} transaction submitted through paymaster: ${submission.transaction_hash}`);
+  await waitForSuccess(provider, submission.transaction_hash, label);
+  return submission.transaction_hash;
 }
 
 async function waitForSuccess(provider, transactionHash, label) {
@@ -412,100 +487,6 @@ async function waitForSuccess(provider, transactionHash, label) {
   return receipt;
 }
 
-async function simulateDirectInvoke(account, callAndProof, label) {
-  // Cartridge currently rejects proof-aware starknet_estimateFee requests by
-  // dropping proof_facts before executing the pool call. The simulation RPC
-  // preserves them and returns the resource bounds needed for the real V3
-  // submission, so use it for fee estimation on mainnet.
-  const simulation = await account.simulateTransaction([{
-    type: TransactionType.INVOKE,
-    payload: [callAndProof.call],
-  }], {
-    proofFacts: callAndProof.proof.proofFacts,
-    tip: 1n,
-    skipValidate: true,
-  });
-  const result = simulation.simulated_transactions?.[0];
-  if (!result?.resourceBounds) throw new Error(`${label} returned no resource bounds.`);
-  const overallFee = BigInt(result.overall_fee ?? result.overallFee ?? 0);
-  console.log(
-    `${label} fee estimate: ${overallFee} wei STRK ` +
-    `(${Number(overallFee) / 1e18} STRK).`,
-  );
-  return {
-    overallFee,
-    budgetFee: overallFee * (100n + MAINNET_FEE_SAFETY_PERCENT) / 100n,
-    resourceBounds: padResourceBounds(result.resourceBounds),
-  };
-}
-
-async function buildSignedProofTransaction(account, callAndProof, details, label) {
-  const signed = await account.getSignedTransaction(callAndProof.call, {
-    ...details,
-    proofFacts: callAndProof.proof.proofFacts,
-    proof: callAndProof.proof.data,
-  });
-  const proofFacts = signed.proof_facts ?? signed.proofFacts;
-  if (!Array.isArray(proofFacts) || proofFacts.length === 0) {
-    throw new Error(`${label} signed transaction has no proof_facts; refusing to broadcast.`);
-  }
-  console.log(`${label} signed transaction contains ${proofFacts.length} proof facts.`);
-  console.log(`${label} proof facts: version ${proofFacts[0]}; virtual OS ${proofFacts[2]}.`);
-  return signed;
-}
-
-async function preflightProofActions(account, callAndProof, details, label) {
-  console.log(`Preflighting ${label} proof facts and apply_actions...`);
-  const signed = await buildSignedProofTransaction(account, callAndProof, details, label);
-  const response = await fetch(RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: Date.now(),
-      method: "starknet_simulateTransactions",
-      // Starknet JSON-RPC v0.10 uses an object (not a one-element params
-      // array) for this method, matching starknet.js's channel request.
-      params: {
-        block_id: "latest",
-        transactions: [signed],
-        simulation_flags: ["SKIP_VALIDATE", "SKIP_FEE_CHARGE"],
-      },
-    }),
-    signal: AbortSignal.timeout(60_000),
-  });
-  const body = await response.json();
-  if (body.error) {
-    throw new Error(`${label} proof-aware preflight failed: ${JSON.stringify(body.error)}`);
-  }
-  const trace = body.result?.[0];
-  const executeInvocation = trace?.transaction_trace?.execute_invocation
-    ?? trace?.transactionTrace?.executeInvocation;
-  const revertReason = executeInvocation?.revert_reason ?? executeInvocation?.revertReason;
-  if (revertReason) throw new Error(`${label} proof-aware preflight reverted: ${revertReason}`);
-  if (trace?.execution_status === "REVERTED" || trace?.executionStatus === "REVERTED") {
-    throw new Error(`${label} proof-aware preflight reverted: ${JSON.stringify(trace)}`);
-  }
-  console.log(`${label} proof-aware preflight passed.`);
-  return signed;
-}
-
-async function submitSignedProofTransaction(provider, signed, label) {
-  const proofFacts = signed.proof_facts ?? signed.proofFacts;
-  if (!Array.isArray(proofFacts) || proofFacts.length === 0) {
-    throw new Error(`${label} signed transaction has no proof_facts; refusing to broadcast.`);
-  }
-  if (IS_MAINNET && process.env.FACET_ALLOW_MAINNET_BROADCAST !== "1") {
-    throw new Error(
-      `${label} is ready but mainnet broadcast is disabled. ` +
-      "Set FACET_ALLOW_MAINNET_BROADCAST=1 only after reviewing the displayed amount, recipient, and calldata.",
-    );
-  }
-  const sent = await provider.invokeSignedTx(signed);
-  console.log(`${label} transaction submitted: ${sent.transaction_hash}`);
-  return sent;
-}
-
 const accountInfo = JSON.parse(await readFile(ACCOUNT_FILE, "utf8"));
 const keystore = JSON.parse(await readFile(KEYSTORE_FILE, "utf8"));
 const password = await promptHidden(`Enter ${IS_MAINNET ? "mainnet" : "Gate A"} keystore password for Gate C: `);
@@ -518,8 +499,19 @@ if (BigInt(ec.starkCurve.getStarkKey(privateKey)) !== BigInt(accountInfo.variant
 let anonymizer = IS_MAINNET ? MAINNET_ANONYMIZER : SEPOLIA_ANONYMIZER;
 let paymasterUrl;
 let paymasterApiKey;
+let paymasterFeeParameters;
 let usePaymaster = false;
-if (!IS_MAINNET && process.env.FACET_USE_SELFHOST !== "0") {
+if (IS_MAINNET) {
+  if (!["default", "sponsored", "sponsored_private"].includes(MAINNET_PAYMASTER_MODE)) {
+    throw new Error(
+      "FACET_MAINNET_PAYMASTER_MODE must be default, sponsored, or sponsored_private.",
+    );
+  }
+  paymasterUrl = MAINNET_PAYMASTER_URL;
+  paymasterApiKey = process.env.FACET_MAINNET_PAYMASTER_API_KEY;
+  paymasterFeeParameters = paymasterParameters(MAINNET_PAYMASTER_MODE);
+  usePaymaster = true;
+} else if (process.env.FACET_USE_SELFHOST !== "0") {
   if (!existsSync(SELFHOST_CLIENT_FILE) || !existsSync(TEST_POOL_FILE)) {
     throw new Error(`Self-hosted Sepolia paymaster files are missing: ${SELFHOST_CLIENT_FILE}`);
   }
@@ -529,15 +521,14 @@ if (!IS_MAINNET && process.env.FACET_USE_SELFHOST !== "0") {
   anonymizer = testPool.anonymizerAddress;
   paymasterUrl = client.localUrl;
   paymasterApiKey = client.apiKey;
+  paymasterFeeParameters = paymasterParameters("sponsored_private");
   usePaymaster = true;
 }
 if (process.env.FACET_POOL_ADDRESS) pool = process.env.FACET_POOL_ADDRESS;
 if (process.env.FACET_ANONYMIZER_ADDRESS) anonymizer = process.env.FACET_ANONYMIZER_ADDRESS;
 
-// Starknet.js defaults to +50% on both resource amounts and prices. That is
-// useful for generic wallet sends but overstates this proof transaction enough
-// to trip the user's configured mainnet authorization. Use raw simulation values and the
-// smaller explicit margin applied by simulateDirectInvoke.
+// The paymaster owns network-fee estimation and submission for proof-bearing calls.
+// The account is still used locally for typed-data signatures and read-only checks.
 const provider = new RpcProvider({ nodeUrl: RPC_URL, resourceBoundsOverhead: false });
 const chainId = await provider.getChainId();
 if (BigInt(chainId) !== BigInt(CHAIN_ID)) throw new Error(`Wrong network: ${chainId}`);
@@ -569,6 +560,16 @@ console.log(`Anonymizer: ${anonymizer}`);
 console.log(`Dapp name: ${DAPP_NAME}; nonce: ${NONCE}`);
 console.log(`Ekubo Router: ${ROUTER}`);
 console.log(`Swap input: ${SWAP_AMOUNT} wei STRK`);
+if (usePaymaster) {
+  console.log(`Privacy paymaster: ${paymasterUrl}; fee mode: ${paymasterFeeParameters.fee_mode.mode}`);
+}
+
+poolFeeWei = BigInt(first(await provider.callContract({
+  contractAddress: pool,
+  entrypoint: "get_fee_amount",
+  calldata: [],
+})));
+console.log(`Pool fee: ${poolFeeWei} wei STRK (${Number(poolFeeWei) / 1e18} STRK per apply_actions).`);
 
 const discovery = new ContractDiscoveryProvider(makePoolViews(provider));
 const provingDetails = new ProvingServiceProofProvider(
@@ -663,11 +664,11 @@ let usable = notes.filter((note) => note.amount >= SWAP_AMOUNT)
   .sort((a, b) => Number(a.amount - b.amount));
 console.log(`Discovered ${notes.length} unspent STRK note(s); usable note: ${usable[0] ? hex(usable[0].id) : "none"}.`);
 
-// Registration writes are emitted as deferred pool actions. The pool's compiler
-// cannot read that write while compiling a later OpenChannel in the same virtual
-// transaction, so a brand-new mainnet account must register first and only then
-// open its self-channel/deposit. This is deliberately a separate proof and
-// transaction; combining the two produces SENDER_NOT_REGISTERED before proving.
+// A proof-bearing Mainnet call must go through the privacy paymaster. The public
+// starknet_addInvokeTransaction path accepts the JSON but drops proof_facts before
+// execution, which makes the pool reject the call with EMPTY_PROOF_FACTS. A new
+// account therefore uses AVNU's invoke_and_apply_action flow to combine the public
+// approve with registration, channel setup, deposit, and the first private fee reserve.
 const ownerPublicKey = BigInt(first(await provider.callContract({
   contractAddress: pool,
   entrypoint: "get_public_key",
@@ -679,168 +680,162 @@ if (IS_MAINNET && MAINNET_PREFLIGHT_ONLY) {
   console.log("Mainnet preflight passed without proving or broadcasting.");
   process.exit(0);
 }
-if (IS_MAINNET && ownerPublicKey === 0n) {
-  console.log("Mainnet account is not registered in the privacy pool; registering it in a separate transaction first...");
-  // Keep the read-only simulation from mutating the registry that will be used
-  // to build the real registration proof. The simulator adds a synthetic
-  // self-channel for SetViewingKey; reusing that object would make the second
-  // compilation think the account was already registered.
-  const registrationBuilder = transfers.build({
-    registry: discovered,
-    registryConst: true,
-  }).register();
-  const registrationSimulation = await registrationBuilder.simulate({
-    node: provider,
-    validateSignature: false,
-  });
-  const registrationEstimate = await simulateDirectInvoke(
-    account,
-    registrationSimulation.callAndProof,
-    "Read-only mainnet registration",
-  );
-  if (mainnetPrincipalWei + mainnetPriorFeesWei + registrationEstimate.budgetFee >= MAX_MAINNET_SPEND) {
-    throw new Error(
-      `Registration fee estimate reaches the ${MAX_MAINNET_SPEND_STRK} STRK cap: ` +
-      `${mainnetPrincipalWei + mainnetPriorFeesWei + registrationEstimate.budgetFee} wei.`,
-    );
-  }
+if (IS_MAINNET && !usePaymaster) {
+  throw new Error("Mainnet proof actions require the AVNU privacy paymaster; direct RPC submission is disabled.");
+}
 
-  await recycleLocalProver("mainnet registration");
-  const registrationInvocation = await registrationBuilder.createProofInvocation();
-  await preflightInvocation(provider, registrationInvocation.invocation, "Mainnet registration");
-  const registrationStarted = Date.now();
-  const registrationResult = await transfers.executeWithInvocation(registrationInvocation);
-  const registrationProofSeconds = Math.round((Date.now() - registrationStarted) / 1000);
-  console.log(`Mainnet registration proof wall time: ${registrationProofSeconds}s`);
-  const registrationDetails = {
-    tip: 1n,
-    resourceBounds: registrationEstimate.resourceBounds,
-  };
-  const registrationSigned = await preflightProofActions(
-    account,
-    registrationResult.callAndProof,
-    registrationDetails,
-    "Mainnet registration",
-  );
-  const registrationSent = await submitSignedProofTransaction(
-    provider,
-    registrationSigned,
-    "Mainnet registration",
-  );
-  const registrationReceipt = await waitForSuccess(
-    provider,
-    registrationSent.transaction_hash,
-    "Mainnet registration",
-  );
-  const registrationActualFee = "actual_fee" in registrationReceipt
-    ? registrationReceipt.actual_fee
-    : registrationReceipt.actualFee;
-  const registrationFeeWei = registrationActualFee
-    ? BigInt(registrationActualFee.amount ?? registrationActualFee)
-    : registrationEstimate.overallFee;
-  const registeredPublicKey = BigInt(first(await provider.callContract({
-    contractAddress: pool,
-    entrypoint: "get_public_key",
-    calldata: [address],
-  })));
-  if (registeredPublicKey === 0n) {
-    throw new Error("Mainnet registration receipt succeeded, but the privacy pool still has no public key for the account.");
+let depositResult;
+let depositTx;
+let gateQuote;
+if (usePaymaster) {
+  if (IS_MAINNET) {
+    const paymasterAvailable = await paymasterRpc(
+      paymasterUrl,
+      paymasterApiKey,
+      "paymaster_isAvailable",
+      {},
+    );
+    if (!paymasterAvailable) throw new Error(`Privacy paymaster is unavailable at ${paymasterUrl}.`);
   }
-  mainnetPriorFeesWei += registrationFeeWei;
-  transfers.invalidateProofNonceCache();
-  console.log(`Mainnet registration transaction: ${registrationSent.transaction_hash}`);
-  console.log(`Mainnet registration fee: ${registrationFeeWei} wei STRK`);
+  gateQuote = await buildPaymasterTransaction(
+    paymasterUrl,
+    paymasterApiKey,
+    paymasterFeeParameters,
+    { type: "apply_action", apply_action: { pool_address: pool } },
+  );
+  if (!gateQuote.fee_action) throw new Error("Privacy paymaster returned an incomplete Gate C quote.");
+  if (BigInt(gateQuote.fee_action.token) !== BigInt(STRK)) {
+    throw new Error(`Gate C fee token is not STRK: ${gateQuote.fee_action.token}`);
+  }
+  console.log(
+    `Privacy paymaster Gate C fee reserve: ${gateQuote.fee_action.amount} wei STRK ` +
+    `(${Number(BigInt(gateQuote.fee_action.amount)) / 1e18} STRK).`,
+  );
 }
 
 if (!usable[0]) {
-  if (!IS_MAINNET) {
+  if (!usePaymaster) {
     throw new Error(
       `No private STRK note covers ${SWAP_AMOUNT} wei on ${NETWORK}. ` +
-      "Gate C stopped before proving; a separate private deposit is required.",
+      "Gate C stopped before proving; a paymaster-backed deposit is required.",
+    );
+  }
+  if (IS_MAINNET && !MAINNET_SCREENING_READY) {
+    throw new Error(
+      "Mainnet initial private deposit requires a screening attestation. "
+      + "The current prover has no screening sidecar configured, so refusing to spend proof time. "
+      + "Deploy the official screening sidecar backed by the authorized Mainnet screener, "
+      + "verify its /health and /metrics endpoints, then set FACET_MAINNET_SCREENING_READY=1.",
     );
   }
 
-  // Mainnet has no sponsored/private-deposit helper. If the selected mainnet
-  // account has no input note, create the exact private input here, then reuse
-  // the resulting registry for Gate C. This keeps the user's one-command flow
-  // while ensuring the configured authorization is checked before Gate C submits.
-  console.log(`No mainnet input note; creating a ${DEPOSIT_AMOUNT} wei private STRK deposit first...`);
+  async function quoteDeposit(approvalAmount) {
+    return buildPaymasterTransaction(
+      paymasterUrl,
+      paymasterApiKey,
+      paymasterFeeParameters,
+      {
+        type: "invoke_and_apply_action",
+        apply_action: { pool_address: pool },
+        invoke: {
+          user_address: address,
+          calls: [{
+            to: STRK,
+            selector: hash.getSelectorFromName("approve"),
+            calldata: [pool, ...u256(approvalAmount)],
+          }],
+        },
+      },
+    );
+  }
+
+  // The first private note must fund both the requested swap input and the
+  // paymaster withdrawals for the deposit and the later Gate C action.
+  let depositAmount = DEPOSIT_AMOUNT + BigInt(gateQuote.fee_action.amount);
+  let depositQuote;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    depositQuote = await quoteDeposit(depositAmount + poolFeeWei);
+    if (!depositQuote.fee_action || !depositQuote.typed_data) {
+      throw new Error("Privacy paymaster returned an incomplete private-deposit quote.");
+    }
+    if (BigInt(depositQuote.fee_action.token) !== BigInt(STRK)) {
+      throw new Error(`Private-deposit fee token is not STRK: ${depositQuote.fee_action.token}`);
+    }
+    const quotedAmount = DEPOSIT_AMOUNT
+      + BigInt(gateQuote.fee_action.amount)
+      + BigInt(depositQuote.fee_action.amount);
+    if (quotedAmount === depositAmount) break;
+    depositAmount = quotedAmount;
+    depositQuote = undefined;
+  }
+  if (!depositQuote) throw new Error("Privacy paymaster private-deposit fee quote did not stabilize.");
+
+  const transparentSpend = depositAmount + poolFeeWei;
+  if (IS_MAINNET && transparentSpend >= MAX_MAINNET_SPEND) {
+    throw new Error(
+      `The initial Mainnet deposit plus its pool fee reaches the authorized ` +
+      `${MAX_MAINNET_SPEND_STRK} STRK ceiling: ${transparentSpend} wei.`,
+    );
+  }
+  if (balance < transparentSpend) {
+    throw new Error(`Initial Mainnet deposit needs ${transparentSpend} wei STRK but only ${balance} wei is available.`);
+  }
+  console.log(`Initial private deposit (swap input + both paymaster fee reserves): ${depositAmount} wei STRK.`);
+  console.log(`User-signed public approval amount: ${transparentSpend} wei STRK.`);
+
   const depositBuilder = transfers.build({
-    // Registration, when needed, was submitted above. Keep this transaction
-    // focused on channel setup plus the deposit.
-    autoRegister: false,
+    autoRegister: ownerPublicKey === 0n,
     autoSetup: true,
     autoDiscover: { notes: "refresh", channels: "refresh" },
     registry: discovered,
     registryConst: true,
   });
-  depositBuilder.with(STRK).deposit({ amount: DEPOSIT_AMOUNT });
-  const depositSimulation = await depositBuilder.simulate({ node: provider, validateSignature: false });
-  const depositEstimate = await simulateDirectInvoke(
-    account,
-    depositSimulation.callAndProof,
-    "Read-only mainnet private-deposit",
-  );
-  const depositFeeEstimate = depositEstimate.overallFee;
-  if (DEPOSIT_AMOUNT + mainnetPriorFeesWei + depositEstimate.budgetFee >= MAX_MAINNET_SPEND) {
-    throw new Error(
-      `Private deposit estimate plus safety margin reaches the ${MAX_MAINNET_SPEND_STRK} STRK cap: ` +
-      `${DEPOSIT_AMOUNT + mainnetPriorFeesWei + depositEstimate.budgetFee} wei.`,
-    );
+  depositBuilder.with(STRK).deposit({ amount: depositAmount });
+  const depositFeeAmount = BigInt(depositQuote.fee_action.amount);
+  if (depositFeeAmount > 0n) {
+    depositBuilder.with(depositQuote.fee_action.token).withdraw({
+      recipient: depositQuote.fee_action.recipient,
+      amount: depositFeeAmount,
+    });
   }
 
-  await recycleLocalProver("mainnet private deposit");
+  await recycleLocalProver(IS_MAINNET ? "Mainnet private deposit + registration" : "private deposit");
   const depositInvocation = await depositBuilder.createProofInvocation();
-  await preflightInvocation(provider, depositInvocation.invocation, "Mainnet private deposit");
+  await preflightInvocation(provider, depositInvocation.invocation, "Private deposit");
   const depositStarted = Date.now();
-  const depositResult = await transfers.executeWithInvocation(depositInvocation);
-  const depositProofSeconds = Math.round((Date.now() - depositStarted) / 1000);
-  console.log(`Mainnet private-deposit proof wall time: ${depositProofSeconds}s`);
-  const depositDetails = {
-    tip: 1n,
-    resourceBounds: depositEstimate.resourceBounds,
-  };
-  const depositFee = depositFeeEstimate;
-  if (DEPOSIT_AMOUNT + mainnetPriorFeesWei + depositFee >= MAX_MAINNET_SPEND) {
-    throw new Error(
-      `Private deposit final fee reaches the ${MAX_MAINNET_SPEND_STRK} STRK cap: ` +
-      `${DEPOSIT_AMOUNT + mainnetPriorFeesWei + depositFee} wei.`,
-    );
-  }
-  const depositSigned = await preflightProofActions(
-    account,
-    depositResult.callAndProof,
-    depositDetails,
-    "Mainnet private deposit",
+  depositResult = await transfers.executeWithInvocation(depositInvocation);
+  console.log(`Private-deposit proof wall time: ${Math.round((Date.now() - depositStarted) / 1000)}s`);
+  requireMainnetScreeningAttestation(
+    depositResult,
+    IS_MAINNET ? "Mainnet private deposit + registration" : "Private deposit",
   );
-  const depositSent = await submitSignedProofTransaction(
+  const depositSignature = stark.signatureToHexArray(
+    await baseSigner.signMessage(depositQuote.typed_data, address),
+  );
+  depositTx = await submitPaymasterProof(
     provider,
-    depositSigned,
-    "Mainnet private deposit",
+    paymasterUrl,
+    paymasterApiKey,
+    paymasterFeeParameters,
+    depositResult,
+    IS_MAINNET ? "Mainnet private deposit + registration" : "Private deposit",
+    {
+      user_address: address,
+      typed_data: depositQuote.typed_data,
+      signature: depositSignature,
+    },
   );
-  const depositReceipt = await waitForSuccess(provider, depositSent.transaction_hash, "Mainnet private deposit");
-  const actualDepositFee = "actual_fee" in depositReceipt
-    ? depositReceipt.actual_fee
-    : depositReceipt.actualFee;
-  const actualDepositFeeWei = actualDepositFee
-    ? BigInt(actualDepositFee.amount ?? actualDepositFee)
-    : depositFee;
-  console.log(`Mainnet private deposit transaction: ${depositSent.transaction_hash}`);
 
-  // The deposit proof result contains the note registry created by the SDK.
-  // Invalidate the proof nonce cache before constructing the second proof.
+  // The proof result contains the note registry created by the SDK. Refresh the
+  // proof nonce before constructing the next proof, since the first apply_actions
+  // has now been accepted by the pool.
   transfers.invalidateProofNonceCache();
   discovered = depositResult.registry;
   notes = discovered.notes.get(BigInt(STRK)) ?? [];
   usable = notes.filter((note) => note.amount >= SWAP_AMOUNT)
     .sort((a, b) => Number(a.amount - b.amount));
   console.log(`Private deposit note: ${usable[0] ? hex(usable[0].id) : "none"} (${usable[0]?.amount ?? 0} wei).`);
-  if (!usable[0]) throw new Error("Mainnet private deposit returned no usable STRK note.");
-
-  // The deposit amount is the source of the later swap input, so it must not
-  // be counted twice in the authorization check.
-  mainnetPriorFeesWei += actualDepositFeeWei;
-  mainnetPrincipalWei = DEPOSIT_AMOUNT;
+  if (!usable[0]) throw new Error("Private deposit returned no usable STRK note.");
 }
 
 const ownerChannel = discovered.channels.get(BigInt(address));
@@ -876,6 +871,15 @@ gateBuilder.shadowAccounts(DAPP_NAME).invoke(NONCE, {
   calls: routerCalls,
   collectPolicy: { type: "all" },
 });
+if (usePaymaster) {
+  const gateFeeAmount = BigInt(gateQuote.fee_action.amount);
+  if (gateFeeAmount > 0n) {
+    gateBuilder.with(gateQuote.fee_action.token).withdraw({
+      recipient: gateQuote.fee_action.recipient,
+      amount: gateFeeAmount,
+    });
+  }
+}
 
 console.log("Gate C call sequence: private STRK note -> shadow account -> Ekubo swap -> private STRK/ETH notes.");
 console.log(`Calls: STRK.transfer(${ROUTER}) -> Router.swap -> Router.clear_minimum(ETH).`);
@@ -883,68 +887,27 @@ await recycleLocalProver("Gate C");
 const invocation = await gateBuilder.createProofInvocation();
 await preflightInvocation(provider, invocation.invocation, "Gate C");
 
-// On mainnet, estimate the real apply_actions transaction with mock proof facts before spending
-// minutes proving. Sepolia uses the already configured proof-aware paymaster path instead.
-if (IS_MAINNET) {
-  const simulated = await gateBuilder.simulate({ node: provider, validateSignature: false });
-  mainnetGateEstimate = await simulateDirectInvoke(
-    account,
-    simulated.callAndProof,
-    "Read-only mainnet apply_actions",
-  );
-  if (mainnetPrincipalWei + mainnetPriorFeesWei + mainnetGateEstimate.budgetFee >= MAX_MAINNET_SPEND) {
-    throw new Error(
-      `Fee estimates plus the private input reach the ${MAX_MAINNET_SPEND_STRK} STRK cap: ` +
-      `${mainnetPrincipalWei + mainnetPriorFeesWei + mainnetGateEstimate.budgetFee} wei.`,
-    );
-  }
-}
-
 const started = Date.now();
 const result = await transfers.executeWithInvocation(invocation);
 const proofSeconds = Math.round((Date.now() - started) / 1000);
 console.log(`Proof wall time: ${proofSeconds}s`);
 
 let transactionHash;
-let feeWei = null;
 if (usePaymaster) {
-  const paymasterParameters = {
-    version: "0x1",
-    fee_mode: { mode: "sponsored_private", pool_fee_token: STRK, tip: "normal" },
-  };
-  const applyAction = {
-    apply_actions_call: toPaymasterCall(result.callAndProof.call),
-    proof: result.callAndProof.proof.data,
-    proof_facts: result.callAndProof.proof.proofFacts,
-  };
-  const submission = await paymasterRpc(paymasterUrl, paymasterApiKey, "paymaster_executeTransaction", {
-    transaction: { type: "apply_action", apply_action: applyAction },
-    parameters: paymasterParameters,
-  });
-  transactionHash = submission.transaction_hash;
-  await waitForSuccess(provider, transactionHash, "Gate C");
+  transactionHash = await submitPaymasterProof(
+    provider,
+    paymasterUrl,
+    paymasterApiKey,
+    paymasterFeeParameters,
+    result,
+    "Gate C",
+  );
 } else {
-  const details = {
-    tip: 1n,
-    resourceBounds: mainnetGateEstimate.resourceBounds,
-  };
-  feeWei = mainnetGateEstimate.overallFee;
-  if (mainnetPrincipalWei + mainnetPriorFeesWei + mainnetGateEstimate.budgetFee >= MAX_MAINNET_SPEND) {
-    throw new Error(
-      `Final fee estimate plus the private input reaches the ${MAX_MAINNET_SPEND_STRK} STRK cap: ` +
-      `${mainnetPrincipalWei + mainnetPriorFeesWei + mainnetGateEstimate.budgetFee} wei.`,
-    );
-  }
-  const signed = await preflightProofActions(account, result.callAndProof, details, "Gate C");
-  const sent = await submitSignedProofTransaction(provider, signed, "Gate C");
-  transactionHash = sent.transaction_hash;
-  const receipt = await waitForSuccess(provider, transactionHash, "Gate C");
-  const actualFee = "actual_fee" in receipt ? receipt.actual_fee : receipt.actualFee;
-  feeWei = actualFee ? BigInt(actualFee.amount ?? actualFee) : feeWei;
+  throw new Error("Gate C proof submission requires a privacy paymaster; refusing direct RPC broadcast.");
 }
 
 console.log(`Gate C transaction: ${transactionHash}`);
+if (depositTx) console.log(`Private deposit transaction: ${depositTx}`);
 console.log(`Gate C proof wall time: ${proofSeconds}s`);
 console.log(`Gate C input: ${SWAP_AMOUNT} wei STRK`);
 console.log(`Gate C minimum output: ${minimumReceived} wei ETH`);
-if (feeWei !== null) console.log(`Gate C fee: ${feeWei} wei STRK`);

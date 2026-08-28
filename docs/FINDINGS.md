@@ -1072,17 +1072,20 @@ The immutable anonymizer constructor is fixed to the mainnet pool
 `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` and shadow-account
 class `0x346e143e3b353473a0d6f681c31ffcf2866537898008027fb3b57335bad7b5f`. Its compiled ABI
 contains no upgrade, proxy, governance, role, or admin entrypoint. The deployment account
-was not used as a DeFi recipient. The owner has approved the exact 0.1 STRK test amounts for
-the pending Mainnet registration/deposit/Ekubo sequence, but no Facet Mainnet DeFi receipt is
-claimed until proof-aware preflight and the final manual gate pass.
+was not used as a DeFi recipient. The owner has approved the exact 0.1 STRK test targets for
+the pending Mainnet registration/deposit/Ekubo sequence, plus a 40 STRK total ceiling including
+fees. No Facet Mainnet DeFi receipt is claimed until the paymaster-backed proof and final manual
+gate pass.
 
-### 6.20 Mainnet proof-facts compatibility gate — 28 August 2026
+### 6.20 Historical Mainnet proof-facts compatibility checks — 28 August 2026
 
 The first direct Facet Mainnet run used the deployed pool, the funded `starknet-gate2`
 account, a 0.1 STRK target, and the exact Ekubo route pinned in the adapter. Read-only
 preflight passed: the account was deployed, the pool and anonymizer were present, the live
 Ekubo quote succeeded, and the account was not yet registered. The runner generated a full
-registration proof and then stopped at proof-aware simulation before broadcast.
+registration proof and then stopped at proof-aware simulation before broadcast. These checks were
+made while the node was using the previous protocol-version gate; the current 0.14.3 constants
+supersede the candidate conclusion in this section.
 
 The first two attempts rewrote the prover's `PROOF1` marker to `PROOF0` and were rejected
 because the accompanying virtual-OS hashes were not allowed. A later attempt preserved the
@@ -1097,11 +1100,9 @@ proof-facts parser expects `PROOF0`. No Mainnet transaction was submitted and no
 | 4 | `PROOF0` after rewrite | `0x39f55918423cade9e95a6a52286b56bed1c5c9b6fe39aa00301361457a3c604` | 508s | Virtual-OS program hash not allowed |
 
 The source-level `0x3e98c2d7703b03a7edb73ed7f075f97f1dcbaa8f717cdf6e1a57bf058265473`
-value remains an untested PROOF0 candidate, not a live compatibility result. The VPS
-`facet-prover-gate-a-53f6` container currently emits the incompatible PROOF1/`0x53f6c9…`
-pair. A genuine PROOF0 prover whose complete facts are accepted by the live Mainnet node is
-still required. Candidate selection is not a transaction receipt and is not submission
-evidence.
+value was an untested PROOF0 candidate for the previous gate, not a current compatibility result.
+The live 0.14.3 node now requires the PROOF1/`0x53f6c9…` pair; candidate selection is not a
+transaction receipt and is not submission evidence.
 
 This failure establishes an infrastructure/version gate, not a failure of the Facet action
 design. It also establishes why a warm queue matters: the current host spends several minutes
@@ -1124,6 +1125,149 @@ This corrects the earlier assumption that registration or shielding could be use
 proof-free workaround. The implementation and issue context are tracked in
 [STRK20 issue #156](https://github.com/starkience/strk20-hackathon/issues/156); the hosted
 prover requests remain separate infrastructure work.
+
+### 6.22 Public Mainnet proof transport dropped proof facts — 28 August 2026
+
+The first complete Mainnet proof using the then-accepted PROOF0/virtual-OS pair passed the local
+proof-aware simulation with nine facts. Its direct `starknet_addInvokeTransaction` submission was
+then accepted by the RPC but reverted on-chain as `EMPTY_PROOF_FACTS`:
+
+| Transaction | Execution | Actual fee | State change |
+|---|---|---:|---|
+| [`0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e`](https://voyager.online/tx/0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e) | `REVERTED`, accepted on L2 | `0.035290550669266304 STRK` | none; approval and registration rolled back |
+
+Read-only retrieval of the submitted transaction showed `proof_facts: []`, while the local signed
+transaction had nine facts and the same signed object passed `starknet_simulateTransactions`.
+The account therefore remains unregistered, with pool allowance `0`; the only loss was the normal
+network fee. This isolates the failure to the public direct-RPC transport path, not to the prover,
+proof facts, pool fee, or STRK allowance.
+
+`packages/sdk/scripts/gate-c-ekubo.mjs` now fails closed for direct Mainnet proof submission and
+uses AVNU's privacy paymaster/forwarder. Its documented private flow wraps the proof-bearing
+`apply_action` and, for a deposit, the user's signed `approve` in
+`invoke_and_apply_action` ([AVNU private-transaction documentation](https://github.com/avnu-labs/paymaster/blob/main/docs/private-transactions.md)).
+For this unregistered account, the first proof combines registration, channel setup, deposit, and
+both private fee reserves; the script quotes the public approval and refuses to prove at or above
+the owner's 40 STRK ceiling. Subsequent Gate C submission carries the proof and proof facts through
+`paymaster_executeTransaction` rather than the direct node endpoint.
+
+### 6.23 Shared 8 GiB VPS cannot complete the bootstrap proof — 28 August 2026
+
+The AVNU quote and public approval were valid: the latest run calculated an initial private
+deposit of `28.91752671630441904 STRK` and a user-signed public approval of
+`34.91752671630441904 STRK`, below the authorized 40 STRK ceiling. Private-deposit preflight also
+passed. During proof generation, however, the compatible `facet-prover-gate-a-0b96` worker reached
+about 7.54 GiB resident memory. The VPS kernel logged `global_oom` and killed the prover process;
+the client consequently received `curl` exit 52 (empty reply). The container restarted once.
+
+This was an infrastructure-capacity failure before `paymaster_executeTransaction`, not an
+allowance, quote, proof-facts, or contract failure. The unrelated services were subsequently
+stopped and disabled, and the worker's swap allowance was increased. The remaining failure was
+then isolated to the proof-version mismatch recorded below.
+
+### 6.24 Mainnet protocol upgrade selects the PROOF1 worker — 28 August 2026
+
+The previous compatibility conclusion used the wrong protocol-version constants. The live
+Mainnet node is on Starknet 0.14.3, whose current Blockifier constants allow only
+`PROOF1` (`0x50524f4f4631`) and virtual-OS program hash
+`0x53f6c9fcfd31d27279ff7d7e422b44623550a732b59fe193354a7316a96daa1`. Starknet 0.14.2
+allowed the older `PROOF0` / `0x3e98c2d7…` pair. The official constants are versioned in the
+[Starknet sequencer repository](https://github.com/starkware-libs/sequencer/blob/main/crates/blockifier/resources/blockifier_versioned_constants_0_14_3.json).
+
+That explains the latest paymaster error exactly: the `facet-prover-gate-a-0b96` worker emitted
+`PROOF0`, so AVNU's forwarder rejected it with `Proof version ... is not allowed under this
+protocol version` before transaction execution. No funds moved in that attempt. The healthy
+`facet-prover-gate-a-53f6` worker emits the pair accepted by the current node and has 12 GiB RAM
+plus 12 GiB swap available. The runner now selects it by default on Mainnet and fails immediately
+if any other proof-facts pair is emitted; it never rewrites the facts.
+
+The deployed privacy pool's current validator does not impose the obsolete `PROOF0` marker
+requirement; the live node's protocol gate is the decisive check. The next authorized run is
+therefore the existing AVNU paymaster flow using `facet-prover-gate-a-53f6` on port `3100`, with
+the same 0.1 STRK deposit, 0.1 STRK Ekubo input, and 40 STRK total ceiling.
+
+### 6.25 AVNU rejected the legacy proof before Mainnet execution — 28 August 2026
+
+After the unrelated VPS services were removed and the prover survived the full workload, the
+paymaster-backed private-deposit proof completed in 525 seconds with nine proof facts. The quote,
+private-deposit preflight, and 40 STRK approval ceiling all passed. The selected `0b96` worker
+then emitted `PROOF0`; AVNU returned `TRANSACTION_EXECUTION_ERROR` before forwarding it:
+`Proof version 88314448135728 (PROOF0) is not allowed under this protocol version.` No transaction
+hash was returned and no Mainnet funds moved. This confirms the failure is the worker's proof
+version, not VPS memory, allowance, paymaster quoting, or the Facet action.
+
+### 6.26 Detached SSH tunnel reused the wrong prover — 28 August 2026
+
+The subsequent run selected `facet-prover-gate-a-53f6` on VPS port `3100`, but the client still
+received the `PROOF0` / `0x3e98c2d7…` pair. The local machine had a healthy detached SSH forward
+from an earlier run: `127.0.0.1:3017 → VPS:3110`, which targeted the `0b96` worker. The runner's
+old health check treated any healthy local endpoint as sufficient and did not verify the remote
+port, so it silently reused that stale tunnel. The guard stopped the run before paymaster
+submission; no funds moved.
+
+The stale forward was closed. `gate-c-ekubo.mjs` now derives a local tunnel port from the selected
+remote port (`3100 → 33100`, unless `FACET_PROVER_URL` or `FACET_PROVER_LOCAL_PORT` is explicitly
+set), preventing a healthy tunnel to a different worker from being reused. A short health check
+through `127.0.0.1:33100` returned `0.10.3-rc.2` from the `53f6` worker. The next full run is
+therefore authorized to use the existing AVNU flow with `facet-prover-gate-a-53f6` / `3100`.
+
+### 6.27 Mainnet pool requires a real screening attestation — 28 August 2026
+
+The next run used the correct `facet-prover-gate-a-53f6` worker. It completed the Mainnet private-
+deposit proof in 254 seconds with nine proof facts, passed the private-deposit preflight, and then
+AVNU rejected the proof-bearing transaction before returning a transaction hash:
+
+```text
+SCREENING_REQUIRED
+ENTRYPOINT_FAILED
+```
+
+No transaction was submitted and no funds moved in this attempt. The live pool's read-only
+`get_screener_public_key` call returned a non-zero key, confirming that screening is enabled. The
+pool's `apply_actions` path requires a fresh screening attestation for the proof-bound
+`TransferFrom.from_addr`; a missing attestation is serialized by the SDK as `Option::None` and
+reverts exactly as observed.
+
+The VPS has no proof-interceptor or elliptic-proxy container, and the running prover has no
+`BLOCKING_CHECK_URL`. The pinned prover does support the blocking-check client and relays an
+allowed response's opaque `additional_data`, but the official proof-interceptor still needs an
+operator-issued screening endpoint/credentials. The pool's production signing private key is not
+in this checkout and must not be replaced with the test signer or a mock endpoint.
+
+`gate-c-ekubo.mjs` now fails closed before paymaster submission when a Mainnet initial deposit
+proof has no `additional_data.signature`, and refuses to start that expensive proof unless
+`FACET_MAINNET_SCREENING_READY=1` is explicitly set after the sidecar's health and screening
+metrics have been verified. This is an operational guard, not a bypass of the pool's compliance
+check. Do not rerun the deposit proof until a valid screening source or an authorized pool-policy
+alternative is available.
+
+### 6.28 Supported Wallet API fallback is the active Mainnet route — 28 August 2026
+
+The direct runner cannot create the production screening attestation required by the live pool,
+but this does not make Mainnet unavailable. The official application route is the Privacy Wallet
+API: the dapp submits ordinary STRK20 actions, while the privacy-enabled wallet owns the viewing
+key, notes, proof generation, and screening. The existing Ready X Mainnet shield proves that this
+wallet-managed route can pass the live pool. Ready X advertises Wallet API `0.10.3` and `0.7.2`,
+so the supported plain `invoke` action is used; the unadvertised `shadow_account_invoke` action is
+not forced.
+
+The upstream `EkuboSwapAnonymizer` helper was rebuilt with the pinned Cairo toolchain. The class
+was already declared on Mainnet, and a read-only check found the reserved unique address unused:
+
+| Item | Value |
+|---|---|
+| Class hash | `0x2a4ac595283d4d64b9952f5ef5c0da1775bfdb7c9d92237524a21dd8d19ebd7` |
+| Predicted address | `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537` |
+| Constructor | empty; stateless |
+| Read-only result | class declared; address unused; no transaction submitted |
+
+`packages/sdk/scripts/deploy-ekubo-helper-mainnet.mjs` is idempotent and verifies the address and
+class before waiting for the deployment receipt. `packages/web/mainnet-ekubo.html` constructs the
+reviewed action sequence: withdraw `0.1 STRK` to the helper, create one `OPEN` ETH note for the
+Ready account, and invoke the helper with a live Ekubo quote and 10% slippage floor. The final
+write is still a manual Ready X approval; the page does not receive a key or proof. No Mainnet
+DeFi transaction is claimed until the helper deployment and the wallet action each have successful
+receipts with STRK20 pool events.
 
 ## 7. Toolchain
 

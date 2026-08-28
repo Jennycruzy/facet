@@ -9,7 +9,13 @@
     "mainnet": {
       "label": "Starknet Mainnet",
       "rpc": "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9",
-      "explorer": "https://voyager.online"
+      "explorer": "https://voyager.online",
+      "ekuboHelper": {
+        "address": "0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537",
+        "classHash": "0x2a4ac595283d4d64b9952f5ef5c0da1775bfdb7c9d92237524a21dd8d19ebd7",
+        "salt": "0x46414345545f454b55424f5f7631",
+        "status": "reserved-predicted-address"
+      }
     }
   },
   "strk": "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",

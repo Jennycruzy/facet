@@ -308,9 +308,9 @@ outright. The versioned path `…/sepolia/rpc/v0_10` serves 0.10.2 and works.
 
 ## 8. Mainnet proof-facts compatibility
 
-The deployed mainnet STRK20 pool is not compatible with every prover build that can
-produce an otherwise valid proof. Its proof-facts parser expects the legacy `PROOF0`
-marker (`0x50524f4f4630`) and an allowlisted virtual-OS program hash.
+Earlier compatibility checks in this document used a stale protocol-version conclusion. The live
+Mainnet 0.14.3 path accepts the PROOF1/hash pair emitted by the current `facet-prover-gate-a-53f6`
+worker. The SDK preserves the complete pair and refuses incompatible worker output.
 
 The current upstream development prover emits `PROOF1`
 (`0x50524f4f4631`) and, in one otherwise healthy build, emitted the virtual-OS hash
@@ -344,9 +344,9 @@ broadcast by the exact proof-aware simulation:
 | Genuine `PROOF0` | `0x3e98c2d7703b03a7edb73ed7f075f97f1dcbaa8f717cdf6e1a57bf058265473` | Untested source-level candidate | — |
 
 The current VPS diagnostic container is `facet-prover-gate-a-53f6`, using the
-`605c29361962` image on loopback port `3100`; it is not currently compatible with the
-deployed pool because it emits `PROOF1`. This is a compatibility investigation, not a
-proving-speed fix. It does not change the measured five-to-seven-minute proof cost.
+`605c29361962` image on loopback port `3100`; it is compatible with the deployed Mainnet protocol.
+The remaining Mainnet blocker is screening attestation, not proof compatibility. This does not
+change the measured five-to-seven-minute proof cost.
 The exact Facet registration, deposit, and Ekubo action must each pass proof-aware preflight
 before a receipt can be claimed. No Mainnet DeFi transaction is recorded from the rejected
 runs.
@@ -354,6 +354,28 @@ runs.
 The SDK preserves the complete proof facts returned by the prover. It must not rewrite the
 marker, virtual-OS hash, or any other proof fact merely to make a transaction look acceptable.
 The proof must come from a build whose complete facts the live node and pool allow.
+
+### 8.2 Correction: current Mainnet protocol constants — 28 August 2026
+
+The compatibility table above is superseded by the live protocol-version check. Mainnet is
+currently on Starknet 0.14.3, whose Blockifier constants allow `PROOF1`
+(`0x50524f4f4631`) and virtual-OS hash
+`0x53f6c9fcfd31d27279ff7d7e422b44623550a732b59fe193354a7316a96daa1`.
+The `facet-prover-gate-a-0b96` worker emits the older `PROOF0` pair and is therefore rejected by
+the node before the pool is executed. Use `facet-prover-gate-a-53f6` on port `3100`; it is the
+current Mainnet-compatible worker and has 12 GiB RAM plus 12 GiB swap. The SDK now validates this
+pair immediately after proof generation and refuses to submit another worker's facts.
+
+The versioned source of truth is the [0.14.3 Blockifier constants](https://github.com/starkware-libs/sequencer/blob/main/crates/blockifier/resources/blockifier_versioned_constants_0_14_3.json).
+
+### 8.3 Mainnet screening attestation — 28 August 2026
+
+The latest compatible proof completed, but the AVNU submission was rejected with
+`SCREENING_REQUIRED` because the proof contained no `additional_data.signature`. The live pool's
+configured screener key means a regular `TransferFrom` deposit must carry a fresh attestation.
+The VPS has no proof-interceptor sidecar or `BLOCKING_CHECK_URL`. A production sidecar backed by
+operator-issued screening credentials is required; the test signer and mock Elliptic endpoint are
+not valid Mainnet substitutes.
 
 ---
 

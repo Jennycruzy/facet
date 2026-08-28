@@ -56,6 +56,7 @@ Facet's shadow-account action to the wallet-managed proving path.
 | `index.html` | **The app** — Facet's grid: your private account contexts, their live on-chain state, and the application tiles |
 | `launch.html` | Staged launcher — wallet binding, persistent app-context preview, and the visible async queue model; no transaction submission yet |
 | `ready-probe.html` | Read-only Ready X capability gate for the mainnet Wallet API path |
+| `mainnet-ekubo.html` | Reviewed wallet-mediated Mainnet Ekubo swap using the deployed privacy helper |
 | `proof.html` | How it works and the evidence, in seven acts. One click behind the app, for the reader who wants to verify rather than use |
 | `assets/css/facet.css` | Design tokens and layout. Dark, single accent, no framework |
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
