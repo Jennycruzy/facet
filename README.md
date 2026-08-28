@@ -244,8 +244,8 @@ What is not built is listed as plainly as what is.
 | SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 20 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
 | Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, a staged EOA launcher, and a reviewed Wallet API Ekubo page exist; the generic async service and portfolio view remain to be built |
-| Mainnet contracts | **deployed** — immutable anonymizer and `FacetAccount`; deployment evidence is in `docs/ARCHITECTURE.md` |
-| Mainnet interaction | **not yet claimed** — the 7 STRK Ready X eligibility shield is verified and a wallet-mediated Facet helper route is prepared, but no Facet protocol receipt has yet been verified |
+| Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, and the Ekubo helper; deployment evidence is in `docs/ARCHITECTURE.md` |
+| Mainnet interaction | **not yet claimed** — the 7 STRK Ready X eligibility shield and helper deployment are verified, but no Facet protocol receipt has yet been verified |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted
@@ -265,8 +265,8 @@ transaction prover and submitted through a self-hosted paymaster:
 
 The event-level decode is `docs/FINDINGS.md` §6.17. The direct Facet shadow-account application
 route is not yet a verified Mainnet receipt. A separate reviewed Wallet API page for the Ekubo
-helper is available, but it remains pending the helper deployment and a successful pool/helper/
-protocol receipt; nothing here claims otherwise.
+helper is available, but it remains pending a successful pool/helper/protocol receipt; nothing
+here claims otherwise.
 
 ## Documentation
 

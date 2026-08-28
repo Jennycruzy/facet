@@ -16,7 +16,8 @@ counts as transaction evidence.
   "transactions": ["0x0721505c…5716a"],
   "contracts": [
     "0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc",
-    "0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45"
+    "0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45",
+    "0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537"
   ],
   "demo_video": "",
   "demo_url": "https://usefacet.xyz"
@@ -59,15 +60,17 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9 \
 
 The immutable anonymizer is
 `0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc`; `FacetAccount` is
-`0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45`.
+`0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45`; the deployed Ekubo
+helper is `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537`.
 
 Deployment transactions:
 
 - immutable anonymizer: `0x277a84c5b063c235acdd5b5e866e2c6078554517e984536b3bb889b26f07922`
 - `FacetAccount`: `0x4e9305a7b362901c0ccd1017bba3269993e724383c1fa9608ba94a63011732f`
+- Ekubo helper: `0x188808f3c11914c6ada25cae55defe4d34332f4ff955d1eb272ce9962f08dfc`
 
-Both were submitted after successful class declarations and verified by the deployment
-script with the expected class hashes. The contracts are not added to `transactions` yet:
+The two Facet contracts and the helper were submitted after successful class declarations and
+verified with the expected class hashes. The contracts are not added to `transactions` yet:
 that list is reserved for the mainnet activity evidence required by the submission.
 
 Verify each address returns a class hash before adding it:

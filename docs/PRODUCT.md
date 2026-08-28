@@ -218,8 +218,8 @@ The staged browser launcher binds an EOA, derives a viewing key in memory, and p
 persistent application contexts. A reviewed Wallet API page now provides the narrow Mainnet
 Ekubo path: Ready X signs and proves the privacy actions, while Facet supplies the allowlisted
 helper and protocol calldata. It is not a direct `FacetAccount`-signer flow, and no Mainnet
-protocol receipt is claimed until the helper deployment and the wallet action each succeed with
-the expected pool, helper, and Ekubo evidence. The existing eligibility shield is a successful
+protocol receipt is claimed until the wallet action succeeds with the expected pool, helper, and
+Ekubo evidence. The helper deployment itself is setup evidence, not a pool transaction. The existing eligibility shield is a successful
 Mainnet STRK20 transaction, but it was made through the Ready X wallet and is not being relabelled
 as Facet DeFi activity.
 

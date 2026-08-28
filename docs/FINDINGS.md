@@ -1252,22 +1252,24 @@ so the supported plain `invoke` action is used; the unadvertised `shadow_account
 not forced.
 
 The upstream `EkuboSwapAnonymizer` helper was rebuilt with the pinned Cairo toolchain. The class
-was already declared on Mainnet, and a read-only check found the reserved unique address unused:
+was already declared on Mainnet, and the reserved unique address was deployed from the local
+Facet checkout after the read-only check:
 
 | Item | Value |
 |---|---|
 | Class hash | `0x2a4ac595283d4d64b9952f5ef5c0da1775bfdb7c9d92237524a21dd8d19ebd7` |
 | Predicted address | `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537` |
 | Constructor | empty; stateless |
-| Read-only result | class declared; address unused; no transaction submitted |
+| Deployment | [`0x188808f3c11914c6ada25cae55defe4d34332f4ff955d1eb272ce9962f08dfc`](https://voyager.online/tx/0x188808f3c11914c6ada25cae55defe4d34332f4ff955d1eb272ce9962f08dfc), `SUCCEEDED`, block 14,000,701 |
+| Post-deployment check | class hash at address matches; no upgrade/admin path in the stateless helper |
 
 `packages/sdk/scripts/deploy-ekubo-helper-mainnet.mjs` is idempotent and verifies the address and
 class before waiting for the deployment receipt. `packages/web/mainnet-ekubo.html` constructs the
 reviewed action sequence: withdraw `0.1 STRK` to the helper, create one `OPEN` ETH note for the
 Ready account, and invoke the helper with a live Ekubo quote and 10% slippage floor. The final
-write is still a manual Ready X approval; the page does not receive a key or proof. No Mainnet
-DeFi transaction is claimed until the helper deployment and the wallet action each have successful
-receipts with STRK20 pool events.
+write is still a manual Ready X approval; the page does not receive a key or proof. The helper
+deployment is verified, but no Mainnet DeFi transaction is claimed until the wallet action has a
+successful receipt with STRK20 pool, helper, and protocol events.
 
 ## 7. Toolchain
 

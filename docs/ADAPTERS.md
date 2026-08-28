@@ -38,8 +38,8 @@ to do with privacy, and leading with it would misattribute a timing problem to t
 
 Ekubo is the only adapter with a reviewed Mainnet execution page. That page uses the supported
 Wallet API path: Ready X supplies the shielded state, proof, and screening, while Facet supplies
-the fixed helper target and allowlisted Ekubo call. It is pending a successful helper deployment
-and a receipt containing the STRK20 pool, helper, and protocol evidence. Vesu and Endur remain
+the fixed helper target and allowlisted Ekubo call. The helper is deployed; the route remains
+pending a receipt containing the STRK20 pool, helper, and protocol evidence. Vesu and Endur remain
 preview-only until their calldata, funded-network rehearsal, and receipts are verified.
 
 ## Vesu — deposit
