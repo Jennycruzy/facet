@@ -16,12 +16,14 @@ assert_macros = "2.17.0"
 allow-prebuilt-plugins = ["snforge_std"]
 
 [lib]
+casm = true
 
 # Keep deployable Sierra on the audited libfunc list. Debug statement instrumentation
 # introduces `trace`, which a mainnet declare rejects; local debugging can use a separate
 # temporary profile outside the deployable artifact path.
 
 [[target.starknet-contract]]
+casm = true
 
 [scripts]
 test = "snforge test"
