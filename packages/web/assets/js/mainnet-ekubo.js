@@ -52,6 +52,14 @@ function hex(value) {
   return `0x${BigInt(value).toString(16)}`;
 }
 
+// STRK20 calldata items are FELTs. Ready's FELT validator rejects a padded
+// 64-digit address such as 0x0471..., while the typed address fields accept
+// and normalize that representation. Always send calldata in canonical felt
+// form (without leading zeroes).
+function felt(value) {
+  return hex(value);
+}
+
 function u256(value) {
   return [hex(value & ((1n << 128n) - 1n)), hex(value >> 128n)];
 }
@@ -309,9 +317,9 @@ function actionsForQuote(quote) {
       type: "invoke",
       contract: HELPER,
       calldata: [
-        ROUTER,
-        STRK, hex(SWAP_AMOUNT), "0x0",
-        STRK, ETH, hex(ROUTE_FEE), hex(TICK_SPACING), "0x0",
+        felt(ROUTER),
+        felt(STRK), hex(SWAP_AMOUNT), "0x0",
+        felt(STRK), felt(ETH), hex(ROUTE_FEE), hex(TICK_SPACING), "0x0",
         ...u256(quote.minimumWei),
         "0x0",
         "${openNoteIds[0]}",
