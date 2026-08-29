@@ -88,11 +88,28 @@ function isMainnet(value) {
   return MAINNET_CHAIN_IDS.has(typeof value === "string" ? value.toUpperCase() : "");
 }
 
+function errorDetail(value, depth = 0, seen = new Set()) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") {
+    return value.length > 3000 ? value.slice(0, 3000) + "… [truncated]" : value;
+  }
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value);
+  }
+  if (depth > 4 || typeof value !== "object") return "[nested error truncated]";
+  if (seen.has(value)) return "[circular error]";
+  seen.add(value);
+  const keys = ["code", "message", "reason", "details", "data", "error", "execution_error", "cause"];
+  const entries = keys
+    .filter((key) => key in value && value[key] !== undefined && value[key] !== null)
+    .map((key) => `${key}=${errorDetail(value[key], depth + 1, seen)}`);
+  seen.delete(value);
+  return entries.length ? `{ ${entries.join("; ")} }` : "";
+}
+
 function errorText(error) {
-  if (error instanceof Error && error.message) return error.message;
-  if (typeof error === "string") return error;
-  if (error && typeof error === "object" && typeof error.message === "string") return error.message;
-  return "The wallet or RPC returned an unknown error.";
+  const detail = errorDetail(error);
+  return detail || "The wallet or RPC returned an unknown error.";
 }
 
 function candidateWallets() {
@@ -304,6 +321,7 @@ function safeDiagnostics() {
     shielded_strk_balance_wei: state.balanceWei?.toString() ?? null,
     facet_targets: { pool: POOL, router: ROUTER, helper: HELPER, helper_class_hash: HELPER_CLASS_HASH },
     quote: state.quote ? { quoted_wei: state.quote.quotedWei.toString(), minimum_wei: state.quote.minimumWei.toString() } : null,
+    last_error: state.errors.at(-1) ?? null,
     transaction_hash: state.transactionHash,
     proof_generated_by_page: false,
   }, null, 2);

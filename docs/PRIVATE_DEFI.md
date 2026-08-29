@@ -160,6 +160,14 @@ The Vesu and Endur pages are route-complete at the calldata and read-only-check 
 shared helper class and deterministic instances are now deployed. They are not live claims yet:
 each route still needs a successful receipt containing the pool, helper, and protocol events.
 
+The first funded wallet-mediated Vesu attempt on 29 August 2026 passed the Mainnet, helper, STRK
+asset, `preview_deposit(0.1 STRK)`, and `max_deposit` checks, but Ready returned only
+`PaymasterV2Error: Paymaster error 156: An error occurred (TRANSACTION_EXECUTION_ERROR) failed`.
+No transaction hash or receipt was returned. This is a paymaster wrapper, not the nested contract
+reason; the browser route now preserves bounded nested error fields and includes the last error in
+safe diagnostics. The route must be diagnosed once after that change before another proof attempt.
+Do not call Vesu live, and do not add this failure to `strk20.json`.
+
 A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with
 an unintended newline and an environment assignment was split. It does not indicate an
 on-chain failure.
@@ -185,8 +193,9 @@ shield remains setup evidence. The reviewed Wallet API Ekubo action
 and its transaction data contains the deployed Facet helper and Ekubo router.
 
 The direct Facet runner remains blocked by AVNU's `SCREENING_REQUIRED` requirement; it was not
-used for the successful browser action. One more successful Mainnet pool transaction is still
-needed for the three-hash submission target.
+used for the successful browser action. Vesu has no successful receipt yet, and Endur has not been
+attempted. One more successful Mainnet pool transaction is still needed for the three-hash
+submission target.
 
 ## Security boundary
 

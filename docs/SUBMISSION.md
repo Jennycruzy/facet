@@ -40,6 +40,10 @@ pool.** There is no cap, and more is better evidence.
 | 2 | `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` | **Done** — reviewed Ready X Wallet API action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,004,049; receipt contains STRK20 pool events, and transaction data carries the Facet helper plus Ekubo router |
 | 3 | — | A second successful Mainnet Facet/protocol transaction is still needed |
 
+The latest Vesu Wallet API attempt returned `PaymasterV2Error` code 156 without a transaction
+hash. It is a failed request, not submission evidence; the nested reason is being surfaced before
+the next controlled attempt. Endur has not yet been attempted.
+
 The working target is **four usable hashes** so that the three strongest can be submitted:
 the existing eligibility shield, a Facet setup transaction, the first Facet protocol action,
 and a second Facet protocol action if the route is safe and genuinely verified. Registration,

@@ -1294,6 +1294,27 @@ STRK20 pool and helper/router addresses; the receipt contains pool events and an
 This is the first verified Facet protocol action on Mainnet. The direct self-hosted runner remains
 a separate path and still stops at AVNU's `SCREENING_REQUIRED` response.
 
+### 6.30 The first wallet-mediated Vesu attempt returned an opaque paymaster error — 29 August 2026
+
+The deployed Vesu helper and the Vesu V1.1 Genesis vSTRK vault passed the browser's read-only
+checks: the vault reports STRK as its underlying asset, returns a positive
+`preview_deposit(0.1 STRK)`, and accepts the helper in `max_deposit`. The Ready X account had
+enough shielded STRK after its fee top-up. The reviewed `wallet_strk20InvokeTransaction` then
+returned:
+
+```text
+PaymasterV2Error: Paymaster error 156: An error occurred (TRANSACTION_EXECUTION_ERROR) failed
+```
+
+Ready returned no transaction hash, so there is no receipt, pool event, helper event, or Vesu
+event to claim. Code 156 is only the paymaster wrapper and does not identify whether the nested
+failure was screening, helper execution, or the Vesu vault. The route's previous `errorText`
+formatter discarded the structured cause; the current working tree preserves bounded
+`code`/`message`/`reason`/`details`/`data`/`error`/`execution_error`/`cause` fields and includes
+the last error in safe diagnostics. The next session should deploy and test that diagnostic
+change, then make one controlled Vesu retry. Repeated retries without the nested reason are not
+useful evidence.
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:

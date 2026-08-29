@@ -6,11 +6,12 @@ file path, or command output. A missing prerequisite blocks the dependent work.
 Sprint window: 14–31 August 2026. Submissions close 31 August, 23:59 UTC. The final
 working sprint is being treated as a compressed four-day window ending at that deadline.
 
-## Current sprint truth — 28 August 2026
+## Current sprint truth — 29 August 2026
 
-The local checkout is the source of truth on branch `strk20-sprint-20260828` at commit
-`648cd70e7c6f22bf4f5d91172f3514353289d066`, with the original freeze tag `freeze-20260827`
-and baseline commit `cdeba32e1051c4ae1304a3d23feb254e62244128`. The working tree is clean.
+The local checkout is the source of truth on branch `strk20-sprint-20260828`; `9009e30` is the
+last pushed checkpoint, with the original freeze tag `freeze-20260827` and baseline commit
+`cdeba32e1051c4ae1304a3d23feb254e62244128`. Use `git log -1` for the exact current handoff
+commit; the next checkpoint includes bounded wallet-error diagnostics.
 The VPS copy is behind and has a dirty
 `packages/contracts/Scarb.toml`; its diff is preserved outside the repository before any
 sync or deployment.
@@ -22,7 +23,9 @@ The Mainnet evidence position is:
 | Ready X eligibility shield | **Verified** — 7 STRK, `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, successful pool event |
 | Facet Mainnet registration | **Not completed** — the compatible proof reached AVNU, but the initial deposit path was rejected because no screening attestation was attached |
 | Facet Mainnet private deposit | **Not completed** — latest AVNU response was `SCREENING_REQUIRED`; no transaction hash returned |
-| Facet Mainnet protocol action | **Verified** — Ready X Wallet API Ekubo action `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049 |
+| Facet Mainnet protocol action | **Verified for Ekubo** — Ready X Wallet API action `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049 |
+| Vesu Mainnet protocol action | **Not completed** — read-only checks passed, but the latest Ready request returned `PaymasterV2Error` code 156 with no transaction hash; nested cause still needs to be surfaced |
+| Endur Mainnet protocol action | **Not attempted** — helper is deployed and the route is read-only checked |
 | Mainnet Facet hash count | **One qualifying Facet protocol hash plus one qualifying eligibility hash** |
 | Current Mainnet cap | **40 STRK ceiling**, with 0.1 STRK approved for the private deposit and 0.1 STRK for the Ekubo action, plus fees |
 
@@ -30,7 +33,8 @@ The rejected direct-runner proofs consumed proving time but moved no funds. The 
 `facet-prover-gate-a-53f6` container emits the current Mainnet-compatible PROOF1/hash pair, but
 the direct AVNU path still lacks the live pool's required screening attestation. The supported
 Ready X Wallet API route completed the reviewed Facet/Ekubo action separately; see the verified
-hash above and `FINDINGS.md` §6.29.
+hash above and `FINDINGS.md` §6.29. The latest Vesu wallet failure is recorded in
+`FINDINGS.md` §6.30; it produced no receipt and does not change the evidence count.
 
 The user-facing speed plan is asynchronous proving: a warm worker, opaque job id, visible
 stages, resumable polling, quote/expiry re-checks, and a final review gate. This improves
@@ -135,7 +139,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | §6.6 funding pattern exercised against deployed bytecode | Done, proof half excluded | Predicted address funded before deployment, account deploys exactly where predicted, full balance collects to the note, pool approved for the total. The `UseNote`/`Withdraw` legs run inside the proved execution and cannot be reached from a fork test. |
 | §6.4 payload replayed against real bytecode | Done | `decoded_invocation.cairo` — the eleven felts fed back through `call_contract_syscall`, no dispatcher in between, plus a control that breaks the decode by shifting slot 11. Answers open question 1 in substance. |
 | Same replay against Sepolia state | Done | `decoded_payload_replays_on_sepolia`, forked at block 13,518,500. A free dry run of the live transaction. |
-| Pure protocol adapter serializers | **Done, 26 August 2026** | `packages/sdk/src/adapters.ts` builds Vesu deposit, Endur stake, and the tested Ekubo single-hop route; it returns per-token settlement hints and hard-fails linked recipients. Unit coverage passes. Vesu and Endur still need funded network rehearsals. |
+| Pure protocol adapter serializers | **Done, 26 August 2026** | `packages/sdk/src/adapters.ts` builds Vesu deposit, Endur stake, and the tested Ekubo single-hop route; it returns per-token settlement hints and hard-fails linked recipients. Unit coverage passes. Vesu has a funded wallet attempt pending diagnosis; Endur still needs its funded rehearsal. |
 | Browser launcher wallet boundary | **Staged, 29 August 2026** | `packages/web/launch.html` connects an injected EIP-1193 EOA, requests one origin/network/pool-bound `personal_sign` message, and opens reviewed Wallet API routes. The route pages let Ready X own note discovery, proving, screening, and broadcast; the launcher itself never handles proof material. |
 | Live Sepolia transaction | **Done, 18 August 2026** | Account `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5`; anonymizer deploy `0x014eb1f86482ae09c32d5784d604115b9e8ab24c3c6f9349308028e6d5a3ab29`; materialisation `0x0719c8ddafc64eebaea496f84d0ec4ccbee46d561a227422d94e5f0be874e9b7`; funding `0x067c272692c0afe9f95535504a81352b0ec664c4b09eb8ccbe0c5ae84a571193`; replay `0x01278bd9634d952da1502118c3bf6f8578b5e4148da6ab992384aeca110675cf`. Exact 0.5 STRK was collected; derived shadow balance is 0. |
 | First funded mainnet interaction | **Done, 19 August 2026** | Ready X shielded 7 STRK into the mainnet STRK20 pool; transaction `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, block 13,538,709, accepted on L2. |
@@ -145,10 +149,11 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | **§6.6 sequence executed on Sepolia** | **Done, 25 August 2026** | The first facet succeeded in `0x05faace1d…dedef` and `0x0111b815a…f3693`. A second clean facet named `facet-second` used deposit `0x4cee8465…0a07` and private transaction `0x68510769…6b3a`; shadow `0x560b1983…e2b8` sent 1 wei to `0x…dead`, not the owner, and collected the remainder. The second proof took 400s. Recorded as `FINDINGS.md` §6.17–§6.18. |
 | **Facet contracts on mainnet** | **Done, 25 August 2026** | Immutable anonymizer `0x741fe9dc…63bc`, deployment `0x277a84c5…922`; `FacetAccount` `0x42e9d345…1a45`, deployment `0x4e9305a7…732f`. Production classes were declared first and the immutable ABI was checked for privileged entrypoints. Recorded as `FINDINGS.md` §6.19. |
 | **Ekubo helper on mainnet** | **Done, 28 August 2026** | Stateless helper `0x2bd92991…8537`, class `0x2a4ac595…ebd7`, deployment `0x188808f3…08dfc`, block 14,000,701. Class hash and address were rechecked after the successful receipt. |
-| **Vesu/Endur helper routes** | **Helpers deployed, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`, block 14,030,634; Vesu helper `0x7568567a…e4b6` deployed in `0x2f729305…d7ff3`, block 14,030,645; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`, block 14,030,657. Funded protocol receipts remain pending. |
+| **Vesu/Endur helper routes** | **Helpers deployed, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`, block 14,030,634; Vesu helper `0x7568567a…e4b6` deployed in `0x2f729305…d7ff3`, block 14,030,645; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`, block 14,030,657. Vesu's latest wallet request returned paymaster code 156 with no hash; funded protocol receipts remain pending. |
 | **Current launcher deployment** | **Done, 29 August 2026** | The current local static build is served at `https://usefacet.xyz`; required pages and assets returned HTTP 200. Previous web root preserved as `/var/www/facet.backup-20260829T064000Z`. |
 | §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
 | **Mainnet screening attestation** | **Blocked, 28 August 2026** | Compatible proof completed, but AVNU returned `SCREENING_REQUIRED`; live pool screener key is configured and the VPS has no `BLOCKING_CHECK_URL`/proof-interceptor deployment. |
+| **Wallet-mediated Vesu attempt** | **Blocked for diagnosis, 29 August 2026** | Ready X passed Mainnet/helper/vault read-only checks, then returned `PaymasterV2Error: Paymaster error 156` with no transaction hash. The browser now preserves bounded nested error fields for the next controlled attempt. |
 
 ---
 
