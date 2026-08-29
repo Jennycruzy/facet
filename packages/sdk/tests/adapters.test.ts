@@ -4,40 +4,12 @@ import {
   buildEkuboQuoteCall,
   buildEkuboSwapPlan,
   buildEndurStakePlan,
-  buildVesuDepositPlan,
   LinkedRecipientError,
 } from "../src/index.js";
 
 const linked = ["0xabc", "0xdef"];
 
 describe("protocol adapter builders", () => {
-  it("builds Vesu V1.1 ERC-4626 deposit calldata", () => {
-    const plan = buildVesuDepositPlan({
-      token: "0x200",
-      vault: "0x300",
-      receiver: "0x400",
-      amount: (1n << 128n) + 5n,
-      linkedAddresses: linked,
-    });
-
-    expect(plan.calls).toEqual([
-      {
-        contractAddress: "0x200",
-        entrypoint: "approve",
-        calldata: ["0x300", "0x5", "0x1"],
-      },
-      {
-        contractAddress: "0x300",
-        entrypoint: "deposit",
-        calldata: ["0x5", "0x1", "0x400"],
-      },
-    ]);
-    expect(plan.settlements.map(({ token, policy }) => ({ token, policy }))).toEqual([
-      { token: "0x200", policy: { type: "diff" } },
-      { token: "0x300", policy: { type: "diff" } },
-    ]);
-  });
-
   it("builds Endur approval and ERC-4626-shaped deposit", () => {
     const plan = buildEndurStakePlan({
       token: "0x200",
@@ -115,10 +87,6 @@ describe("adapter recipient guard", () => {
   });
 
   it.each([
-    ["Vesu", () => buildVesuDepositPlan({
-      token: "0x200", vault: "0x300", receiver: "0xabc",
-      amount: 1n, linkedAddresses: linked,
-    })],
     ["Endur", () => buildEndurStakePlan({
       token: "0x200", endur: "0x500", receiver: "0xabc", amount: 1n, linkedAddresses: linked,
     })],

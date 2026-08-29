@@ -18,10 +18,10 @@ test("facet cards have stable identities, recorded fallbacks, and transaction bl
   }
 });
 
-test("launcher contexts are the same three cards documented by the product", () => {
+test("launcher contexts are the two receipt-backed routes documented by the product", () => {
   assert.deepEqual(
     data.apps.map((app) => app.id).sort(),
-    ["ekubo", "endur", "vesu"],
+    ["ekubo", "endur"],
   );
   for (const app of data.apps) {
     assert.ok(app.name);
@@ -30,33 +30,25 @@ test("launcher contexts are the same three cards documented by the product", () 
   }
 });
 
-test("Vesu and Endur are bound to reviewed Mainnet ERC-4626 routes", () => {
+test("Endur is bound to the reviewed Mainnet ERC-4626 route", () => {
   const mainnet = data.networks.mainnet;
-  for (const id of ["vesu", "endur"]) {
+  for (const id of ["endur"]) {
     const app = data.apps.find((candidate) => candidate.id === id);
     assert.ok(app);
-    assert.equal(app.executionPage, `mainnet-defi.html?protocol=${id}`);
+    assert.equal(app.executionPage, "mainnet-defi.html");
     assert.match(app.contract, /^0x[0-9a-f]{60,}$/i);
     assert.match(app.outputToken, /^0x[0-9a-f]{60,}$/i);
     assert.match(app.helper, /^0x[0-9a-f]{60,}$/i);
     assert.match(app.helperClassHash, /^0x[0-9a-f]{60,}$/i);
-    const helper = mainnet[id === "vesu" ? "vesuHelper" : "endurHelper"];
+    const helper = mainnet.endurHelper;
     assert.equal(helper.status, "deployed");
     assert.match(helper.deploymentTransaction, /^0x[0-9a-f]{60,}$/i);
     assert.equal(typeof helper.deploymentBlock, "number");
     assert.equal(BigInt(helper.constructorCalldata[1]), BigInt(data.strk));
     assert.equal(BigInt(helper.constructorCalldata[2]), BigInt(app.outputToken));
-    assert.equal(
-      app.status,
-      id === "vesu" ? "wallet-mediated-blocked" : "wallet-mediated-verified",
-    );
-    if (id === "vesu") {
-      assert.equal(app.executionEnabled, false);
-      assert.match(app.blockReason, /not-allowed/);
-    } else {
-      assert.match(app.mainnetTransaction, /^0x[0-9a-f]{60,}$/i);
-      assert.equal(app.mainnetBlock, 14052044);
-    }
+    assert.equal(app.status, "wallet-mediated-verified");
+    assert.match(app.mainnetTransaction, /^0x[0-9a-f]{60,}$/i);
+    assert.equal(app.mainnetBlock, 14052044);
   }
 });
 
@@ -69,10 +61,6 @@ test("verified Mainnet integrations are unique receipts and blocked routes have 
     assert.equal(typeof app.mainnetBlock, "number");
     assert.notEqual(app.executionEnabled, false);
   }
-  const vesu = data.apps.find((app) => app.id === "vesu");
-  assert.equal(vesu.status, "wallet-mediated-blocked");
-  assert.equal(vesu.executionEnabled, false);
-  assert.equal(vesu.mainnetTransaction, undefined);
 });
 
 test("reviewed route code can resolve every Mainnet target from the data file", () => {

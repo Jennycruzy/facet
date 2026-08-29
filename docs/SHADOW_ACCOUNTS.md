@@ -1,7 +1,7 @@
 # Shadow accounts: the implementation guide
 
 Shadow accounts are the account-separation primitive underneath Facet's private account
-and portfolio layer. They let one shielded portfolio present a different deterministic
+launcher and portfolio layer. They let one shielded portfolio present a different deterministic
 Starknet account to each application context.
 
 The upstream public documentation is brief. This document supplies the missing engineering

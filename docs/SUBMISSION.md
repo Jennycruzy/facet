@@ -22,7 +22,6 @@ counts as transaction evidence.
     "0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc",
     "0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45",
     "0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537",
-    "0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6",
     "0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240"
   ],
   "demo_video": "",
@@ -41,10 +40,9 @@ pool.** There is no cap, and more is better evidence.
 | 2 | `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` | **Done** — reviewed Ready X Wallet API action, `SUCCEEDED` and `ACCEPTED_ON_L1` in block 14,004,049; receipt contains STRK20 pool events, and transaction data carries the Facet helper plus Ekubo router |
 | 3 | `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` | **Done** — reviewed Ready X Wallet API Endur action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,052,044; receipt contains STRK20 pool events, the deployed Endur helper, and Endur xSTRK events |
 
-The Vesu Wallet API attempt returned `PaymasterV2Error` code 156 without a transaction hash. It is
-a failed request, not submission evidence; direct simulation reproduced the Vesu migration
-extension's `before_modify_position: "not-allowed"` revert, so that route is paused. The Endur
-route now supplies the third successful Mainnet transaction.
+The retired Vesu experiment is not submission evidence; its failed request and direct simulation
+are preserved in `FINDINGS.md` §§6.30–6.31. The current submission surface contains only the two
+receipt-backed protocol routes: Ekubo and Endur.
 
 The minimum three-hash target is now satisfied by the eligibility shield, the Facet/Ekubo action,
 and the Facet/Endur action. The optional working target remains **four usable hashes** so that the
@@ -70,9 +68,8 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
 
 The immutable anonymizer is
 `0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc`; `FacetAccount` is
-`0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45`; the deployed Ekubo,
-Vesu, and Endur helpers are `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537`,
-`0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6`, and
+`0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45`; the deployed Ekubo
+and Endur helpers are `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537` and
 `0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240`.
 
 Deployment transactions:
@@ -85,9 +82,10 @@ The two Facet contracts and the helper were submitted after successful class dec
 verified with the expected class hashes. The contracts are not added to `transactions` yet:
 that list is reserved for the mainnet activity evidence required by the submission.
 
-The Vesu and Endur helper instances are declared and deployed. Their deployment addresses are
-included above; their deployment transactions are intentionally absent from `transactions`,
-which is reserved for successful Mainnet activity touching the STRK20 pool.
+The Endur helper is declared and deployed. Its deployment address is included above; its
+deployment transaction is intentionally absent from `transactions`, which is reserved for
+successful Mainnet activity touching the STRK20 pool. The retired Vesu helper is omitted from
+the current submission contract list.
 
 Verify each address returns a class hash before adding it:
 
@@ -100,9 +98,9 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
 ## `demo_url`
 
 **Previously deployed and verified — `https://usefacet.xyz`.** The live nginx root currently
-serves the release with the verified Endur / paused Vesu card state;
-`/launch.html`, `/mainnet-ekubo.html`, `/mainnet-defi.html?protocol=vesu`, and
-`/mainnet-defi.html?protocol=endur` returned 200 and passed the VPS-side obvious-secret scan.
+serves the release with the two verified route cards;
+`/launch.html`, `/mainnet-ekubo.html`, and `/mainnet-defi.html` returned 200 and passed the
+VPS-side obvious-secret scan.
 The prior release is preserved at
 `/var/www/facet.backup-20260829T170732Z-release-hardening`.
 
@@ -114,7 +112,7 @@ curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
 
 Empty. Target: under two minutes, real Mainnet evidence, hashes visible, and a screen recording
 with no hidden success claim. The recording may use the already-verified receipts if it says so;
-it must not imply that the direct Facet runner is instant or that Vesu succeeded.
+it must not imply that the direct Facet runner is instant or that an unverified route succeeded.
 
 **State the proving time honestly.** Proving takes roughly five to seven minutes on the
 current self-hosted development host; pre-generating

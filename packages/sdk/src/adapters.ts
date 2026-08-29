@@ -29,7 +29,7 @@ export interface AdapterSettlement {
 }
 
 export interface AdapterPlan {
-  protocol: "vesu" | "endur" | "ekubo";
+  protocol: "endur" | "ekubo";
   calls: PrivacyCall[];
   input: {
     token: string;
@@ -136,51 +136,6 @@ export function buildErc20ApproveCall(options: {
     contractAddress: token,
     entrypoint: "approve",
     calldata: [spender, ...u256(options.amount, "approval amount")],
-  };
-}
-
-export interface BuildVesuDepositPlanOptions {
-  token: FeltLike;
-  vault: FeltLike;
-  receiver: FeltLike;
-  amount: FeltLike;
-  linkedAddresses: readonly FeltLike[];
-}
-
-/**
- * Build Vesu V1.1's ERC-4626 deposit path: STRK approval followed by `deposit`.
- *
- * The receiver is the persistent Facet context account. The resulting vSTRK is a
- * protocol position and must be settled independently from any unused STRK.
- */
-export function buildVesuDepositPlan(options: BuildVesuDepositPlanOptions): AdapterPlan {
-  const token = address(options.token, "Vesu input token");
-  const vault = address(options.vault, "Vesu vSTRK vault");
-  const receiver = unlinkedRecipient(options.receiver, "Vesu receiver", options.linkedAddresses);
-  const amount = positiveU256(options.amount, "Vesu deposit amount");
-  return {
-    protocol: "vesu",
-    calls: [
-      buildErc20ApproveCall({ token, spender: vault, amount: amount.normalized }),
-      {
-        contractAddress: vault,
-        entrypoint: "deposit",
-        calldata: [...amount.calldata, receiver],
-      },
-    ],
-    input: { token, amount: amount.normalized },
-    settlements: [
-      {
-        token,
-        policy: { type: "diff" },
-        reason: "Return unused STRK without sweeping an earlier context balance.",
-      },
-      {
-        token: vault,
-        policy: { type: "diff" },
-        reason: "Vesu returns vSTRK shares, which remain a protocol position on this facet.",
-      },
-    ],
   };
 }
 

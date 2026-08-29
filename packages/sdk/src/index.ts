@@ -21,13 +21,11 @@ export {
   buildEkuboQuoteCall,
   buildEkuboSwapPlan,
   buildEndurStakePlan,
-  buildVesuDepositPlan,
   LinkedRecipientError,
   type AdapterPlan,
   type AdapterSettlement,
   type BuildEndurStakePlanOptions,
   type BuildEkuboSwapPlanOptions,
-  type BuildVesuDepositPlanOptions,
   type EkuboRouteOptions,
 } from "./adapters.js";
 

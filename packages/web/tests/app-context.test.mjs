@@ -14,8 +14,8 @@ test("application contexts keep one stable namespace and default rotation", () =
 });
 
 test("application contexts accept explicit namespaces and rotations", () => {
-  const context = applicationContext({ id: "vesu", dappName: "facet-mainnet-vesu-v1", nonce: 2 });
-  assert.equal(context.dappName, "facet-mainnet-vesu-v1");
+  const context = applicationContext({ id: "endur", dappName: "facet-mainnet-endur-v1", nonce: 2 });
+  assert.equal(context.dappName, "facet-mainnet-endur-v1");
   assert.equal(context.nonce, 2);
   assert.equal(context.lifecycle, "persistent");
 });

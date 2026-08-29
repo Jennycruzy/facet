@@ -1,7 +1,8 @@
 # `@facet/sdk`
 
 This package is the Facet-specific action builder over
-`@starkware-libs/starknet-privacy-sdk`. Facet is a private account and portfolio layer:
+`@starkware-libs/starknet-privacy-sdk`. Facet is the integration layer for a private Starknet
+app launcher:
 the SDK turns a shielded note into a context-specific shadow-account call and settles
 the result back into private notes.
 
@@ -50,17 +51,15 @@ register; use `supportsRegistration` to check first, or build on the core path.
 
 ## Protocol adapters
 
-`src/adapters.ts` contains pure call builders for the first three Facet integrations:
+`src/adapters.ts` contains pure call builders for the two current Facet integrations:
 
-- `buildVesuDepositPlan` — STRK approval plus Vesu V1.1 vSTRK
-  `deposit(assets, receiver)`.
 - `buildEndurStakePlan` — ERC-20 approval plus Endur `deposit(assets, receiver)`.
 - `buildEkuboQuoteCall` and `buildEkuboSwapPlan` — the live single-hop Ekubo route, including
   the transfer, swap, and minimum-output clear calls.
 
 Each plan returns canonical `PrivacyCall`s, the input token and amount, and independent
-settlement policies for every token whose balance can change. Vesu and Endur require a list of
-addresses already linked to the user and refuse a matching protocol recipient with a typed
+settlement policies for every token whose balance can change. Endur requires a list of addresses
+already linked to the user and refuses a matching protocol recipient with a typed
 `LinkedRecipientError`; this is a hard privacy guard, not a warning. The builders do not quote,
 prove, or broadcast. Quote Ekubo immediately before starting a proof because its minimum output
 can decay during the proving window.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Facet · one balance, a different face in every app</title>
-<meta name="description" content="A private account and portfolio layer for Starknet. One shielded balance, a persistent identity per compatible app or strategy.">
+<meta name="description" content="A private Starknet app launcher. One shielded balance, a persistent unlinkable identity per compatible app or strategy.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -29,10 +29,10 @@
 
   <section class="hero">
     <div>
-      <div class="eyebrow">Private account &amp; portfolio layer</div>
+      <div class="eyebrow">Private Starknet app launcher</div>
       <h1>One balance.<br>A different face<br>in every app.</h1>
       <p class="tagline">Hide My Email, for your money.</p>
-      <p class="sub">Unlinkable by the funding path. One portfolio underneath.</p>
+      <p class="sub">Unlinkable by the funding path. One shielded balance underneath.</p>
       <div class="live" id="live" data-state="loading" role="status" aria-live="polite"><span class="dot"></span><span id="live-text">connecting</span></div>
     </div>
     <div class="stage"><canvas id="stone" aria-label="A cut stone. Lit faces are identities that exist on chain."></canvas></div>
@@ -91,7 +91,7 @@
       </div>
       <div>
         <h4>Self-linking calls are guarded</h4>
-        <p>The tested Vesu and Endur builders refuse a call that pays your wallet, an address
+        <p>The tested Endur builder refuses a call that pays your wallet, an address
         that funded your pool, or another identity. The browser path must use those builders
         before this is a launcher-wide guarantee.</p>
       </div>

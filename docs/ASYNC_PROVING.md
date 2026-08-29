@@ -142,9 +142,9 @@ explorer URL after broadcast. It must not return the proof blob or private proof
 
 ## Route-specific timing
 
-Vesu deposits and Endur stakes tolerate a multi-minute proof better because the requested
-amount or share action does not depend on a short-lived swap quote. Endur is currently the
-verified delay-tolerant Mainnet route; Vesu is paused by its live migration-extension revert.
+Endur stakes tolerate a multi-minute proof better because the requested amount or share action
+does not depend on a short-lived swap quote. Endur is currently the verified delay-tolerant
+Mainnet route.
 Ekubo is verified but least tolerant of delay because its quote can expire:
 
 1. Build the route and quote immediately before queueing.
@@ -162,9 +162,9 @@ Ekubo remains enabled only with a fresh quote and minimum-output floor.
 |---|---|---|
 | EOA binding and in-memory derivation | Staged in `packages/web` | Browser/unit tests |
 | Persistent app-context metadata | Previewed by the launcher | `app-context` tests and data file |
-| SDK adapters | Built and unit-tested | Vesu, Endur, and Ekubo serializer tests |
+| SDK adapters | Built and unit-tested | Endur and Ekubo serializer tests |
 | Self-hosted warm prover | Running on the trusted VPS, one proof at a time | `starknet_specVersion` plus full proof results |
-| Reviewed wallet-mediated routes | Ekubo and Endur verified; Vesu paused | Mainnet receipts and the Vesu simulation finding |
+| Reviewed wallet-mediated routes | Ekubo and Endur verified | Mainnet receipts and route-specific preflight |
 | Queue API and worker supervisor | Not wired to the public site | Must return a job id and persist no secrets |
 | Note discovery in browser | Not wired | Real note count and selected note |
 | Browser proving/submission | Not wired | Mainnet receipt through an allowlisted route |
@@ -178,7 +178,7 @@ the frontend.
 ## Post-sprint roadmap
 
 The evidence gates are complete for the current wallet-mediated scope: Ekubo and Endur have
-receipt-backed Mainnet actions, while Vesu is explicitly paused. The remaining product work is
+receipt-backed Mainnet actions. The remaining product work is
 deliberately narrower:
 
 1. Add the authenticated two-endpoint job service and warm-worker supervisor. No universal wallet
@@ -187,8 +187,8 @@ deliberately narrower:
 3. Enforce fixed funding denominations, quote expiry, and timing policy in code and tests before
    describing them as guarantees.
 4. Revisit the direct Facet runner only when an authorized Mainnet screening attestation exists.
-5. Retest Vesu only after the live vault/migration configuration changes; do not spend proof time
-   against the current blocked route.
+5. Add another adapter only when it uses the same public interface, passes the compatibility
+   checks, and has a real receipt; do not increase route count for marketing.
 
 This ordering makes the queue a product improvement around a proven transaction path. It
 does not hide the current prover limitation or substitute a demo spinner for Mainnet evidence.

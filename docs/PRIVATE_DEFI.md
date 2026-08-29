@@ -15,10 +15,10 @@ Facet combines five Starknet components:
 2. **Immutable shadow-account anonymizer.** The anonymizer derives a fresh account from the
    user's private identity, anonymizer address, dapp name, and nonce. The shadow account is
    the public caller seen by the dapp; the owner address is not the dapp caller.
-3. **Protocol adapters and helpers.** Ekubo uses a router-specific helper. Vesu V1.1 and Endur
-   use the shared `FacetErc4626Anonymizer`, each bound to the STRK20 pool, STRK, and one vault.
-   The helper approves the selected vault, calls its ordinary ERC-4626 `deposit`, and approves
-   only the resulting output balance back to the privacy pool.
+3. **Protocol adapters and helpers.** Ekubo uses a router-specific helper. Endur uses the
+   shared `FacetErc4626Anonymizer`, bound to the STRK20 pool, STRK, and one vault. The helper
+   approves the selected vault, calls its ordinary ERC-4626 `deposit`, and approves only the
+   resulting output balance back to the privacy pool.
 4. **Transaction prover.** The SDK sends a signed Invoke V3 to
    `starknet_proveTransaction`. The prover returns the proof facts needed by the privacy
    pool. In development, the Mac reaches the VPS prover through an SSH loopback tunnel.
@@ -40,7 +40,6 @@ The deployed mainnet contracts are:
 | Immutable anonymizer | `0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc` |
 | FacetAccount class deployment | `0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45` |
 | EkuboSwapAnonymizer helper | `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537` |
-| Vesu V1.1 vSTRK helper | `0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6` (deployed in `0x2f72930587b4621eca8a35fbc8a40c30db0773076a7a46afe9bb49c467d7ff3`) |
 | Endur xSTRK helper | `0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240` (deployed in `0x7bc811b873927bc86adb892d18ca4ea971e74c06939693c76ee91c699fee289`) |
 | Shared helper class | `0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4` (declared in `0x6ec84277bbeea2f6005c265ed7d47cc5a1397fb7c77cb1e88172dc17950a500`) |
 | STRK20 pool | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
@@ -141,11 +140,11 @@ that implements the STRK20 Wallet API can own note discovery, proving, screening
 For the reviewed paths, connect **Ready X on Starknet Mainnet**. The browser submits only a
 fixed action set. Ekubo withdraws `0.1 STRK` to Facet's deployed stateless helper, creates one
 open ETH note for the connected Ready account, and invokes the helper with a freshly checked
-quote. Vesu and Endur withdraw `0.1 STRK` to their protocol-bound helper, call the selected
-ERC-4626 vault, and create an open vSTRK or xSTRK note for the connected Ready account.
+quote. Endur withdraws `0.1 STRK` to its protocol-bound helper, calls the ERC-4626 vault, and
+creates an open xSTRK note for the connected Ready account.
 
 The ordinary wallet deposit that creates the shielded balance goes to the STRK20 pool; it does
-not go directly into Ekubo, Vesu, or Endur. A later app action spends that shielded note, withdraws
+not go directly into Ekubo or Endur. A later app action spends that shielded note, withdraws
 STRK to the selected Facet helper, calls the real protocol contract, and settles the protocol
 output into a new note. This separation is what makes the app-specific caller different from the
 wallet that funded the private balance.
@@ -156,20 +155,10 @@ deployment account is only used to deploy the helper. Do not reuse the existing 
 shield as a Facet DeFi hash. Record a new hash only after its receipt is successful/finalized and
 contains the Mainnet STRK20 pool event, the Facet helper call, and the Ekubo protocol event.
 
-The Vesu and Endur pages are route-complete at the calldata and read-only-check level, and their
-shared helper class and deterministic instances are now deployed. Endur is now a live claim after
-its successful receipt; Vesu remains blocked by the migration-extension revert and is not a live
-claim.
-
-The first funded wallet-mediated Vesu attempt on 29 August 2026 passed the Mainnet, helper, STRK
-asset, `preview_deposit(0.1 STRK)`, and `max_deposit` checks, but Ready returned only
-`PaymasterV2Error: Paymaster error 156: An error occurred (TRANSACTION_EXECUTION_ERROR)`.
-The diagnostic build is now live, and one controlled retry returned the same wrapper with no
-transaction hash. A non-broadcast Mainnet simulation of the protocol portion reproduced the
-underlying failure: the configured Genesis vSTRK vault reaches its migration extension's
-`before_modify_position` hook, which reverts `"not-allowed"`. This is a live Vesu configuration
-block, not a helper, quote, prover, screening, or browser-formatting issue. Do not call this Vesu
-vault live again or add the failure to `strk20.json`.
+Endur is now a live claim after its successful receipt. The retired Vesu experiment, including
+the code-156 wrapper and the underlying migration-extension revert, is recorded in
+`FINDINGS.md` §§6.30–6.31 and is not part of the supported route set. Do not retry that vault or
+add its failed request to `strk20.json`.
 
 The same non-broadcast `approve → Endur.deposit(0.1 STRK)` simulation completed successfully,
 including xSTRK output and simulated state changes. The controlled wallet test then succeeded in
@@ -207,9 +196,9 @@ The reviewed Wallet API Endur action
 and Endur xSTRK events.
 
 The direct Facet runner remains blocked by AVNU's `SCREENING_REQUIRED` requirement; it was not
-used for the successful browser action. Vesu has no successful receipt and is blocked by the live
-migration-extension revert; Endur now has a successful wallet-mediated receipt. The minimum
-three-hash Mainnet submission target is satisfied by the eligibility shield, Ekubo, and Endur.
+used for the successful browser action. Endur now has a successful wallet-mediated receipt. The
+minimum three-hash Mainnet submission target is satisfied by the eligibility shield, Ekubo, and
+Endur.
 
 ## Security boundary
 

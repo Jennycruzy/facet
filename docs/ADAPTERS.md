@@ -27,50 +27,18 @@ by prominence.
 
 | Order | Protocol | Action | Decay |
 |---|---|---|---|
-| 1 | Vesu | Deposit | None — a supplied balance does not go stale |
-| 2 | Endur | Stake | None — the exchange rate moves slowly and monotonically |
-| 3 | Ekubo | Swap | **High** — a quote can miss its slippage bound inside the window |
+| 1 | Endur | Stake | None — the exchange rate moves slowly and monotonically |
+| 2 | Ekubo | Swap | **High** — a quote can miss its slippage bound inside the window |
 
 Ekubo is last by design. It is the adapter most likely to fail for reasons that have nothing
 to do with privacy, and leading with it would misattribute a timing problem to the product.
 
 ## Current execution status
 
-All three adapters have a reviewed Mainnet execution page using the supported Wallet API path:
-Ready X supplies the shielded state, proof, screening, and submission, while Facet supplies a
-fixed protocol route. Ekubo and Endur have deployed helpers and verified Mainnet receipts. Vesu
-uses the same declared shared `FacetErc4626Anonymizer`, but its configured Genesis vSTRK vault
-reverts at a live migration extension, so the launcher labels Vesu paused and refuses execution.
-The browser pages do not claim a direct `FacetAccount`-signer Mainnet path.
-
-## Vesu — deposit
-
-| | |
-|---|---|
-| Vault | `0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2` (V1.1 Genesis vSTRK) |
-| Underlying | STRK `0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d` |
-| Entrypoint | `deposit(assets, receiver)` |
-
-```cairo
-fn deposit(assets: u256, receiver: ContractAddress) -> u256
-```
-
-The live V1.1 vault is ERC-4626 shaped: it accepts STRK and returns vSTRK shares. The
-`receiver` is the persistent Facet context account, not the person's wallet. The resulting
-vSTRK represents a Vesu position and is not an automatically recoverable STRK note.
-
-The current Mainnet route is paused. A read-only deposit simulation reaches the configured
-migration extension and reverts `before_modify_position: "not-allowed"`; no Vesu receipt is
-claimed until the vault configuration changes and a new controlled rehearsal succeeds.
-
-The direct SDK plan uses two calls in one invocation: approve STRK to the vault, then deposit.
-The browser route uses the same bindings through the Facet-owned helper, which is bound to the
-privacy pool, STRK, and this one vault and cannot be redirected to another protocol.
-
-The pure SDK builder is `buildVesuDepositPlan`. It returns those two calls plus a per-token
-`diff` settlement hint for both unused STRK and the vSTRK output. It requires the caller to
-provide every address already linked to the user; the `receiver` field is refused if it matches
-one of them.
+Both adapters have a reviewed Mainnet execution page using the supported Wallet API path:
+Ready X supplies the shielded state, proof, screening, and submission, while Facet supplies
+fixed protocol routes. Ekubo and Endur have deployed helpers and verified Mainnet receipts. The
+browser pages do not claim a direct `FacetAccount`-signer Mainnet path.
 
 ## Endur — stake
 
@@ -185,9 +153,6 @@ and what to do instead, because a user who cannot see why will work around it.
 Each adapter must state its `CollectPolicy` and the reasoning. A fungible balance delta is not
 the same asset class as a persistent protocol position:
 
-- **Vesu deposit** — the STRK leaves the facet and becomes vSTRK shares. `Diff` settles unused
-  STRK and the output share balance independently; the Vesu position remains attached to the
-  facet until an explicit redeem path is added.
 - **Endur stake** — the facet receives xSTRK, a *different* token from the one it spent. The
   policy must be reasoned about per token, not per interaction.
 
@@ -198,7 +163,7 @@ performed; they are not automatically recoverable into a shielded balance.
 
 The SDK builders in `packages/sdk/src/adapters.ts` do not prove or broadcast. They only return
 canonical calls and settlement metadata for composition with `buildGateAActionSet` and the
-upstream privacy client. Vesu and Endur builders enforce the recipient guard; Ekubo has no
+upstream privacy client. The Endur builder enforces the recipient guard; Ekubo has no
 user-supplied recipient in its tested single-hop path. The browser routes use the same reviewed
 bindings through narrow allowlists rather than accepting arbitrary calldata.
 
@@ -211,6 +176,4 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
   | python3 -c "import sys,json;a=json.load(sys.stdin)['result']['abi'];a=json.loads(a) if isinstance(a,str) else a;print([f['name'] for i in a if i.get('type')=='interface' for f in i['items']])"
 ```
 
-Sources: Vesu's published [contract addresses](https://docs.vesu.xyz/developers/contract-addresses),
-then confirmed against chain. Endur's xSTRK address confirmed by reading `name` and `symbol`
-from the contract itself.
+Source: Endur's xSTRK address confirmed by reading `name` and `symbol` from the contract itself.

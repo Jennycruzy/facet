@@ -2,7 +2,7 @@
 //!
 //! The helper is deliberately bound at construction to one privacy pool, one
 //! underlying token, and one vault. It is therefore suitable for both the
-//! Vesu vSTRK and Endur xSTRK routes without accepting arbitrary browser
+//! protocol routes without accepting arbitrary browser
 //! calldata. The privacy pool withdraws the underlying token to this helper,
 //! the helper calls the real vault, and the resulting shares are approved back
 //! to the pool for an open note.

@@ -44,8 +44,8 @@
     <div class="head"><h2>Mainnet integrations</h2><div class="aside">receipt-backed · wallet-mediated</div></div>
     <div class="grid" id="mainnet-txs"></div>
     <p class="note">These are Ready X Wallet API actions through Facet's deployed protocol helpers,
-    not direct FacetAccount-signer transactions. Vesu is shown in the launcher as paused and is not
-    included here because its current vault reverts before a receipt exists.</p>
+    not direct FacetAccount-signer transactions. The current product surface contains only the two
+    routes with successful receipts: Ekubo and Endur.</p>
   </section>
 
   <section class="block">
@@ -110,10 +110,9 @@ snforge test</pre>
       <p>The first run sent one wei to the owner's address because it was a smoke test, so
       that receipt does connect them. The argument rests on the funding leg, which is
       shielded.</p></div>
-      <div><h4>Vesu is not live</h4>
-      <p>Ekubo and Endur have successful wallet-mediated Mainnet receipts. The configured Vesu
-      Genesis vSTRK vault currently reverts at its migration extension, so no Vesu action is
-      requested or claimed.</p></div>
+      <div><h4>Two routes, one boundary</h4>
+      <p>Ekubo and Endur have successful wallet-mediated Mainnet receipts. The launcher exposes
+      only these receipt-backed routes; unsupported protocols are outside the current product.</p></div>
     </div>
   </section>
 

@@ -2,9 +2,9 @@
 
 **Hide My Email, for your money.**
 
-Facet is a private account and portfolio layer for Starknet: one shielded balance, a
-persistent context-specific account for each application or strategy, and a portfolio view
-that does not require the user to publicly reuse one wallet everywhere.
+Facet is a private application launcher for Starknet: one shielded balance funds a
+persistent, context-specific account for each compatible application or strategy. The
+portfolio is the underlying recovery model; the launcher is the product surface.
 
 > **One balance. A different face in every app.**
 
@@ -13,7 +13,7 @@ identities. It does not hide an app account's downstream protocol activity: its 
 calls, balances, timing, and user-chosen recipients are public or inferable once it reaches
 Starknet.
 
-Vesu sees one account. Ekubo sees another. A future application sees a third. The user
+Each compatible application sees its own account. A future application sees another. The user
 still has one private portfolio underneath, with deterministic recovery instead of a
 folder full of manually managed wallets.
 
@@ -43,8 +43,8 @@ result back into shielded notes. Facet turns that primitive into an account and 
 model rather than asking users to think in raw commitments, notes, and contract phases.
 
 > **Status: live experimental build.** The wallet-mediated Ekubo and Endur routes have
-> receipt-backed Mainnet evidence; the direct Facet runner, async queue, portfolio view, and
-> Vesu route remain incomplete or blocked. Nothing here is externally audited. Do not route
+> receipt-backed Mainnet evidence; the direct Facet runner, async queue, and portfolio view
+> remain incomplete. Nothing here is externally audited. Do not route
 > funds you cannot afford to lose. Claims in this README are traceable to a source reference
 > or a transaction hash; anything not yet done is marked as such.
 
@@ -251,11 +251,11 @@ What is not built is listed as plainly as what is.
 | Research | `docs/FINDINGS.md` — pool, anonymizer, identity derivation, all 39 invocations decoded |
 | Contracts | `packages/contracts` — 20 fork tests passing with the pinned Scarb, Foundry, and Universal Sierra Compiler toolchain |
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
-| SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 20 tests passing |
+| SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 18 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
 | Product layer | **working wallet-mediated demo** — account contexts, private funding, settlement, adapter foundations, a deployed launcher, and receipt-backed Ekubo/Endur Wallet API pages exist; the generic async service and portfolio view remain to be built |
-| Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, Ekubo helper, and the shared protocol-bound Vesu/Endur helper instances are deployed; the Endur action is verified and the Vesu route is paused |
-| Mainnet interaction | **verified for Ekubo and Endur** — the 7 STRK Ready X eligibility shield plus reviewed Facet/Ekubo and Facet/Endur Wallet API actions are confirmed on Mainnet; Vesu remains blocked by its live migration-extension revert |
+| Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, Ekubo helper, and Endur helper are deployed; both current protocol routes have receipt-backed evidence |
+| Mainnet interaction | **verified for Ekubo and Endur** — the 7 STRK Ready X eligibility shield plus reviewed Facet/Ekubo and Facet/Endur Wallet API actions are confirmed on Mainnet |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted
@@ -279,9 +279,9 @@ verified in Mainnet transaction
 the receipt succeeded and emitted STRK20 pool and Ekubo core events, while the transaction data
 contains the deployed helper and router. The reviewed Wallet API Endur action also succeeded in
 `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`, block 14,052,044, with
-STRK20 pool, Endur helper, and Endur xSTRK events. The Vesu V1.1 route is retained for diagnosis
-but paused after its live migration-extension revert; it is not a successful integration claim.
-The direct Facet runner remains a separate path blocked by AVNU screening.
+STRK20 pool, Endur helper, and Endur xSTRK events. The direct Facet runner remains a separate
+path blocked by AVNU screening. A retired Vesu experiment is preserved as historical failure
+analysis in [`docs/FINDINGS.md`](docs/FINDINGS.md), not presented as a supported route.
 
 ## Documentation
 

@@ -15,11 +15,8 @@ const MAINNET_RPC = data.networks.mainnet.rpc;
 const MAINNET_POOL = data.networks.mainnet.pool;
 const STRK = data.strk;
 
-const protocolId = new URLSearchParams(window.location.search).get("protocol")?.toLowerCase() ?? "vesu";
-const app = data.apps.find((candidate) => candidate.id === protocolId);
-if (!app || !["vesu", "endur"].includes(app.id)) {
-  throw new Error("Choose a supported application: ?protocol=vesu or ?protocol=endur.");
-}
+const app = data.apps.find((candidate) => candidate.id === "endur");
+if (!app) throw new Error("Endur route is missing from Facet configuration.");
 
 const network = data.networks.mainnet;
 const HELPER = app.helper;

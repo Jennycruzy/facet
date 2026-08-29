@@ -22,21 +22,6 @@
         "deploymentTransaction": "0x188808f3c11914c6ada25cae55defe4d34332f4ff955d1eb272ce9962f08dfc",
         "deploymentBlock": 14000701
       },
-      "vesuHelper": {
-        "address": "0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6",
-        "classHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
-        "compiledClassHash": "0x74f090a448998ae228ea2294d8e007d83174f36ca8498d152b6f4c53692eb05",
-        "salt": "0x46414345545f564553555f7631",
-        "constructorCalldata": [
-          "0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a",
-          "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
-          "0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2"
-        ],
-        "status": "deployed",
-        "deploymentTransaction": "0x2f72930587b4621eca8a35fbc8a40c30db0773076a7a46afe9bb49c467d7ff3",
-        "deploymentBlock": 14030645,
-        "protocol": "Vesu V1.1 vSTRK"
-      },
       "endurHelper": {
         "address": "0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240",
         "classHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
@@ -132,31 +117,6 @@
   },
   "apps": [
     {
-      "id": "vesu",
-      "name": "Vesu",
-      "dappName": "facet-mainnet-vesu-v1",
-      "nonce": 0,
-      "kind": "savings",
-      "action": "Deposit",
-      "tolerates_delay": true,
-      "note": "The reviewed route is currently paused: Vesu V1.1's Genesis vSTRK vault reaches a live migration gate and reverts before_modify_position: not-allowed. No Vesu transaction is requested or claimed.",
-      "contract": "0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2",
-      "contractLabel": "Vesu V1.1 \u00b7 Genesis vSTRK",
-      "entrypoint": "deposit",
-      "pool": "0x000d8d6dfec4d33bfb6895de9f3852143a17c6f92fd2a21da3d6924d34870160",
-      "outputToken": "0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2",
-      "outputSymbol": "vSTRK",
-      "helper": "0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6",
-      "helperClassHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
-      "verified": "read-only checks passed, but Mainnet deposit simulation reaches the migration extension and reverts before_modify_position: not-allowed; paused on 29 Aug 2026",
-      "status": "wallet-mediated-blocked",
-      "executionEnabled": false,
-      "blockReason": "Paused: this Vesu Genesis vSTRK vault currently reverts before_modify_position: not-allowed. Do not retry this route.",
-      "executionPage": "mainnet-defi.html?protocol=vesu",
-      "monogram": "Ve",
-      "accent": "emerald"
-    },
-    {
       "id": "endur",
       "name": "Endur",
       "dappName": "facet-mainnet-endur-v1",
@@ -176,7 +136,7 @@
       "status": "wallet-mediated-verified",
       "mainnetTransaction": "0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5",
       "mainnetBlock": 14052044,
-      "executionPage": "mainnet-defi.html?protocol=endur",
+      "executionPage": "mainnet-defi.html",
       "monogram": "En",
       "accent": "violet"
     },

@@ -1,7 +1,12 @@
-# Facet: a private account and portfolio layer
+# Facet: a private Starknet app launcher
 
 Facet provides unlinkability between a shielded balance and the application-specific
 identities that use it. It is not an invisibility layer for downstream protocol activity.
+
+The primary product is the launcher: choose a compatible Starknet application and Facet
+funds a persistent app-specific account from that balance. The private portfolio is the
+underlying model for recovery and future unified position tracking, not a claim that the
+current browser surface already indexes every asset type.
 
 The simplest way to understand it is **Hide My Email for your money**: one person can
 keep a unified private portfolio while presenting a separate account to every app,
@@ -18,7 +23,7 @@ portfolio and a compatible application's public account from being published by 
 funding path. Once that account touches a protocol, its caller, calldata, balances,
 timing, and downstream activity are public or inferable like any other Starknet account.
 
-This is an account and portfolio product, not a new cryptographic protocol. Facet uses
+This is a launcher and account product, not a new cryptographic protocol. Facet uses
 the STRK20 privacy pool, proved execution, and shadow accounts as its substrate, then
 turns those primitives into a usable account model for applications.
 
@@ -212,20 +217,19 @@ product layer:
 - the Ekubo adapter has completed a shielded STRK-to-ETH rehearsal on Sepolia;
 - the SDK contains the action builder, proof-aware preflight, settlement logic, and
   operational runbooks;
-- the launcher has reviewed Mainnet routes for Ekubo, Vesu V1.1 vSTRK, and Endur xSTRK;
-- the shared ERC-4626 helper class and deterministic Vesu/Endur helper instances are declared
-  and deployed on Mainnet;
+- the launcher has reviewed Mainnet routes for Ekubo and Endur xSTRK;
+- the shared ERC-4626 helper class and deterministic Endur helper instance are declared and
+  deployed on Mainnet;
 - fork-backed contract tests and source/chain findings document the behavior.
 
 The staged browser launcher binds an EOA, derives a viewing key in memory, and previews
 persistent application contexts. Reviewed Wallet API pages now provide narrow Mainnet routes for
-Ekubo, Vesu V1.1 vSTRK, and Endur xSTRK: Ready X signs, proves, screens, and submits the privacy
-actions, while Facet supplies the fixed protocol-bound helper and protocol calldata. Ekubo and
-Endur have verified Mainnet receipts with pool, helper, and protocol evidence. The Vesu page is
-wired to its deployed helper but is paused because the configured vault reverts at its migration
-extension. These are not direct `FacetAccount`-signer flows. The existing eligibility shield is a
-successful Mainnet STRK20 transaction, but it was made through the Ready X wallet and is not being
-relabeled as Facet DeFi activity.
+Ekubo and Endur: Ready X signs, proves, screens, and submits the privacy actions, while Facet
+supplies the fixed protocol-bound helper and protocol calldata. Both have verified Mainnet
+receipts with pool, helper, and protocol evidence. These are not direct `FacetAccount`-signer
+flows. The existing eligibility shield is a successful Mainnet STRK20 transaction, but it was
+made through the Ready X wallet and is not being relabeled as Facet DeFi activity. The retired
+Vesu experiment is retained in `FINDINGS.md` as failure analysis, not as a product route.
 
 The development prover currently takes roughly five to seven minutes on the small reference
 host. That is an infrastructure measurement, not the intended user experience. The intended

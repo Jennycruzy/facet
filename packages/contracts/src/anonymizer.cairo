@@ -2,7 +2,7 @@
 //!
 //! These mirror `starkware-libs/starknet-privacy`
 //! `packages/shadow_account_anonymizer/src/shadow_account_anonymizer.cairo` so tests can talk to
-//! the live mainnet deployment without pulling the upstream workspace and its Ekubo and Vesu
+//! the live mainnet deployment without pulling the upstream workspace and its reviewed
 //! dependencies. Entrypoint selectors derive from function names and the structs below reproduce
 //! the upstream Serde layouts, so the ABI matches by construction.
 

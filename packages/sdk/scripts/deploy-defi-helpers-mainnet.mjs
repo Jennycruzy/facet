@@ -31,16 +31,9 @@ const ARTIFACT_DIR = process.env.FACET_CONTRACT_ARTIFACT_DIR
 
 const POOL = "0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a";
 const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
-const VSTRK = "0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2";
 const XSTRK = "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a";
 
 const HELPERS = [
-  {
-    id: "vesu",
-    label: "Vesu V1.1 vSTRK",
-    vault: VSTRK,
-    salt: "0x46414345545f564553555f7631", // FACET_VESU_v1
-  },
   {
     id: "endur",
     label: "Endur xSTRK",
