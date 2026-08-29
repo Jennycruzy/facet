@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Facet · launch a private account</title>
+<title>Facet · launch a private app</title>
 <meta name="description" content="Facet launcher: bind an EOA wallet in memory and choose a persistent application context.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
   <header class="appbar">
     <a class="brand" href="./">
       <canvas id="mark" width="68" height="68" aria-hidden="true"></canvas>
-      <span class="wordmark">Facet<small>private accounts</small></span>
+      <span class="wordmark">Facet<small>private launcher</small></span>
     </a>
     <nav class="appnav">
       <a href="./">The app</a>
@@ -85,12 +85,12 @@
   </section>
 
   <section class="block launch-next">
-    <div class="head"><h2>What happens next</h2><div class="aside">Async queue · Mainnet gated</div></div>
-    <div class="launch-queue">
-      <div class="queue-step active" data-queue-step="context"><span>03</span><div><strong>Choose an application context</strong><small>Ekubo and Endur are the two reviewed Mainnet routes.</small></div></div>
-      <div class="queue-step" data-queue-step="quote"><span>04</span><div><strong>Quote, build, and safety-check</strong><small>The adapter refuses linked recipients and records per-token settlement policy.</small></div></div>
-      <div class="queue-step" data-queue-step="prove"><span>05</span><div><strong>Queue a proof job</strong><small>A warm worker proves asynchronously; the job id survives a closed page.</small></div></div>
-      <div class="queue-step" data-queue-step="review"><span>06</span><div><strong>Re-check, then broadcast</strong><small>Quote expiry, recipient, route, and proof-aware preflight must pass first.</small></div></div>
+    <div class="head"><h2>What happens next</h2><div class="aside">Ready X · Mainnet gated</div></div>
+    <div class="launch-steps">
+      <div class="launch-step active" data-launch-step="context"><span>03</span><div><strong>Choose an application context</strong><small>Ekubo and Endur are the two reviewed Mainnet routes.</small></div></div>
+      <div class="launch-step" data-launch-step="review"><span>04</span><div><strong>Review the exact route</strong><small>Amount, recipient, helper, quote, and settlement boundary are shown before approval.</small></div></div>
+      <div class="launch-step" data-launch-step="approve"><span>05</span><div><strong>Approve in the wallet</strong><small>Ready X owns proving, screening, and submission; Facet never receives proof material.</small></div></div>
+      <div class="launch-step" data-launch-step="verify"><span>06</span><div><strong>Verify the receipt</strong><small>Only a successful receipt touching the pool, helper, and protocol counts as evidence.</small></div></div>
     </div>
     <div class="launch-selection" id="selection-note" role="status" aria-live="polite">
       Sign the binding message to choose an application context. No transaction is prepared here.
@@ -121,9 +121,9 @@
   <section class="block launch-boundary">
     <div class="head"><h2>Honest boundary</h2><div class="aside">No silent signing</div></div>
     <p class="note">Wallet binding and viewing-key derivation are implemented as an in-memory browser flow.
-    The two route links above are the separate reviewed Wallet API execution paths; the generic EOA queue shown
-    here does not submit arbitrary calls. The current development prover takes several minutes; signing the
-    message above does not move funds or authorize a transaction. The <a href="proof.html">evidence page</a>
+    The two route links above open separate reviewed Ready X Wallet API execution paths; the EOA binding flow
+    does not submit arbitrary calls. Signing the message above does not move funds or authorize a transaction.
+    The <a href="proof.html">evidence page</a>
     remains the place to verify completed receipts.</p>
   </section>
 

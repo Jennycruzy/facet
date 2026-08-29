@@ -39,9 +39,9 @@ Ekubo or Endur review route. The signature and key are never persisted. The revi
 Mainnet pages use Ready X's native STRK20 proving/screening API; they only request a transaction
 after the user checks the exact route and amount.
 
-The intended execution path is `proof queued` → visible stages → user may leave → resumable
-job polling → proof-aware review → receipt. The queue improves the page experience around the
-current five-to-seven-minute proof; it does not claim to make the proof itself faster. See
+The current reviewed execution path is `bind` → choose an app → exact route review → Ready X
+wallet approval → receipt. A future direct Facet queue may add resumable job polling around the
+five-to-seven-minute development proof; that is not presented as a live browser feature. See
 [`../../docs/ASYNC_PROVING.md`](../../docs/ASYNC_PROVING.md) for the contract and security
 requirements.
 
@@ -55,7 +55,7 @@ Facet's shadow-account action to the wallet-managed proving path.
 
 | File | Contents |
 |---|---|
-| `index.html` | **The app** — Facet's grid: your private account contexts, their live on-chain state, and the application tiles |
+| `index.html` | **The app** — Facet's launcher surface: private account contexts, live on-chain state, and compatible application tiles |
 | `launch.html` | Staged launcher — wallet binding, persistent app-context selection, and reviewed route links |
 | `ready-probe.html` | Internal read-only Ready X capability check for the mainnet Wallet API path |
 | `mainnet-ekubo.html` | Reviewed wallet-mediated Mainnet Ekubo swap using the deployed privacy helper |
@@ -87,9 +87,9 @@ Facet's shadow-account action to the wallet-managed proving path.
   own limits is the one believed on everything else.
 - **The launcher states its stage.** A wallet signature is not a transaction approval, and no
   private key, viewing key, or signature is persisted by the page.
-- **The launcher must state the proof wait.** A warm worker and a job id let a user leave the
-  page, but they do not turn a five-minute proof into a synchronous interaction or authorize
-  an unreviewed broadcast.
+- **The launcher must state its execution boundary.** The current reviewed routes delegate
+  proving, screening, and submission to Ready X; the browser never receives proof material.
+  A direct Facet queue remains roadmap-only until it is wired and receipt-tested.
 
 ## Testing
 

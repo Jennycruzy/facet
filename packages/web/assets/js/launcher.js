@@ -69,9 +69,9 @@ function render() {
   $("reset").hidden = !connected;
   const selected = data.apps.find((app) => app.id === session.selectedApp) ?? null;
   const context = selected ? applicationContext(selected) : null;
-  const activeQueueStep = selected ? "quote" : "context";
-  document.querySelectorAll("[data-queue-step]").forEach((step) => {
-    const active = step.dataset.queueStep === activeQueueStep;
+  const activeLaunchStep = selected ? "review" : "context";
+  document.querySelectorAll("[data-launch-step]").forEach((step) => {
+    const active = step.dataset.launchStep === activeLaunchStep;
     step.classList.toggle("active", active);
     if (active) step.setAttribute("aria-current", "step");
     else step.removeAttribute("aria-current");

@@ -16,7 +16,7 @@
   <header class="appbar">
     <a class="brand" href="./">
       <canvas id="mark" width="68" height="68" aria-hidden="true"></canvas>
-      <span class="wordmark">Facet<small>private accounts</small></span>
+      <span class="wordmark">Facet<small>private launcher</small></span>
     </a>
     <nav class="appnav">
       <a href="./" aria-current="page">The app</a>
@@ -27,15 +27,27 @@
     </nav>
   </header>
 
-  <section class="hero">
-    <div>
+  <section class="hero hero-home">
+    <div class="hero-copy">
       <div class="eyebrow">Private Starknet app launcher</div>
       <h1>One balance.<br>A different face<br>in every app.</h1>
       <p class="tagline">Hide My Email, for your money.</p>
       <p class="sub">Unlinkable by the funding path. One shielded balance underneath.</p>
+      <div class="hero-actions">
+        <a class="btn" href="launch.html">Launch an app <span aria-hidden="true">↗</span></a>
+        <a class="btn ghost" href="proof.html">See the proof</a>
+      </div>
       <div class="live" id="live" data-state="loading" role="status" aria-live="polite"><span class="dot"></span><span id="live-text">connecting</span></div>
+      <div class="hero-micro"><span class="micro-mark" aria-hidden="true"></span><span>Wallet-bound · app-specific · receipt-backed</span></div>
     </div>
-    <div class="stage"><canvas id="stone" aria-label="A cut stone. Lit faces are identities that exist on chain."></canvas></div>
+    <div class="stage" aria-label="Facet identity map">
+      <div class="stage-orbit stage-orbit-a" aria-hidden="true"></div>
+      <div class="stage-orbit stage-orbit-b" aria-hidden="true"></div>
+      <div class="stage-label stage-label-top" aria-hidden="true"><span>PRIVATE ROOT</span><i></i></div>
+      <div class="stage-label stage-label-bottom" aria-hidden="true"><i></i><span>PUBLIC FACES</span></div>
+      <canvas id="stone" aria-label="A cut stone. Lit faces are identities that exist on chain."></canvas>
+      <div class="stage-caption" aria-hidden="true"><span class="stage-caption-dot"></span>one shielded balance · many contexts</div>
+    </div>
   </section>
 
   <section class="stats">
@@ -96,9 +108,9 @@
         before this is a launcher-wide guarantee.</p>
       </div>
       <div>
-        <h4>Proving is asynchronous</h4>
-        <p>Private actions still take minutes to prove on the current host. The target launcher
-        queues a job, shows its stages, and lets you leave the page instead of hiding the wait.</p>
+        <h4>Execution stays with the wallet</h4>
+        <p>Reviewed Mainnet routes hand proving, screening, and submission to Ready X. Facet
+        supplies the allowlisted helper and route; your wallet shows the final approval.</p>
       </div>
     </div>
 
@@ -113,9 +125,9 @@
         stays hidden is whose it is, and that is the whole claim.</p>
       </div>
       <div>
-        <h4>Six minutes is the real cost</h4>
-        <p>Proving cannot be skipped. A warm worker and resumable job id can make the wait easier
-        to live with, but they do not make the cryptographic work disappear.</p>
+        <h4>The app action stays public</h4>
+        <p>The identity has to exist on chain to act. Anyone can see its calls, balances, and
+        timing; Facet hides the funding link, not the downstream activity.</p>
       </div>
     </div>
   </section>
