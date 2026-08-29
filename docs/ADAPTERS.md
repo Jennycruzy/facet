@@ -36,44 +36,37 @@ to do with privacy, and leading with it would misattribute a timing problem to t
 
 ## Current execution status
 
-Ekubo is the only adapter with a reviewed Mainnet execution page. That page uses the supported
-Wallet API path: Ready X supplies the shielded state, proof, and screening, while Facet supplies
-the fixed helper target and allowlisted Ekubo call. The helper is deployed; the route remains
-pending a receipt containing the STRK20 pool, helper, and protocol evidence. Vesu and Endur remain
-preview-only until their calldata, funded-network rehearsal, and receipts are verified.
+All three adapters have a reviewed Mainnet execution page using the supported Wallet API path:
+Ready X supplies the shielded state, proof, screening, and submission, while Facet supplies a
+fixed protocol route. Ekubo's helper is deployed and its route has a verified Mainnet receipt.
+Vesu and Endur use the shared `FacetErc4626Anonymizer`; its class and deterministic instances are
+prepared, but declaration, deployment, funded execution, and receipts remain pending. They must
+stay labelled pending rather than live until those checks pass.
 
 ## Vesu — deposit
 
 | | |
 |---|---|
-| Pool | `0x451fe483d5921a2919ddd81d0de6696669bccdacd859f72a4fba7656b97c3b5` (V2, Prime) |
-| Entrypoint | `modify_position` |
+| Vault | `0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2` (V1.1 Genesis vSTRK) |
+| Underlying | STRK `0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d` |
+| Entrypoint | `deposit(assets, receiver)` |
 
 ```cairo
-fn modify_position(params: ModifyPositionParams) -> UpdatePositionResponse
-
-struct ModifyPositionParams {
-    collateral_asset: ContractAddress,
-    debt_asset: ContractAddress,
-    user: ContractAddress,
-    collateral: Amount,
-    debt: Amount,
-}
-
-struct Amount { denomination: AmountDenomination, value: i257 }
-enum AmountDenomination { Native, Assets }
+fn deposit(assets: u256, receiver: ContractAddress) -> u256
 ```
 
-**`user` is the facet's address, not the person's.** That single field is what makes the
-position belong to an identity nobody can trace. A supply-only deposit sets a positive
-`collateral` and leaves `debt` at zero.
+The live V1.1 vault is ERC-4626 shaped: it accepts STRK and returns vSTRK shares. The
+`receiver` is the persistent Facet context account, not the person's wallet. The resulting
+vSTRK represents a Vesu position and is not an automatically recoverable STRK note.
 
-Two calls, one invocation: `approve` on the collateral token, then `modify_position`. The
-anonymizer takes an `Array<Call>`, so both fit in a single proved transaction.
+The direct SDK plan uses two calls in one invocation: approve STRK to the vault, then deposit.
+The browser route uses the same bindings through the Facet-owned helper, which is bound to the
+privacy pool, STRK, and this one vault and cannot be redirected to another protocol.
 
 The pure SDK builder is `buildVesuDepositPlan`. It returns those two calls plus a per-token
-`diff` settlement hint. It requires the caller to provide every address already linked to the
-user; the `user` field is refused if it matches one of them.
+`diff` settlement hint for both unused STRK and the vSTRK output. It requires the caller to
+provide every address already linked to the user; the `receiver` field is refused if it matches
+one of them.
 
 ## Endur — stake
 
@@ -94,6 +87,10 @@ Same two-call pattern: `approve` STRK to the xSTRK contract, then `deposit`.
 
 The pure SDK builder is `buildEndurStakePlan`. It returns separate `diff` settlement hints for
 the unused input token and the xSTRK output, because those are different balances.
+
+The browser route uses the shared Facet-owned ERC-4626 helper rather than arbitrary browser
+calldata. The helper is bound to the STRK20 pool, STRK, and the Endur xSTRK vault; it approves
+the pool to collect only the output balance produced by this call.
 
 ## Ekubo — swap
 
@@ -184,8 +181,9 @@ and what to do instead, because a user who cannot see why will work around it.
 Each adapter must state its `CollectPolicy` and the reasoning. A fungible balance delta is not
 the same asset class as a persistent protocol position:
 
-- **Vesu deposit** — the STRK leaves the facet and becomes a position. `Diff` settles whatever
-  remains rather than assuming the balance is zero.
+- **Vesu deposit** — the STRK leaves the facet and becomes vSTRK shares. `Diff` settles unused
+  STRK and the output share balance independently; the Vesu position remains attached to the
+  facet until an explicit redeem path is added.
 - **Endur stake** — the facet receives xSTRK, a *different* token from the one it spent. The
   policy must be reasoned about per token, not per interaction.
 
@@ -197,13 +195,13 @@ performed; they are not automatically recoverable into a shielded balance.
 The SDK builders in `packages/sdk/src/adapters.ts` do not prove or broadcast. They only return
 canonical calls and settlement metadata for composition with `buildGateAActionSet` and the
 upstream privacy client. Vesu and Endur builders enforce the recipient guard; Ekubo has no
-user-supplied recipient in its tested single-hop path. The browser queue must call these
-reviewed builders through a narrow allowlist rather than serializing arbitrary calldata.
+user-supplied recipient in its tested single-hop path. The browser routes use the same reviewed
+bindings through narrow allowlists rather than accepting arbitrary calldata.
 
 ## Verify any address here
 
 ```bash
-curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9 \
+curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"starknet_getClassAt","params":["latest","<address>"]}' \
   | python3 -c "import sys,json;a=json.load(sys.stdin)['result']['abi'];a=json.loads(a) if isinstance(a,str) else a;print([f['name'] for i in a if i.get('type')=='interface' for f in i['items']])"

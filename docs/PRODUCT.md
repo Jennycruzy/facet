@@ -212,16 +212,18 @@ product layer:
 - the Ekubo adapter has completed a shielded STRK-to-ETH rehearsal on Sepolia;
 - the SDK contains the action builder, proof-aware preflight, settlement logic, and
   operational runbooks;
+- the launcher has reviewed Mainnet routes for Ekubo, Vesu V1.1 vSTRK, and Endur xSTRK;
 - fork-backed contract tests and source/chain findings document the behavior.
 
 The staged browser launcher binds an EOA, derives a viewing key in memory, and previews
-persistent application contexts. A reviewed Wallet API page now provides the narrow Mainnet
-Ekubo path: Ready X signs and proves the privacy actions, while Facet supplies the allowlisted
-helper and protocol calldata. It is not a direct `FacetAccount`-signer flow, and no Mainnet
-protocol receipt is claimed until the wallet action succeeds with the expected pool, helper, and
-Ekubo evidence. The helper deployment itself is setup evidence, not a pool transaction. The existing eligibility shield is a successful
-Mainnet STRK20 transaction, but it was made through the Ready X wallet and is not being relabelled
-as Facet DeFi activity.
+persistent application contexts. Reviewed Wallet API pages now provide narrow Mainnet routes for
+Ekubo, Vesu V1.1 vSTRK, and Endur xSTRK: Ready X signs, proves, screens, and submits the privacy
+actions, while Facet supplies the fixed protocol-bound helper and protocol calldata. The Ekubo
+route has a verified Mainnet receipt with pool, helper, and Ekubo evidence. The Vesu and Endur
+pages are wired to the same helper class, but their helper declaration/deployments and protocol
+receipts remain pending. These are not direct `FacetAccount`-signer flows. The existing
+eligibility shield is a successful Mainnet STRK20 transaction, but it was made through the Ready
+X wallet and is not being relabelled as Facet DeFi activity.
 
 The development prover currently takes roughly five to seven minutes on the small reference
 host. That is an infrastructure measurement, not the intended user experience. The intended

@@ -76,10 +76,14 @@ The two Facet contracts and the helper were submitted after successful class dec
 verified with the expected class hashes. The contracts are not added to `transactions` yet:
 that list is reserved for the mainnet activity evidence required by the submission.
 
+The Vesu and Endur helper instances are prepared but not yet declared or deployed. Their
+deterministic addresses are recorded in `docs/PRIVATE_DEFI.md` and are intentionally absent from
+`strk20.json` until Mainnet class/address and route receipts have been verified.
+
 Verify each address returns a class hash before adding it:
 
 ```bash
-curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_9 \
+curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"starknet_getClassHashAt","params":["latest","<address>"]}'
 ```

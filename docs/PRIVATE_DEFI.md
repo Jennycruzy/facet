@@ -15,8 +15,10 @@ Facet combines five Starknet components:
 2. **Immutable shadow-account anonymizer.** The anonymizer derives a fresh account from the
    user's private identity, anonymizer address, dapp name, and nonce. The shadow account is
    the public caller seen by the dapp; the owner address is not the dapp caller.
-3. **Ekubo.** The shadow account calls the Ekubo router with STRK, then clears the router's
-   STRK and ETH balances. The resulting STRK and ETH are returned to private notes.
+3. **Protocol adapters and helpers.** Ekubo uses a router-specific helper. Vesu V1.1 and Endur
+   use the shared `FacetErc4626Anonymizer`, each bound to the STRK20 pool, STRK, and one vault.
+   The helper approves the selected vault, calls its ordinary ERC-4626 `deposit`, and approves
+   only the resulting output balance back to the privacy pool.
 4. **Transaction prover.** The SDK sends a signed Invoke V3 to
    `starknet_proveTransaction`. The prover returns the proof facts needed by the privacy
    pool. In development, the Mac reaches the VPS prover through an SSH loopback tunnel.
@@ -38,6 +40,9 @@ The deployed mainnet contracts are:
 | Immutable anonymizer | `0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc` |
 | FacetAccount class deployment | `0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45` |
 | EkuboSwapAnonymizer helper | `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537` |
+| Vesu V1.1 vSTRK helper | `0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6` (reserved; deployment pending) |
+| Endur xSTRK helper | `0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240` (reserved; deployment pending) |
+| Shared helper class | `0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4` (not declared yet) |
 | STRK20 pool | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
 
 ## Proven Sepolia swap
@@ -133,15 +138,28 @@ service is configured.
 
 The direct operator runner above is not the only supported integration boundary. A privacy wallet
 that implements the STRK20 Wallet API can own note discovery, proving, screening, and submission.
-For the reviewed Ekubo path, connect **Ready X on Starknet Mainnet**. The browser submits only
-the fixed action set: withdraw `0.1 STRK` to Facet's deployed stateless helper, create one open
-ETH note for the connected Ready account, and invoke the helper with a freshly checked Ekubo quote.
+For the reviewed paths, connect **Ready X on Starknet Mainnet**. The browser submits only a
+fixed action set. Ekubo withdraws `0.1 STRK` to Facet's deployed stateless helper, creates one
+open ETH note for the connected Ready account, and invokes the helper with a freshly checked
+quote. Vesu and Endur withdraw `0.1 STRK` to their protocol-bound helper, call the selected
+ERC-4626 vault, and create an open vSTRK or xSTRK note for the connected Ready account.
+
+The ordinary wallet deposit that creates the shielded balance goes to the STRK20 pool; it does
+not go directly into Ekubo, Vesu, or Endur. A later app action spends that shielded note, withdraws
+STRK to the selected Facet helper, calls the real protocol contract, and settles the protocol
+output into a new note. This separation is what makes the app-specific caller different from the
+wallet that funded the private balance.
 
 This route is a Facet integration through the helper and Ekubo call path, but it is not a direct
 `FacetAccount`-signer transaction: the Ready wallet signs and proves it, while the Mainnet Facet
 deployment account is only used to deploy the helper. Do not reuse the existing Ready X eligibility
 shield as a Facet DeFi hash. Record a new hash only after its receipt is successful/finalized and
 contains the Mainnet STRK20 pool event, the Facet helper call, and the Ekubo protocol event.
+
+The Vesu and Endur pages are route-complete at the calldata and read-only-check level, but they
+are not live claims yet: the shared helper class must be declared, both deterministic instances
+must be deployed, and each route needs a successful receipt containing the pool, helper, and
+protocol events.
 
 A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with
 an unintended newline and an environment assignment was split. It does not indicate an

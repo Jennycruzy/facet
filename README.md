@@ -104,6 +104,7 @@ every angle, still one portfolio.
 | Viewing-key flow | Uses the wallet-bound private identity inside the proved execution; the key is never written to the repository. |
 | Immutable anonymizer | Derives a fresh shadow-account identity from the user, anonymizer, dapp name, and nonce. |
 | Shadow account | Becomes the public caller seen by the dapp and is funded at its deterministic address from the private note. |
+| Protocol-bound helper | A Facet-owned helper is bound to the pool, STRK, and one protocol vault, then calls only that vault. |
 | Ekubo router | Receives the shadow account's STRK call and returns the swap balances for private-note settlement. |
 | Transaction prover | Re-executes the signed Invoke V3 and supplies the proof facts required by the pool. |
 | Relayer / paymaster | Submits proof-bearing transactions and can sponsor execution where the network path supports it. |
@@ -116,7 +117,7 @@ wallet signature + private identity
               │  UseNote → Withdraw
               ▼
       deterministic shadow account
-              │  call Ekubo as the caller
+              │  call the selected protocol as the caller
               ▼
        STRK / ETH private notes
 ```
@@ -243,9 +244,9 @@ What is not built is listed as plainly as what is.
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
 | SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 20 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
-| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, a staged EOA launcher, and a reviewed Wallet API Ekubo page exist; the generic async service and portfolio view remain to be built |
-| Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, and the Ekubo helper; deployment evidence is in `docs/ARCHITECTURE.md` |
-| Mainnet interaction | **verified** — the 7 STRK Ready X eligibility shield and a reviewed Facet/Ekubo Wallet API action are confirmed on Mainnet; a second qualifying action is still needed for the three-hash submission target |
+| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, a staged launcher, and reviewed Wallet API pages for Ekubo, Vesu V1.1, and Endur exist; the generic async service and portfolio view remain to be built |
+| Mainnet contracts | **partly deployed** — immutable anonymizer, `FacetAccount`, and the Ekubo helper are deployed; the shared Vesu/Endur helper class and deterministic instances are prepared but still await declaration and deployment |
+| Mainnet interaction | **verified for Ekubo** — the 7 STRK Ready X eligibility shield and a reviewed Facet/Ekubo Wallet API action are confirmed on Mainnet; Vesu and Endur remain pending helper deployment and receipts |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted
@@ -267,7 +268,9 @@ The event-level decode is `docs/FINDINGS.md` §6.17. The reviewed Wallet API Eku
 verified in Mainnet transaction
 `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049:
 the receipt succeeded and emitted STRK20 pool and Ekubo core events, while the transaction data
-contains the deployed helper and router. The direct Facet runner remains a separate path blocked
+contains the deployed helper and router. The launcher also contains reviewed Vesu V1.1 and Endur
+routes built around the same protocol-bound ERC-4626 helper; their class and instances are still
+pending Mainnet declaration/deployment. The direct Facet runner remains a separate path blocked
 by AVNU screening.
 
 ## Documentation
