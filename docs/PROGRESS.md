@@ -8,10 +8,10 @@ working sprint is being treated as a compressed four-day window ending at that d
 
 ## Current sprint truth — 29 August 2026
 
-The local checkout is the source of truth on branch `strk20-sprint-20260828`; `9009e30` is the
-last pushed checkpoint, with the original freeze tag `freeze-20260827` and baseline commit
-`cdeba32e1051c4ae1304a3d23feb254e62244128`. Use `git log -1` for the exact current handoff
-commit; the next checkpoint includes bounded wallet-error diagnostics.
+The local checkout is the source of truth on branch `strk20-sprint-20260828`; `defb44c` is the
+latest pushed web-code checkpoint, with the original freeze tag `freeze-20260827` and baseline commit
+`cdeba32e1051c4ae1304a3d23feb254e62244128`. The pushed web-code checkpoint includes bounded
+wallet-error diagnostics; use `git log -1` for the exact current handoff commit.
 The VPS copy is behind and has a dirty
 `packages/contracts/Scarb.toml`; its diff is preserved outside the repository before any
 sync or deployment.
@@ -150,7 +150,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | **Facet contracts on mainnet** | **Done, 25 August 2026** | Immutable anonymizer `0x741fe9dc…63bc`, deployment `0x277a84c5…922`; `FacetAccount` `0x42e9d345…1a45`, deployment `0x4e9305a7…732f`. Production classes were declared first and the immutable ABI was checked for privileged entrypoints. Recorded as `FINDINGS.md` §6.19. |
 | **Ekubo helper on mainnet** | **Done, 28 August 2026** | Stateless helper `0x2bd92991…8537`, class `0x2a4ac595…ebd7`, deployment `0x188808f3…08dfc`, block 14,000,701. Class hash and address were rechecked after the successful receipt. |
 | **Vesu/Endur helper routes** | **Helpers deployed, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`, block 14,030,634; Vesu helper `0x7568567a…e4b6` deployed in `0x2f729305…d7ff3`, block 14,030,645; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`, block 14,030,657. Vesu's latest wallet request returned paymaster code 156 with no hash; funded protocol receipts remain pending. |
-| **Current launcher deployment** | **Done, 29 August 2026** | The current local static build is served at `https://usefacet.xyz`; required pages and assets returned HTTP 200. Previous web root preserved as `/var/www/facet.backup-20260829T064000Z`. |
+| **Current launcher deployment** | **Previous build live; redeploy pending, 29 August 2026** | `https://usefacet.xyz` serves the previously verified `9009e30` static build; the pushed `defb44c` diagnostic formatter must be deployed before the next wallet retry. Previous web root preserved as `/var/www/facet.backup-20260829T064000Z`. |
 | §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
 | **Mainnet screening attestation** | **Blocked, 28 August 2026** | Compatible proof completed, but AVNU returned `SCREENING_REQUIRED`; live pool screener key is configured and the VPS has no `BLOCKING_CHECK_URL`/proof-interceptor deployment. |
 | **Wallet-mediated Vesu attempt** | **Blocked for diagnosis, 29 August 2026** | Ready X passed Mainnet/helper/vault read-only checks, then returned `PaymasterV2Error: Paymaster error 156` with no transaction hash. The browser now preserves bounded nested error fields for the next controlled attempt. |

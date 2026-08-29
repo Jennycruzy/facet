@@ -98,10 +98,11 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
 
 ## `demo_url`
 
-**Deployed and verified — `https://usefacet.xyz`.** The current checkout is served from nginx;
-`/launch.html`, `/mainnet-ekubo.html`, `/mainnet-defi.html?protocol=vesu`, and
-`/mainnet-defi.html?protocol=endur` return 200, required assets load, and the staged web root
-passed a VPS-side obvious-secret scan. The prior release is preserved at
+**Previously deployed and verified — `https://usefacet.xyz`.** The live nginx root currently
+serves the previously verified `9009e30` build; `/launch.html`, `/mainnet-ekubo.html`,
+`/mainnet-defi.html?protocol=vesu`, and `/mainnet-defi.html?protocol=endur` returned 200 and
+passed the VPS-side obvious-secret scan. The pushed `defb44c` build adds bounded nested wallet
+error diagnostics and must be redeployed before the next wallet attempt. The prior release is preserved at
 `/var/www/facet.backup-20260829T064000Z`.
 
 ```bash

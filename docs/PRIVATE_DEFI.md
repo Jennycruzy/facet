@@ -164,8 +164,9 @@ The first funded wallet-mediated Vesu attempt on 29 August 2026 passed the Mainn
 asset, `preview_deposit(0.1 STRK)`, and `max_deposit` checks, but Ready returned only
 `PaymasterV2Error: Paymaster error 156: An error occurred (TRANSACTION_EXECUTION_ERROR) failed`.
 No transaction hash or receipt was returned. This is a paymaster wrapper, not the nested contract
-reason; the browser route now preserves bounded nested error fields and includes the last error in
-safe diagnostics. The route must be diagnosed once after that change before another proof attempt.
+reason; the pushed browser route preserves bounded nested error fields and includes the last error
+in safe diagnostics, but that static build still needs to be deployed. The route must be diagnosed
+once after that change before another proof attempt.
 Do not call Vesu live, and do not add this failure to `strk20.json`.
 
 A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with
