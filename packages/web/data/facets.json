@@ -106,7 +106,7 @@
       "accent": "violet"
     }
   ],
-  "uncutNote": "Every other face is an identity that has not been cut. The two recorded faces use distinct dapp names; no other identity is claimed.",
+  "uncutNote": "A direct Facet identity on Mainnet is the next milestone. These cards are the Sepolia proof accounts; the live Mainnet evidence is shown in the route cards.",
   "linkable": {
     "network": "mainnet",
     "hash": "0x319b9de82e1704ba861283d26b4e03356a5a3cc948ce8ad752366f1f8bf7883",
@@ -124,7 +124,7 @@
       "kind": "staking",
       "action": "Stake",
       "tolerates_delay": true,
-      "note": "The live route supplies STRK to Endur xSTRK and returns xSTRK shares as an open note. The exchange-rate quote is refreshed immediately before approval.",
+      "note": "The live route puts 0.1 STRK into Endur and returns xSTRK shares to the connected wallet's private balance. The rate is checked again before approval.",
       "contract": "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
       "contractLabel": "Endur \u00b7 xSTRK",
       "entrypoint": "deposit",
@@ -148,7 +148,7 @@
       "kind": "trading",
       "action": "Swap",
       "tolerates_delay": false,
-      "note": "A swap quote can expire while a wallet builds a proof. The page refreshes the quote immediately before approval and carries a minimum-output floor into the reviewed action.",
+      "note": "A swap price can change. Facet checks the current price again before your wallet asks you to approve and includes a minimum result.",
       "contract": "0x00000005dd3d2f4429af886cd1a3b08289dbcea99a294197e9eb43b0e0325b4b",
       "contractLabel": "Ekubo \u00b7 Core",
       "entrypoint": "swap",

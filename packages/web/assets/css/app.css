@@ -205,7 +205,7 @@ body::after {
 .live[data-state="stale"] .dot { background: var(--amber); }
 
 /* ---- stats ---- */
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding-bottom: 8px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding-bottom: 8px; }
 .stat { padding: 22px 24px 24px; }
 .stat .k { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
   color: var(--text-3); }
@@ -287,6 +287,8 @@ section.block { padding: 62px 0 0; }
 .btn[disabled] { background: rgba(255,255,255,.05); color: var(--text-3); cursor: not-allowed;
   border: 1px solid var(--rule); box-shadow: none; }
 .btn-why { font-size: .74rem; color: var(--text-3); }
+.receipt-link { white-space: nowrap; }
+.receipt-link:hover { color: var(--sapphire); }
 
 /* ---- fine print ---- */
 .fine { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px 40px; }
@@ -537,6 +539,7 @@ section.block { position: relative; }
 .head .aside { font-family: var(--mono); font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; }
 .fine > div { transition: border-color .25s ease, transform .25s var(--ease-out); }
 .fine > div:hover { border-color: var(--sapphire); transform: translateX(4px); }
+.section-intro { margin: -8px 0 24px; max-width: 70ch; color: var(--text-2); font-size: .9rem; line-height: 1.65; }
 
 .grid { gap: 16px; }
 .id-card, .tile { padding: 25px 24px 26px; }

@@ -330,7 +330,7 @@ function render() {
   if (!EXECUTION_ENABLED) reviewLines.push("PAUSED: " + BLOCK_REASON);
   if (connected && !isMainnet(state.chainId)) reviewLines.push("STOP: switch Ready X to Starknet Mainnet.");
   if (connected && !hasNativeStrk20()) {
-    reviewLines.push("STOP: this wallet does not advertise Wallet API 0.10.3 or newer.");
+    reviewLines.push("STOP: this wallet does not support the private action required by this route.");
   }
   if (state.protocolDeployed === false) {
     reviewLines.push("The " + app.contractLabel + " contract is not available at its configured address.");
@@ -345,12 +345,12 @@ function render() {
   if (!reviewLines.length && connected) {
     reviewLines.push(
       state.quote
-        ? "Mainnet, helper, balance, and live protocol checks passed."
-        : "Mainnet and helper checks passed; fetching a live " + app.name + " quote…",
+        ? "Mainnet, route, balance, and live app checks passed."
+        : "Mainnet and route checks passed; fetching a live " + app.name + " rate…",
     );
     reviewLines.push(
-      "The action will withdraw STRK to the Facet helper, call " + app.contractLabel
-        + ", and settle " + OUTPUT_SYMBOL + " to an open note in this wallet.",
+      "The action will use 0.1 STRK from your private balance, call " + app.contractLabel
+        + ", and return " + OUTPUT_SYMBOL + " to that private balance.",
     );
   }
   $("review-panel").innerHTML = reviewLines.length
@@ -498,7 +498,7 @@ async function execute() {
   if (!state.wallet || !canExecute()) return;
   state.executing = true;
   state.transactionHash = null;
-  setStatus("signing", "Refreshing the " + app.name + " quote, then asking Ready X to prove and screen the action…");
+  setStatus("signing", "Refreshing the " + app.name + " rate, then asking your wallet to complete the private action…");
   render();
   try {
     await readProtocolState();
@@ -516,7 +516,7 @@ async function execute() {
       throw new Error("Ready returned no transaction hash.");
     }
     state.transactionHash = transactionHash;
-    setStatus("submitted", "Ready returned a transaction hash; waiting for Mainnet acceptance…");
+    setStatus("submitted", "Your wallet returned a transaction hash; waiting for Mainnet acceptance…");
     $("result-panel").innerHTML = "<p>Submitted: <a href=\""
       + network.explorer + "/tx/" + encodeURIComponent(transactionHash)
       + "\" target=\"_blank\" rel=\"noreferrer\">" + escapeHtml(transactionHash) + "</a></p>";
@@ -568,18 +568,18 @@ async function copyDiagnostics() {
 
 function configurePage() {
   document.title = "Facet · Mainnet " + app.name;
-  $("protocol-eyebrow").textContent = "Facet Mainnet path · wallet-mediated " + app.name;
+  $("protocol-eyebrow").textContent = "Facet Mainnet · " + app.name;
   $("hero-title").textContent = EXECUTION_ENABLED ? "Use the live " + app.name + " route." : app.name + " route paused.";
   $("hero-lede").textContent = EXECUTION_ENABLED
-    ? "Ready X is the signing and proving wallet for this supported route. Facet supplies the "
-      + app.name + " helper, the allowlisted call path, and the exact deposit parameters below."
+    ? "Your private balance supplies " + app.name + ". Facet provides the fixed route, and your wallet "
+      + "shows the final approval."
     : BLOCK_REASON + " This page remains available for read-only inspection; no wallet transaction can be requested.";
   $("output-symbol").textContent = OUTPUT_SYMBOL;
   $("protocol-label").textContent = app.contractLabel;
   $("protocol-note").textContent = EXECUTION_ENABLED
-    ? "Ready X proves and screens the private action. The receipt must touch the Mainnet STRK20 pool, the Facet "
-      + app.name + " helper, and " + app.contractLabel + " before it is counted as integration evidence. The "
-      + OUTPUT_SYMBOL + " position remains protocol state until an explicit redeem action."
+    ? "Your wallet completes the private steps. The receipt must show the private balance, the Facet route, "
+      + "and " + app.contractLabel + " before it is counted as verified integration evidence. The "
+      + OUTPUT_SYMBOL + " position remains in " + app.name + " until you explicitly redeem it."
     : "This route is paused after a live protocol execution failure. No new transaction is requested or counted.";
 }
 

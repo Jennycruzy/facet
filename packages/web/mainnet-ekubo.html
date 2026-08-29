@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Facet · Mainnet Ekubo</title>
-<meta name="description" content="Reviewed wallet-mediated Mainnet Ekubo swap for Facet.">
+<meta name="description" content="Private Mainnet Ekubo swap route through Facet.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -27,10 +27,10 @@
   </header>
 
   <section class="launch-hero ready-hero">
-    <div class="eyebrow">Facet mainnet path · wallet-mediated Ekubo</div>
+    <div class="eyebrow">Facet Mainnet · Ekubo</div>
     <h1>Use the working Mainnet route.</h1>
-    <p class="launch-lede">Ready X is the signing and proving wallet for this supported route. Facet supplies
-    the deployed Ekubo privacy helper, the allowlisted call path, and the exact swap parameters below.</p>
+    <p class="launch-lede">Your private balance supplies the swap. Facet provides the fixed route,
+    and your wallet shows the final approval.</p>
     <div class="launch-status" id="ready-status" data-state="idle" role="status" aria-live="polite">
       <span class="dot"></span><span id="ready-status-text">Connect Ready X to begin the review.</span>
     </div>
@@ -40,9 +40,8 @@
     <div class="ready-safety-mark">MANUAL GATE</div>
     <div>
       <strong>No transaction is requested until you approve the review.</strong>
-      <p>This page never receives a private key, viewing key, or proof. The only live write is the explicit
-      <code>0.1 STRK</code> wallet action after the checkbox and Ready X approval. The direct Facet deployment
-      account is not the signer for this browser flow.</p>
+      <p>This page never receives your private key. It asks for a transaction only after you check
+      the details and approve the action in your wallet. The route uses exactly <code>0.1 STRK</code>.</p>
     </div>
   </section>
 
@@ -55,10 +54,10 @@
         </div>
         <div class="ready-kv">
           <span>wallet</span><strong id="wallet-name">—</strong>
-          <span>signer / prover</span><strong>Ready X</strong>
+          <span>private steps handled by</span><strong>Ready X</strong>
           <span>account</span><strong id="wallet-address">—</strong>
           <span>network</span><strong id="wallet-network">—</strong>
-          <span>Wallet API</span><strong id="api-versions">—</strong>
+          <span>wallet support</span><strong id="api-versions">—</strong>
         </div>
         <button class="btn" id="connect" type="button">Connect Ready X</button>
       </div>
@@ -70,8 +69,8 @@
           <div><div class="mono-badge">02</div><h2>Private input</h2></div>
           <span class="pill" id="balance-pill">not checked</span>
         </div>
-        <p class="launch-copy">The swap withdraws exactly 0.1 STRK from the Ready-managed private balance to
-        the helper. The output is returned as an open ETH note to the same wallet.</p>
+        <p class="launch-copy">The swap uses exactly 0.1 STRK from the private balance in your
+        wallet, not from your public wallet address. The ETH result returns to that private balance.</p>
         <div class="ready-balance" id="balance-value"><span id="balance-amount">—</span> <small>STRK</small></div>
         <div class="ready-kv compact">
           <span>input</span><strong>0.1 STRK</strong>
@@ -86,20 +85,20 @@
           <div><div class="mono-badge">03</div><h2>Facet helper</h2></div>
           <span class="pill" id="helper-pill">checking</span>
         </div>
-        <p class="launch-copy">This is the official stateless Ekubo privacy helper, deployed from this project’s
-        Mainnet account. It is the contract that executes the swap for the privacy pool.</p>
+        <p class="launch-copy">This fixed Facet contract is the only route this page can use before
+        it calls Ekubo. The address and code are shown so anyone can check them.</p>
         <div class="ready-kv compact">
           <span>helper</span><strong id="helper-address">—</strong>
           <span>class</span><strong id="helper-class">—</strong>
           <span>pool</span><strong id="pool-address">—</strong>
-          <span>Facet path</span><strong>pool → helper → Ekubo</strong>
+          <span>route</span><strong>private balance → Facet → Ekubo</strong>
         </div>
       </div>
     </div>
   </section>
 
   <section class="block ready-details">
-    <div class="head"><h2>Transaction review</h2><div class="aside">quote refreshed at approval</div></div>
+    <div class="head"><h2>Transaction review</h2><div class="aside">price checked again</div></div>
     <div class="ready-result" id="review-panel">
       <p>Connect Ready X. The page will verify Mainnet, the deployed helper, the shielded STRK balance, and a
       fresh Ekubo quote before enabling the review.</p>
@@ -111,8 +110,8 @@
       <span>recipient</span><strong id="output-recipient">—</strong>
     </div>
     <label class="ready-check"><input id="confirm" type="checkbox" disabled>
-      <span>I reviewed the route and approve a private 0.1 STRK withdrawal to the displayed helper. Ready X will
-      show the final wallet approval before signing.</span>
+      <span>I reviewed the route. It will use 0.1 STRK from my private balance and show the final
+      approval in my wallet.</span>
     </label>
     <div class="ready-actions">
       <button class="btn" id="execute" type="button" disabled>Request reviewed swap</button>
@@ -123,11 +122,10 @@
   </section>
 
   <section class="block launch-boundary">
-    <div class="head"><h2>What happens next</h2><div class="aside">wallet proves + screens</div></div>
-    <p class="note">Ready X owns the proving and submission step. Keep the wallet approval open until it
-    returns a transaction hash. This is not the earlier eligibility shield: the new receipt must
-    touch the Mainnet STRK20 pool, Facet’s helper, and Ekubo. Only then should it be recorded as Facet integration
-    evidence.</p>
+    <div class="head"><h2>After you approve</h2><div class="aside">receipt required</div></div>
+    <p class="note">Your wallet completes the private steps and returns a transaction hash. The
+    receipt must show the private balance, the Facet route, and Ekubo before it counts as a verified
+    integration.</p>
     <div class="ready-result" id="result-panel"><p>No transaction has been requested.</p></div>
   </section>
 
@@ -137,7 +135,7 @@
   </footer>
 </div>
 
-<noscript><p class="noscript">JavaScript is required for the wallet-mediated Mainnet action.</p></noscript>
+<noscript><p class="noscript">JavaScript is required for the Mainnet swap route.</p></noscript>
 <script type="module" src="assets/js/mainnet-ekubo.js?v=20260829-5"></script>
 </body>
 </html>

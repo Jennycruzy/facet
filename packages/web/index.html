@@ -38,7 +38,7 @@
         <a class="btn ghost" href="proof.html">See the proof</a>
       </div>
       <div class="live" id="live" data-state="loading" role="status" aria-live="polite"><span class="dot"></span><span id="live-text">connecting</span></div>
-      <div class="hero-micro"><span class="micro-mark" aria-hidden="true"></span><span>Wallet-bound · app-specific · receipt-backed</span></div>
+      <div class="hero-micro"><span class="micro-mark" aria-hidden="true"></span><span>Your wallet · one app at a time · verified</span></div>
     </div>
     <div class="stage" aria-label="Facet identity map">
       <div class="stage-orbit stage-orbit-a" aria-hidden="true"></div>
@@ -57,31 +57,41 @@
       <div class="n">Not readable from a web page, by us or anyone.</div>
     </div></div>
     <div class="cut accent-violet"><div class="cut-in stat">
-      <div class="k">Identities</div>
+      <div class="k">Mainnet routes</div>
+      <div class="v" id="stat-mainnet-routes">&nbsp;</div>
+      <div class="n">Real app actions with a receipt you can inspect.</div>
+    </div></div>
+    <div class="cut accent-violet"><div class="cut-in stat">
+      <div class="k">Sepolia identities</div>
       <div class="v" id="stat-faces">&nbsp;</div>
-      <div class="n">Separate on-chain accounts, persistent per app or strategy.</div>
+      <div class="n">Direct Facet test accounts used to prove the private flow.</div>
     </div></div>
     <div class="cut accent-emerald"><div class="cut-in stat">
-      <div class="k">Links between them</div>
+      <div class="k">Public funding links</div>
       <div class="v ok" id="stat-links">&nbsp;</div>
-      <div class="n">Public connections anyone could follow.</div>
+      <div class="n">Connections from a public wallet into those test accounts.</div>
     </div></div>
   </section>
 
   <section class="block">
     <div class="head">
-      <h2>Your identities</h2>
-      <div class="aside" id="ids-aside"></div>
+      <h2>Live Mainnet routes</h2>
+      <div class="aside" id="routes-aside">receipt-backed</div>
     </div>
-    <div class="grid" id="ids"></div>
+    <p class="section-intro">These are two real app actions completed on Starknet Mainnet. Each card links to
+    its receipt. This release uses the connected wallet to carry out these actions, so they are shown
+    separately from the direct Facet test accounts below.</p>
+    <div class="grid" id="tiles"></div>
   </section>
 
   <section class="block">
     <div class="head">
-      <h2>Apps</h2>
-      <div class="aside">Each keeps an app-specific identity</div>
+      <h2>Sepolia proof identities</h2>
+      <div class="aside" id="ids-aside"></div>
     </div>
-    <div class="grid" id="tiles"></div>
+    <p class="section-intro">These two direct Facet accounts are test accounts on Starknet Sepolia.
+    They prove the private funding sequence; they are not Mainnet accounts or Mainnet balances.</p>
+    <div class="grid" id="ids"></div>
   </section>
 
   <section class="block">
@@ -91,26 +101,32 @@
     </div>
     <div class="fine">
       <div>
-        <h4>Fixed amounts, by policy</h4>
-        <p>The intended policy uses shared funding steps, never a figure you type. An arbitrary
-        amount like 137.42 STRK identifies you across every identity that uses it. The current
-        launcher does not yet enforce the denomination policy.</p>
+        <h4>Your wallet is not the app's wallet</h4>
+        <p>Facet pays an app from a private balance instead of sending money straight from your
+        main wallet. The app sees a separate account, not the wallet that funded the balance.</p>
       </div>
       <div>
-        <h4>Timing is visible</h4>
-        <p>Funding and acting should be separated because two identities made seconds apart can
-        correlate. Timing separation is a product policy, not a current guarantee of this page.</p>
+        <h4>Common amounts leave fewer clues</h4>
+        <p>Facet's privacy rules call for a small set of shared amounts instead of any number you
+        type. That makes one person's amount less recognizable. The current launcher does not
+        enforce this rule yet.</p>
       </div>
       <div>
-        <h4>Self-linking calls are guarded</h4>
-        <p>The tested Endur builder refuses a call that pays your wallet, an address
-        that funded your pool, or another identity. The browser path must use those builders
-        before this is a launcher-wide guarantee.</p>
+        <h4>Timing can give people a clue</h4>
+        <p>If two accounts are funded and used seconds apart, people can guess they belong
+        together. The current launcher does not space actions for you, so timing is still your
+        responsibility.</p>
       </div>
       <div>
-        <h4>Execution stays with the wallet</h4>
-        <p>Reviewed Mainnet routes hand proving, screening, and submission to Ready X. Facet
-        supplies the allowlisted helper and route; your wallet shows the final approval.</p>
+        <h4>Facet stops the easiest connections</h4>
+        <p>A protected route must not send money back to your wallet or another one of your
+        accounts. That would connect them immediately. The Endur route has this check; the
+        launcher still needs the same check on every route.</p>
+      </div>
+      <div>
+        <h4>You approve every live action</h4>
+        <p>For the live Mainnet routes, your connected wallet shows you what will happen and asks
+        for your approval. Facet never receives your private key.</p>
       </div>
     </div>
 
@@ -120,14 +136,15 @@
     </div>
     <div class="fine">
       <div>
-        <h4>The identity exists in public</h4>
-        <p>An account has to be on chain to act. Anyone can see it and what it did. What
-        stays hidden is whose it is, and that is the whole claim.</p>
+        <h4>The app can see the account</h4>
+        <p>Once an account acts, its address, actions, balances, and timing are public. Facet hides
+        the link back to your private balance, not the app activity.</p>
       </div>
       <div>
-        <h4>The app action stays public</h4>
-        <p>The identity has to exist on chain to act. Anyone can see its calls, balances, and
-        timing; Facet hides the funding link, not the downstream activity.</p>
+        <h4>You can still link accounts yourself</h4>
+        <p>Moving money between your accounts, reusing one account across apps, or repeating an
+        obvious pattern can reveal that they belong together. Facet cannot hide a link you create
+        in public.</p>
       </div>
     </div>
   </section>

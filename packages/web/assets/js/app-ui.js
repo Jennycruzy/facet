@@ -34,11 +34,16 @@ for (const [id, opts] of [["stone", {}], ["mark", { segments: 6 }]]) {
 
 /* ---------- stats ---------- */
 
+const mainnetRoutes = data.apps.filter((app) =>
+  app.status === "wallet-mediated-verified" && app.mainnetTransaction,
+);
+$("stat-mainnet-routes").textContent = String(mainnetRoutes.length);
 $("stat-faces").textContent = String(data.facets.length);
 const publicLinks = data.facets.filter((f) => f.fundedPublicly).length;
 $("stat-links").textContent = String(publicLinks);
 if (publicLinks > 0) $("stat-links").classList.remove("ok");
-$("ids-aside").textContent = `${data.facets.length} cut`;
+$("routes-aside").textContent = mainnetRoutes.length + " verified actions";
+$("ids-aside").textContent = data.facets.length + " test accounts";
 
 /* ---------- identities ---------- */
 
@@ -105,7 +110,7 @@ data.facets.forEach((f) => $("ids").append(identityCard(f)));
   const top = h("div", "id-top");
   top.append(h("div", "mono-badge dim", "+"));
   const names = h("div");
-  names.append(h("div", "id-name", "Cut a new one"));
+  names.append(h("div", "id-name", "Direct Mainnet identity next"));
   names.append(h("div", "id-ctx", data.uncutNote));
   top.append(names);
   $("ids").append(cut("id-card empty", [top]));
@@ -125,7 +130,7 @@ for (const app of data.apps) {
 
   if (app.contract) {
     parts.push(h("div", "calls",
-      `calls <a href="${explorer("mainnet")}/contract/${app.contract}">${short(app.contract, 6, 4)}</a> <b>${app.entrypoint}</b><br>${app.contractLabel}`));
+      `Mainnet route · ${app.contractLabel}<br><a href="${explorer("mainnet")}/contract/${app.contract}">View contract ${short(app.contract, 6, 4)}</a>`));
   }
 
   const act = h("div", "act");
@@ -145,6 +150,13 @@ for (const app of data.apps) {
       ? "receipt verified"
       : "reviewed route";
   act.append(h("span", "btn-why", status));
+  if (app.mainnetTransaction) {
+    const receipt = h("a", "btn-why receipt-link", "View receipt ↗");
+    receipt.href = `${explorer("mainnet")}/tx/${app.mainnetTransaction}`;
+    receipt.target = "_blank";
+    receipt.rel = "noreferrer";
+    act.append(receipt);
+  }
   parts.push(act);
 
   $("tiles").append(cut(`tile accent-${app.accent ?? "sapphire"}`, parts));

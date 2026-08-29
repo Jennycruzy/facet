@@ -63,6 +63,14 @@ test("verified Mainnet integrations are unique receipts and blocked routes have 
   }
 });
 
+test("the product separates Mainnet route evidence from Sepolia identity evidence", () => {
+  assert.ok(data.facets.every((facet) => facet.network === "sepolia"));
+  const verified = data.apps.filter((app) => app.status === "wallet-mediated-verified");
+  assert.equal(verified.length, 2);
+  assert.ok(verified.every((app) => app.mainnetTransaction && app.mainnetBlock));
+  assert.match(data.uncutNote, /identity on Mainnet/i);
+});
+
 test("reviewed route code can resolve every Mainnet target from the data file", () => {
   const mainnet = data.networks.mainnet;
   for (const value of [mainnet.rpc, mainnet.pool, mainnet.anonymizer, mainnet.eth, mainnet.ekuboRouter]) {

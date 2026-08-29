@@ -58,13 +58,13 @@ function render() {
   $("wallet-address").textContent = connected ? short(session.account) : "not connected";
   $("wallet-address").title = connected ? session.account : "";
   $("connect").disabled = !session.provider || bound || busy;
-  $("connect").textContent = connected ? "Wallet connected" : "Connect EOA wallet";
+  $("connect").textContent = connected ? "Wallet connected" : "Connect wallet";
   $("sign").disabled = !connected || bound || busy;
-  $("sign").textContent = bound ? "Binding signed" : "Sign binding message";
+  $("sign").textContent = bound ? "Session ready" : "Sign to continue";
   $("binding-message").textContent = session.message ??
     "Connect an EOA wallet to preview the exact message. Nothing is signed on page load.";
   $("copy-message").disabled = !session.message;
-  $("bound-pill").textContent = bound ? "bound · key in memory" : "not bound";
+  $("bound-pill").textContent = bound ? "session ready" : "not bound";
   $("bound-pill").className = `pill ${bound ? "pill-good" : ""}`;
   $("reset").hidden = !connected;
   const selected = data.apps.find((app) => app.id === session.selectedApp) ?? null;
@@ -91,7 +91,7 @@ function render() {
     ? `${selected.name} selected. ${contextLabel(context)} is retained for this application; no transaction was prepared.`
     : bound
       ? "Choose an application context. Selection only previews the next step; no transaction is prepared."
-      : "Sign the binding message to choose an application context. No transaction is prepared here.";
+      : "Sign the message to choose an app. Signing does not move money.";
 }
 
 function clearSession(text = "Wallet disconnected from this launcher.") {
@@ -107,7 +107,7 @@ function clearSession(text = "Wallet disconnected from this launcher.") {
 
 async function connect() {
   if (!session.provider) {
-    setStatus("error", "No EOA wallet detected. Install an EIP-1193 wallet to continue.");
+    setStatus("error", "No compatible wallet found. Connect one to continue.");
     return;
   }
   try {
@@ -131,7 +131,7 @@ async function sign() {
     const viewingKey = deriveViewingKeyFromSignature(signature);
     session.signature = signature;
     session.viewingKey = viewingKey;
-    setStatus("bound", "Wallet bound. Viewing key derived in memory; no transaction was authorized.");
+    setStatus("bound", "Session ready. No transaction was authorized.");
     render();
   } catch (error) {
     session.signature = null;
@@ -170,7 +170,7 @@ document.querySelectorAll("[data-launch-action]").forEach((button) => {
 });
 
 if (!session.provider) {
-  setStatus("error", "No EOA wallet detected. The launcher is preview-only until one is connected.");
+  setStatus("error", "No compatible wallet found. The launcher is preview-only until one is connected.");
 } else {
   try {
     const accounts = await readEoaAccounts(session.provider);
@@ -179,10 +179,10 @@ if (!session.provider) {
       session.message = canonicalWalletBindingMessage({ ...bindingContext, wallet: accounts[0] });
       setStatus("connected", "Wallet already connected. Read the message before signing.");
     } else {
-      setStatus("idle", "EOA wallet detected. Connect it when you are ready.");
+      setStatus("idle", "Wallet found. Connect it when you are ready.");
     }
   } catch {
-    setStatus("idle", "EOA wallet detected. Connect it when you are ready.");
+    setStatus("idle", "Wallet found. Connect it when you are ready.");
   }
   if (typeof session.provider.on === "function") {
     session.provider.on("accountsChanged", (accounts) => {

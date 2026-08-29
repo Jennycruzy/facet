@@ -297,13 +297,13 @@ function render() {
 
   const reviewLines = [];
   if (connected && !isMainnet(state.chainId)) reviewLines.push("STOP: switch Ready X to Starknet Mainnet.");
-  if (connected && !hasNativeStrk20()) reviewLines.push("STOP: this wallet does not advertise Wallet API 0.10.3 or newer.");
+  if (connected && !hasNativeStrk20()) reviewLines.push("STOP: this wallet does not support the private action required by this route.");
   if (state.helperDeployed === false) reviewLines.push("The official helper class is declared, but its reserved Mainnet address is not deployed yet.");
   if (state.balanceWei !== null && state.balanceWei < SWAP_AMOUNT) reviewLines.push("The shielded STRK balance is below the 0.1 STRK input.");
   if (state.errors.length) reviewLines.push(...state.errors);
   if (!reviewLines.length && connected) {
-    reviewLines.push(state.quote ? "Mainnet, helper, balance, and live quote checks passed." : "Mainnet checks passed; fetching a live Ekubo quote…");
-    reviewLines.push("The action will withdraw STRK to the helper, swap on Ekubo, and settle ETH to an open note in this wallet.");
+    reviewLines.push(state.quote ? "Mainnet, route, balance, and live price checks passed." : "Mainnet checks passed; fetching a live Ekubo price…");
+    reviewLines.push("The action will use 0.1 STRK from your private balance, swap on Ekubo, and return ETH to that private balance.");
   }
   $("review-panel").innerHTML = reviewLines.length
     ? reviewLines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")
@@ -454,7 +454,7 @@ async function execute() {
   if (!state.wallet || !canExecute()) return;
   state.executing = true;
   state.transactionHash = null;
-  setStatus("signing", "Refreshing the quote, then asking Ready X to prove and screen the swap…");
+  setStatus("signing", "Refreshing the price, then asking your wallet to complete the private swap…");
   render();
   try {
     const quote = await readQuote();
@@ -473,7 +473,7 @@ async function execute() {
     const transactionHash = result?.transaction_hash;
     if (typeof transactionHash !== "string" || !transactionHash) throw new Error("Ready returned no transaction hash.");
     state.transactionHash = transactionHash;
-    setStatus("submitted", "Ready returned a transaction hash; waiting for Mainnet acceptance…");
+    setStatus("submitted", "Your wallet returned a transaction hash; waiting for Mainnet acceptance…");
     $("result-panel").innerHTML = `<p>Submitted: <a href="https://voyager.online/tx/${encodeURIComponent(transactionHash)}" target="_blank" rel="noreferrer">${escapeHtml(transactionHash)}</a></p>`;
     await waitForReceipt(transactionHash);
   } catch (error) {
