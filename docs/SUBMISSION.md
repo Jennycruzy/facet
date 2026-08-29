@@ -90,11 +90,11 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
 
 ## `demo_url`
 
-**Configured — `https://usefacet.xyz`; current checkout deployment pending.** The existing
-domain and HTTPS service are available, but the current local launcher and documentation must
-still be deployed from this frozen checkout. Mark this done only after `/launch.html` returns
-200, the current assets load, no secrets are present in the bundle, and a clean desktop/mobile
-browser smoke test passes.
+**Deployed and verified — `https://usefacet.xyz`.** The current checkout is served from nginx;
+`/launch.html`, `/mainnet-ekubo.html`, `/mainnet-defi.html?protocol=vesu`, and
+`/mainnet-defi.html?protocol=endur` return 200, required assets load, and the staged web root
+passed a VPS-side obvious-secret scan. The prior release is preserved at
+`/var/www/facet.backup-20260829T025603Z`.
 
 ```bash
 curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
