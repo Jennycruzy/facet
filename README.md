@@ -244,7 +244,7 @@ What is not built is listed as plainly as what is.
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
 | SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 20 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
-| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, a staged launcher, and reviewed Wallet API pages for Ekubo, Vesu V1.1, and Endur exist; the generic async service and portfolio view remain to be built |
+| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, a deployed launcher, and reviewed Wallet API pages for Ekubo, Vesu V1.1, and Endur exist; the generic async service and portfolio view remain to be built |
 | Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, Ekubo helper, and the shared protocol-bound Vesu/Endur helper instances are deployed; funded Vesu/Endur actions remain to be verified |
 | Mainnet interaction | **verified for Ekubo** — the 7 STRK Ready X eligibility shield and a reviewed Facet/Ekubo Wallet API action are confirmed on Mainnet; Vesu and Endur helpers are deployed, with their pool/protocol receipts still pending |
 
