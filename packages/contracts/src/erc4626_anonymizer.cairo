@@ -8,7 +8,6 @@
 //! to the pool for an open note.
 
 use starknet::ContractAddress;
-
 use super::anonymizer::OpenNoteDeposit;
 
 #[derive(Serde, Copy, Drop, PartialEq, Debug)]
@@ -20,9 +19,7 @@ pub enum LendingOperation {
 #[starknet::interface]
 pub trait IERC4626Vault<T> {
     fn deposit(ref self: T, assets: u256, receiver: ContractAddress) -> u256;
-    fn redeem(
-        ref self: T, shares: u256, receiver: ContractAddress, owner: ContractAddress,
-    ) -> u256;
+    fn redeem(ref self: T, shares: u256, receiver: ContractAddress, owner: ContractAddress) -> u256;
 }
 
 #[starknet::interface]
@@ -53,16 +50,13 @@ pub mod errors {
 #[starknet::contract]
 pub mod FacetErc4626Anonymizer {
     use core::num::traits::{CheckedSub, Zero};
-    use starknet::storage::{
-        StoragePointerReadAccess, StoragePointerWriteAccess,
-    };
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
-
     use super::super::anonymizer::OpenNoteDeposit;
     use super::super::erc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use super::{
-        errors, IERC4626VaultDispatcher, IERC4626VaultDispatcherTrait,
-        IFacetErc4626Anonymizer, LendingOperation,
+        IERC4626VaultDispatcher, IERC4626VaultDispatcherTrait, IFacetErc4626Anonymizer,
+        LendingOperation, errors,
     };
 
     #[storage]
@@ -99,8 +93,7 @@ pub mod FacetErc4626Anonymizer {
             note_id: felt252,
         ) -> Span<OpenNoteDeposit> {
             assert(
-                get_caller_address() == self.privacy_contract.read(),
-                errors::UNAUTHORIZED_CALLER,
+                get_caller_address() == self.privacy_contract.read(), errors::UNAUTHORIZED_CALLER,
             );
             assert(amount.is_non_zero(), errors::ZERO_AMOUNT);
 
@@ -136,12 +129,8 @@ pub mod FacetErc4626Anonymizer {
             }
 
             let balance_after = out_erc20.balance_of(account: self_addr);
-            let received = balance_after
-                .checked_sub(balance_before)
-                .expect(errors::NEGATIVE_DIFF);
-            let output_amount: u128 = received
-                .try_into()
-                .expect(errors::RECEIVED_AMOUNT_OVERFLOW);
+            let received = balance_after.checked_sub(balance_before).expect(errors::NEGATIVE_DIFF);
+            let output_amount: u128 = received.try_into().expect(errors::RECEIVED_AMOUNT_OVERFLOW);
             assert(output_amount.is_non_zero(), errors::ZERO_OUT_AMOUNT);
 
             out_erc20.approve(spender: privacy_addr, amount: output_amount.into());

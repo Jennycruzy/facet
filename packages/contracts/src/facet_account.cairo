@@ -7,9 +7,8 @@
 //! wallet phase, so this contract deliberately does not pretend to be a full
 //! SNIP-6 account yet.
 
-use starknet::account::Call;
 use starknet::ContractAddress;
-
+use starknet::account::Call;
 use super::anonymizer::{IdentityCommitment, OpenNote, OpenNoteDeposit};
 
 #[starknet::interface]
@@ -32,12 +31,11 @@ pub mod FacetAccount {
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::syscalls::call_contract_syscall;
     use starknet::{ContractAddress, SyscallResultTrait, get_caller_address};
-
+    use super::IFacetAccount;
     use super::super::anonymizer::{
         IShadowAccountAnonymizerDispatcher, IShadowAccountAnonymizerDispatcherTrait,
         IdentityCommitment, OpenNote, OpenNoteDeposit,
     };
-    use super::IFacetAccount;
 
     pub const UNAUTHORIZED: felt252 = 'UNAUTHORIZED';
     pub const ZERO_ADDRESS: felt252 = 'ZERO_ADDRESS';
@@ -49,9 +47,7 @@ pub mod FacetAccount {
     }
 
     #[constructor]
-    fn constructor(
-        ref self: ContractState, owner: ContractAddress, anonymizer: ContractAddress,
-    ) {
+    fn constructor(ref self: ContractState, owner: ContractAddress, anonymizer: ContractAddress) {
         assert(owner.is_non_zero(), ZERO_ADDRESS);
         assert(anonymizer.is_non_zero(), ZERO_ADDRESS);
         self.owner.write(owner);
@@ -77,9 +73,7 @@ pub mod FacetAccount {
             let anonymizer = IShadowAccountAnonymizerDispatcher {
                 contract_address: self.anonymizer.read(),
             };
-            anonymizer.privacy_invoke_with_computation(
-                identity_commitment, calls, open_notes,
-            )
+            anonymizer.privacy_invoke_with_computation(identity_commitment, calls, open_notes)
         }
 
         fn get_owner(self: @ContractState) -> ContractAddress {

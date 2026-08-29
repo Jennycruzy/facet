@@ -4,8 +4,7 @@
 //! `ContractAddress` literal syntax.
 
 /// Shadow account anonymizer. FINDINGS §6.1 — deployed at block 12,199,879.
-pub const ANONYMIZER: felt252 =
-    0x4f33230dc57855c6e7eabe66dfa0fde82c5458fd0e54827cdb7cb4c474888a7;
+pub const ANONYMIZER: felt252 = 0x4f33230dc57855c6e7eabe66dfa0fde82c5458fd0e54827cdb7cb4c474888a7;
 
 /// Class hash of the deployed anonymizer. FINDINGS §6.1.
 pub const ANONYMIZER_CLASS_HASH: felt252 =

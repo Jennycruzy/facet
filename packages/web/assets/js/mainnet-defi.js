@@ -1,9 +1,5 @@
 const $ = (id) => document.getElementById(id);
 
-const MAINNET_CHAIN_IDS = new Set(["SN_MAIN", "0X534E5F4D41494E"]);
-const MAINNET_RPC = "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10";
-const MAINNET_POOL = "0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a";
-const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 const AMOUNT = 100000000000000000n;
 const ASSET_SELECTOR = "0x3d4060688a1800ae986e4840aebc924bb40b5bf44de4583df2257220b54b77c";
 const PREVIEW_DEPOSIT_SELECTOR = "0x2152e6631b3dd14160be68ee388eeb94d1e2b02e5c1a4c6ce5da69272c5057e";
@@ -13,6 +9,11 @@ const data = await fetch("data/facets.json").then((response) => {
   if (!response.ok) throw new Error("Facet configuration unavailable (" + response.status + ").");
   return response.json();
 });
+
+const MAINNET_CHAIN_IDS = new Set(["SN_MAIN", "0X534E5F4D41494E"]);
+const MAINNET_RPC = data.networks.mainnet.rpc;
+const MAINNET_POOL = data.networks.mainnet.pool;
+const STRK = data.strk;
 
 const protocolId = new URLSearchParams(window.location.search).get("protocol")?.toLowerCase() ?? "vesu";
 const app = data.apps.find((candidate) => candidate.id === protocolId);

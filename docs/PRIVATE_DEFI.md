@@ -198,7 +198,7 @@ production benchmark. See [`ASYNC_PROVING.md`](ASYNC_PROVING.md) for the service
 Three successful Mainnet STRK20 transactions are now verified. The 7 STRK Ready X eligibility
 shield remains setup evidence. The reviewed Wallet API Ekubo action
 `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` succeeded in block
-14,004,049 (`ACCEPTED_ON_L2`); its receipt contains STRK20 pool events and Ekubo core events,
+14,004,049 (`ACCEPTED_ON_L1`); its receipt contains STRK20 pool events and Ekubo core events,
 and its transaction data contains the deployed Facet helper and Ekubo router.
 
 The reviewed Wallet API Endur action

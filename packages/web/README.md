@@ -22,7 +22,8 @@ The page is static, so it is served directly from the project's own host on its 
 `demo_url` in the sprint registry should be that domain, not a platform subdomain.
 
 ```bash
-./facet-deploy-web.sh          # rsync packages/web -> /var/www/facet
+# from the repository root, with DEPLOY_HOST set to the deployment host
+rsync -az --delete packages/web/ "$DEPLOY_HOST:/var/www/facet/"
 ln -s /etc/nginx/sites-available/facet /etc/nginx/sites-enabled/facet
 certbot --nginx -d <domain>    # certificate and the HTTPS redirect
 ```
@@ -44,7 +45,8 @@ current five-to-seven-minute proof; it does not claim to make the proof itself f
 [`../../docs/ASYNC_PROVING.md`](../../docs/ASYNC_PROVING.md) for the contract and security
 requirements.
 
-The native Ready X gate is available at `ready-probe.html`. It uses the injected Starknet Wallet
+The internal Ready X capability check is available at `ready-probe.html` but is intentionally not
+linked from the public product navigation. It uses the injected Starknet Wallet
 API to read the connected account, chain, advertised Wallet API versions, and shielded STRK
 balance. It never requests a private key, proof, signature, or transaction. Use it before wiring
 Facet's shadow-account action to the wallet-managed proving path.
@@ -55,11 +57,11 @@ Facet's shadow-account action to the wallet-managed proving path.
 |---|---|
 | `index.html` | **The app** — Facet's grid: your private account contexts, their live on-chain state, and the application tiles |
 | `launch.html` | Staged launcher — wallet binding, persistent app-context selection, and reviewed route links |
-| `ready-probe.html` | Read-only Ready X capability gate for the mainnet Wallet API path |
+| `ready-probe.html` | Internal read-only Ready X capability check for the mainnet Wallet API path |
 | `mainnet-ekubo.html` | Reviewed wallet-mediated Mainnet Ekubo swap using the deployed privacy helper |
 | `mainnet-defi.html` | Shared reviewed wallet-mediated Mainnet Vesu vSTRK and Endur xSTRK deposit routes |
 | `proof.html` | How it works and the evidence, in seven acts. One click behind the app, for the reader who wants to verify rather than use |
-| `assets/css/facet.css` | Design tokens and layout. Dark, single accent, no framework |
+| `assets/css/app.css` | Design tokens and layout. Dark, single accent, no framework |
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
 | `assets/js/chain.js` | The only module that talks to an RPC node. `sessionStorage` cache, five-minute TTL |
 | `assets/js/app-ui.js` | The app: live strip, identity cards, app tiles, and dated RPC fallbacks |
@@ -67,7 +69,7 @@ Facet's shadow-account action to the wallet-managed proving path.
 | `assets/js/ready-probe.js` | Read-only Ready X account, chain, STRK20 balance, and API capability check |
 | `assets/js/wallet-binding.js` | Canonical binding message, EIP-1193 account handling, and signature validation |
 | `assets/js/wallet-derivation.js` | Dependency-free Keccak and bridge-compatible viewing-key derivation |
-| `assets/js/app.js` | Wires chain data into the proof page's acts |
+| `assets/js/proof.js` | Wires chain data and receipt checks into the proof page's acts |
 | `data/facets.json` | Addresses, transaction hashes, RPC endpoints |
 
 ## Rules this page follows

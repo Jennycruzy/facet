@@ -72,6 +72,32 @@ for (const tx of facet.transactions) {
   $("proof-txs").append(cut(`id-card accent-${tx.role === "deploy" ? "sapphire" : "emerald"}`, [top, body, link]));
 }
 
+/* ---------- current Mainnet integration receipts ---------- */
+
+const mainnetApps = data.apps.filter((app) =>
+  app.status === "wallet-mediated-verified" && app.mainnetTransaction,
+);
+for (const app of mainnetApps) {
+  const top = h("div", "id-top");
+  top.append(h("div", "mono-badge", app.monogram));
+  const title = h("div");
+  title.append(h("div", "id-name", `${app.name} · ${app.action}`));
+  title.append(h("div", "id-ctx", "wallet-mediated Mainnet receipt"));
+  top.append(title);
+  top.append(h("span", "pill", "Mainnet"));
+
+  const body = h("p", "step-text",
+    `${app.name} received the Facet helper call in block ${Number(app.mainnetBlock).toLocaleString()}. ` +
+    "The receipt and protocol event are the evidence; the direct Facet runner is a separate path.");
+  const link = h("div", "addr");
+  const a = h("a", null, short(app.mainnetTransaction, 12, 10));
+  a.href = `${explorer("mainnet")}/tx/${app.mainnetTransaction}`;
+  link.append(a);
+  link.append(h("span", "state", `receipt <span id="mainnet-st-${app.id}">checking</span>`));
+
+  $("mainnet-txs").append(cut(`id-card accent-${app.accent ?? "sapphire"}`, [top, body, link]));
+}
+
 /* ---------- the comparison ---------- */
 
 const legs = {
@@ -167,9 +193,20 @@ try {
     $(`st-${tx.role}`).textContent = `${r.execution_status} · block ${Number(r.block_number).toLocaleString()}`;
     $(`st-${tx.role}`).className = r.execution_status === "SUCCEEDED" ? "ok" : "";
   }
+  for (const app of mainnetApps) {
+    try {
+      const r = await chain.receipt("mainnet", app.mainnetTransaction);
+      const state = $(`mainnet-st-${app.id}`);
+      state.textContent = `${r.execution_status} · block ${Number(r.block_number).toLocaleString()}`;
+      state.className = r.execution_status === "SUCCEEDED" ? "ok" : "";
+    } catch {
+      $(`mainnet-st-${app.id}`).textContent = "recorded receipt";
+    }
+  }
 } catch {
-  $("proof-live").textContent = "chain unreachable, values recorded 25 Aug 2026";
-  document.querySelectorAll("[id^='st-']").forEach((n) => { n.textContent = "recorded 25 Aug 2026"; });
+  $("proof-live").textContent = `chain unreachable, values recorded ${data.generated}`;
+  document.querySelectorAll("[id^='st-']").forEach((n) => { n.textContent = `recorded ${data.generated}`; });
+  document.querySelectorAll("[id^='mainnet-st-']").forEach((n) => { n.textContent = "recorded receipt"; });
 }
 
 enableTilt();

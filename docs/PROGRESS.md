@@ -8,10 +8,10 @@ working sprint is being treated as a compressed four-day window ending at that d
 
 ## Current sprint truth — 29 August 2026
 
-The local checkout is the source of truth on branch `strk20-sprint-20260828`; `defb44c` is the
-latest pushed web-code checkpoint, with the original freeze tag `freeze-20260827` and baseline commit
-`cdeba32e1051c4ae1304a3d23feb254e62244128`. The pushed web-code checkpoint includes bounded
-wallet-error diagnostics; use `git log -1` for the exact current handoff commit.
+The local checkout is the source of truth on the canonical `main` branch. The current release
+includes bounded wallet-error diagnostics and the verified Endur / paused Vesu state; use
+`git log -1` for the exact publication commit rather than embedding a short-lived commit id in
+the product documentation.
 The VPS copy is behind and has a dirty
 `packages/contracts/Scarb.toml`; its diff is preserved outside the repository before any
 sync or deployment.
@@ -119,13 +119,13 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | Shadow anonymizer verified on mainnet | Done | `0x4f33230d…888a7`, class hash `0x7ffaf4f4…f5e6`, deployment block 12,199,879 (23 July 2026). Identified by `get_shadow_account` responding where six other compute-path targets return "entrypoint does not exist". |
 | Pool activity measured | Done | 112,464 events, blocks 8,978,970 → 13,329,863. Breakdown in `FINDINGS.md` §2. |
 | Two-tier action model established | Done | `FINDINGS.md` §4. `apply_actions` takes `Span<ServerAction>`; `ClientAction`s execute inside the proved virtual OS execution. |
-| Real invocation decoded | Done, unproven | `FINDINGS.md` §6.4. Reconstructed from raw calldata against source Serde layouts — `starknet_traceTransaction` is unavailable on public endpoints. **Must be confirmed by executing the same shape on Sepolia before it is treated as fact.** |
+| Real invocation decoded | **Done, confirmed by replay** | `FINDINGS.md` §6.4. Reconstructed from raw calldata against source Serde layouts, then executed through `call_contract_syscall` against real anonymizer bytecode; `starknet_traceTransaction` remains unavailable on public endpoints. |
 | Toolchain pinned | Done | scarb 2.17.0 (aa8740944 2026-04-09), cairo 2.17.0, sierra 1.8.0 — matching `starknet-privacy`. |
-| starknet-foundry installed | Done | `snforge 0.59.0` at `/root/.local/bin/snforge`, matching the pool's pin. |
+| Starknet Foundry pinned | Done | `snforge 0.59.0` is the repository toolchain pin; the local run also requires Universal Sierra Compiler 2.10.0. |
 | Full shadow anonymizer source and test suite read | Partial | Interface, identity derivation, `OpenNote`, `CollectPolicy` read. The 733-line test suite is not yet read in full. |
 | Existing SDK shadow support catalogued | Partial | Confirmed present: `sdk/src/internal/shadow-accounts.ts` (98 lines, `ShadowAccountsBuilderImpl`), `ShadowAccountAnonymizerABI` exported at `index.ts:4`, plus references in `interfaces.ts`, `factory.ts`, `internal/builders.ts`, `internal/anonymizer-abi.ts`, `testing/mocknet.ts`. What each one does is not yet catalogued. |
 | Prior-art check | Done | Nothing in the hackathon README, `IDEAS.md`, or `projects.json` mentions shadow or stealth accounts. Field at 35 projects; three have mainnet transactions recorded (cutout 4, redpocket 3, veilpass 1). |
-| Commit identity single-valued | Done | `user.name jennycruzy`, `user.email jennycruzy@users.noreply.github.com` configured and used by the local commits. |
+| Commit identity single-valued | Done after normalization | `Jennycruzy <jennycruzy@users.noreply.github.com>` is the canonical author and committer identity across the published history. |
 | Secret scan clean | Current-tree scan done; full-history final scan pending | |
 
 ---
@@ -136,11 +136,11 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 |---|---|---|
 | `packages/contracts` scaffolded | Done | `facet_contracts` 0.1.0, edition `2024_07`, pinned `starknet 2.17.0` / `snforge_std 0.59.0`. Anonymizer and ERC20 bindings plus `mainnet.cairo`, which carries every verified address as a documented constant. |
 | Fork harness against live mainnet | Done | `[[tool.snforge.fork]]` MAINNET pinned to block 13,329,863 — the block the findings are measured against — over `api.cartridge.gg`. Reproducible, no key, no fee. |
-| Fork tests passing | Recorded pass; reproduction pending | The pinned environment recorded **20 passed, 0 failed** in `FINDINGS.md` §6.12; a fresh checkout currently cannot resolve the required Sierra compiler. Do not claim current reproducible Cairo success until fixed. |
+| Fork tests passing | **Done with pinned toolchain** | Scarb 2.17.0, Starknet Foundry 0.59.0, Universal Sierra Compiler 2.10.0; **20 passed, 0 failed** against the configured Mainnet and Sepolia forks. |
 | §6.6 funding pattern exercised against deployed bytecode | Done, proof half excluded | Predicted address funded before deployment, account deploys exactly where predicted, full balance collects to the note, pool approved for the total. The `UseNote`/`Withdraw` legs run inside the proved execution and cannot be reached from a fork test. |
 | §6.4 payload replayed against real bytecode | Done | `decoded_invocation.cairo` — the eleven felts fed back through `call_contract_syscall`, no dispatcher in between, plus a control that breaks the decode by shifting slot 11. Answers open question 1 in substance. |
 | Same replay against Sepolia state | Done | `decoded_payload_replays_on_sepolia`, forked at block 13,518,500. A free dry run of the live transaction. |
-| Pure protocol adapter serializers | **Done, 26 August 2026** | `packages/sdk/src/adapters.ts` builds Vesu deposit, Endur stake, and the tested Ekubo single-hop route; it returns per-token settlement hints and hard-fails linked recipients. Unit coverage passes. Vesu has a funded wallet attempt pending diagnosis; Endur still needs its funded rehearsal. |
+| Pure protocol adapter serializers | **Done, 26 August 2026** | `packages/sdk/src/adapters.ts` builds Vesu deposit, Endur stake, and the tested Ekubo single-hop route; it returns per-token settlement hints and hard-fails linked recipients. Unit coverage passes. The Endur funded rehearsal is verified; Vesu is blocked by its live migration extension. |
 | Browser launcher wallet boundary | **Staged, 29 August 2026** | `packages/web/launch.html` connects an injected EIP-1193 EOA, requests one origin/network/pool-bound `personal_sign` message, and opens reviewed Wallet API routes. The route pages let Ready X own note discovery, proving, screening, and broadcast; the launcher itself never handles proof material. |
 | Live Sepolia transaction | **Done, 18 August 2026** | Account `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5`; anonymizer deploy `0x014eb1f86482ae09c32d5784d604115b9e8ab24c3c6f9349308028e6d5a3ab29`; materialisation `0x0719c8ddafc64eebaea496f84d0ec4ccbee46d561a227422d94e5f0be874e9b7`; funding `0x067c272692c0afe9f95535504a81352b0ec664c4b09eb8ccbe0c5ae84a571193`; replay `0x01278bd9634d952da1502118c3bf6f8578b5e4148da6ab992384aeca110675cf`. Exact 0.5 STRK was collected; derived shadow balance is 0. |
 | First funded mainnet interaction | **Done, 19 August 2026** | Ready X shielded 7 STRK into the mainnet STRK20 pool; transaction `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, block 13,538,709, accepted on L2. |
@@ -151,7 +151,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | **Facet contracts on mainnet** | **Done, 25 August 2026** | Immutable anonymizer `0x741fe9dc…63bc`, deployment `0x277a84c5…922`; `FacetAccount` `0x42e9d345…1a45`, deployment `0x4e9305a7…732f`. Production classes were declared first and the immutable ABI was checked for privileged entrypoints. Recorded as `FINDINGS.md` §6.19. |
 | **Ekubo helper on mainnet** | **Done, 28 August 2026** | Stateless helper `0x2bd92991…8537`, class `0x2a4ac595…ebd7`, deployment `0x188808f3…08dfc`, block 14,000,701. Class hash and address were rechecked after the successful receipt. |
 | **Vesu/Endur helper routes** | **Endur verified; Vesu blocked, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`, block 14,030,634; Vesu helper `0x7568567a…e4b6` deployed in `0x2f729305…d7ff3`, block 14,030,645; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`, block 14,030,657. Endur action `0x240d2b8285…63f5` succeeded in block 14,052,044; Vesu remains blocked by `not-allowed`. |
-| **Current launcher deployment** | **`c513aa6` web build live, 29 August 2026** | `https://usefacet.xyz` serves the verified Endur card and paused Vesu guard; HTTPS checks returned 200 for the launcher, Ekubo, Vesu, and Endur pages. Previous web root preserved as `/var/www/facet.backup-20260829T064000Z`. |
+| **Current launcher deployment** | **Verified live, 29 August 2026** | `https://usefacet.xyz` serves the verified Endur card and paused Vesu guard; HTTPS checks returned 200 for the launcher, Ekubo, Vesu, and Endur pages. Previous web root preserved as `/var/www/facet.backup-20260829T064000Z`. |
 | §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
 | **Mainnet screening attestation** | **Blocked, 28 August 2026** | Compatible proof completed, but AVNU returned `SCREENING_REQUIRED`; live pool screener key is configured and the VPS has no `BLOCKING_CHECK_URL`/proof-interceptor deployment. |
 | **Wallet-mediated Vesu attempt** | **Blocked by live protocol revert, 29 August 2026** | The deployed page still received paymaster code 156 with no hash. A separate read-only Mainnet simulation reaches Vesu's migration extension and reverts `before_modify_position: "not-allowed"`; do not retry this vault. |

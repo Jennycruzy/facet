@@ -220,12 +220,12 @@ product layer:
 The staged browser launcher binds an EOA, derives a viewing key in memory, and previews
 persistent application contexts. Reviewed Wallet API pages now provide narrow Mainnet routes for
 Ekubo, Vesu V1.1 vSTRK, and Endur xSTRK: Ready X signs, proves, screens, and submits the privacy
-actions, while Facet supplies the fixed protocol-bound helper and protocol calldata. The Ekubo
-route has a verified Mainnet receipt with pool, helper, and Ekubo evidence. The Vesu and Endur
-pages are wired to the deployed helper instances, but their funded protocol receipts remain
-pending. These are not direct `FacetAccount`-signer flows. The existing
-eligibility shield is a successful Mainnet STRK20 transaction, but it was made through the Ready
-X wallet and is not being relabelled as Facet DeFi activity.
+actions, while Facet supplies the fixed protocol-bound helper and protocol calldata. Ekubo and
+Endur have verified Mainnet receipts with pool, helper, and protocol evidence. The Vesu page is
+wired to its deployed helper but is paused because the configured vault reverts at its migration
+extension. These are not direct `FacetAccount`-signer flows. The existing eligibility shield is a
+successful Mainnet STRK20 transaction, but it was made through the Ready X wallet and is not being
+relabeled as Facet DeFi activity.
 
 The development prover currently takes roughly five to seven minutes on the small reference
 host. That is an infrastructure measurement, not the intended user experience. The intended

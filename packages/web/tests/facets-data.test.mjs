@@ -59,3 +59,29 @@ test("Vesu and Endur are bound to reviewed Mainnet ERC-4626 routes", () => {
     }
   }
 });
+
+test("verified Mainnet integrations are unique receipts and blocked routes have no hash", () => {
+  const verified = data.apps.filter((app) => app.status === "wallet-mediated-verified");
+  assert.deepEqual(verified.map((app) => app.id).sort(), ["ekubo", "endur"]);
+  assert.equal(new Set(verified.map((app) => app.mainnetTransaction)).size, verified.length);
+  for (const app of verified) {
+    assert.match(app.mainnetTransaction, /^0x[0-9a-f]{60,}$/i);
+    assert.equal(typeof app.mainnetBlock, "number");
+    assert.notEqual(app.executionEnabled, false);
+  }
+  const vesu = data.apps.find((app) => app.id === "vesu");
+  assert.equal(vesu.status, "wallet-mediated-blocked");
+  assert.equal(vesu.executionEnabled, false);
+  assert.equal(vesu.mainnetTransaction, undefined);
+});
+
+test("reviewed route code can resolve every Mainnet target from the data file", () => {
+  const mainnet = data.networks.mainnet;
+  for (const value of [mainnet.rpc, mainnet.pool, mainnet.anonymizer, mainnet.eth, mainnet.ekuboRouter]) {
+    assert.ok(value);
+  }
+  const ekubo = data.apps.find((app) => app.id === "ekubo");
+  assert.equal(ekubo.helper, mainnet.ekuboHelper.address);
+  assert.equal(ekubo.helperClassHash, mainnet.ekuboHelper.classHash);
+  assert.equal(ekubo.router, mainnet.ekuboRouter);
+});

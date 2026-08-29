@@ -38,10 +38,10 @@ to do with privacy, and leading with it would misattribute a timing problem to t
 
 All three adapters have a reviewed Mainnet execution page using the supported Wallet API path:
 Ready X supplies the shielded state, proof, screening, and submission, while Facet supplies a
-fixed protocol route. Ekubo's helper is deployed and its route has a verified Mainnet receipt.
-Vesu and Endur use the deployed shared `FacetErc4626Anonymizer`; its class and deterministic
-instances are declared and deployed. Their funded executions and receipts remain pending, so the
-launcher labels them wallet-mediated-ready rather than live until those checks pass.
+fixed protocol route. Ekubo and Endur have deployed helpers and verified Mainnet receipts. Vesu
+uses the same declared shared `FacetErc4626Anonymizer`, but its configured Genesis vSTRK vault
+reverts at a live migration extension, so the launcher labels Vesu paused and refuses execution.
+The browser pages do not claim a direct `FacetAccount`-signer Mainnet path.
 
 ## Vesu — deposit
 
@@ -58,6 +58,10 @@ fn deposit(assets: u256, receiver: ContractAddress) -> u256
 The live V1.1 vault is ERC-4626 shaped: it accepts STRK and returns vSTRK shares. The
 `receiver` is the persistent Facet context account, not the person's wallet. The resulting
 vSTRK represents a Vesu position and is not an automatically recoverable STRK note.
+
+The current Mainnet route is paused. A read-only deposit simulation reaches the configured
+migration extension and reverts `before_modify_position: "not-allowed"`; no Vesu receipt is
+claimed until the vault configuration changes and a new controlled rehearsal succeeds.
 
 The direct SDK plan uses two calls in one invocation: approve STRK to the vault, then deposit.
 The browser route uses the same bindings through the Facet-owned helper, which is bound to the

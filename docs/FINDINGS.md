@@ -1,8 +1,9 @@
 # Findings
 
-Everything verified directly from source or from mainnet chain data. Every claim here
-carries a file:line reference or a block height. Nothing in this file is inferred from
-documentation alone.
+Everything verified directly from source or from chain data. Every claim here carries a
+file:line reference or a block height. Nothing in this file is inferred from documentation
+alone. Historical sections retain their original checkpoint wording; later sections explicitly
+update the current product and evidence state.
 
 Measurements pinned to block range **8,978,970 → 13,329,863** unless stated otherwise.
 Chain head at time of writing: 13,330,217 (15 August 2026, 11:43:38 UTC).
@@ -376,9 +377,9 @@ were uniformly `balance_of` reads; that was wrong, and the full pass corrected i
 lesson is recorded here rather than quietly fixed: a sample of five out of thirty-nine
 produced a confident and false generalisation.
 
-Every one of the 39 issues exactly one `Call`, and **every one targets the same
-contract — the STRK token** (`0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d`).
-No invocation has ever touched a DeFi protocol. Two selectors appear:
+Every one of the 39 historical invocations issues exactly one `Call`, and **every one targets
+the same contract — the STRK token** (`0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d`).
+Within that measured set, no invocation touched a DeFi protocol. Two selectors appear:
 
 | Selector | Name | Count |
 |---|---|---|
@@ -418,8 +419,9 @@ funds, which is exactly why a funding call has to be smuggled in as the first `C
 It does mean two claims must be stated carefully:
 
 - **False:** "nobody has funded a shadow account." Seven transactions have.
-- **True and checkable:** all 39 invocations target the STRK token contract. **No shadow
-  account has ever interacted with a DeFi protocol.**
+- **True and checkable for the historical set:** all 39 invocations target the STRK token
+  contract. **None of those 39 shadow-account invocations interacted with a DeFi protocol.**
+  Facet's later Mainnet Ekubo and Endur receipts are recorded in §§6.29 and 6.32.
 
 **The pre-approval method carries a privacy cost that the withdraw pattern does not.**
 Granting an allowance requires a public `approve` transaction sent from a funded
@@ -430,7 +432,7 @@ from a shielded note instead (§6.6) has no such leak.
 That contrast is the product's sharpest argument, and it is stronger than a claim of
 novelty would have been.
 
-### 6.6 The funding gap, and the pattern that closes it — VERIFIED
+### 6.6 The funding gap, and the pattern that closes it — VERIFIED ON SEPOLIA
 
 **`privacy_invoke_with_computation` never receives funds.**
 `shadow_account_anonymizer.cairo:308-324`, in full:
@@ -508,11 +510,14 @@ ComputeAndInvoke (phase 7) deploy that account at that address, run the dapp
                            calls with the funds present, settle to an open note
 ```
 
-No mainnet transaction has ever done this. It is the pattern the product is built on.
+At the 15 August 2026 research checkpoint, no transaction in the measured Mainnet set
+demonstrated this exact shielded-note sequence. Facet subsequently executed it twice on
+Sepolia (§§6.17–6.18). The current Mainnet boundary is different: the direct Facet runner
+remains blocked by the pool's screening-attestation requirement, while the Ready X
+wallet-mediated Ekubo and Endur actions are separately verified in §§6.29 and 6.32.
 
-**Unverified until executed.** The reasoning is sound and every constituent fact is
-confirmed in source, but nothing here has been run on-chain. Reproducing it on Sepolia
-is the first build task and the only thing that converts this from analysis to fact.
+The source reasoning is therefore verified on Sepolia, but it must not be relabelled as a
+direct Facet-runner Mainnet receipt.
 
 ### 6.7 What the funding pattern costs in privacy — NEW
 
@@ -877,12 +882,12 @@ The anonymizer's privacy contract resolved to the Sepolia account. After the rep
 derived shadow account's STRK balance was zero, confirming that the exact `CollectPolicy::Exact`
 amount from slot 12 was collected. The replay accepted on chain without contradiction.
 
-### 6.15 First funded mainnet interaction — 19 August 2026
+### 6.15 First Mainnet eligibility shield — 19 August 2026
 
 The eligibility shield was completed through Ready X. The transaction was checked against the
 mainnet receipt: it succeeded, touched the deployed STRK20 pool, and transferred 7 STRK from the
-Ready wallet into the pool. This is an eligibility transaction only; no Facet shadow account has
-yet interacted with a DeFi protocol.
+Ready wallet into the pool. At this historical checkpoint it was an eligibility transaction only;
+the later Facet/Ekubo and Facet/Endur protocol receipts are recorded in §§6.29 and 6.32.
 
 | Item | Result |
 |---|---|
@@ -892,12 +897,12 @@ yet interacted with a DeFi protocol.
 | Shield amount | 7 STRK |
 | Transaction | `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a` |
 | Block | 13,538,709 |
-| Status | `SUCCEEDED`, `ACCEPTED_ON_L2` |
+| Status | `SUCCEEDED`, `ACCEPTED_ON_L1` |
 | Explorer | <https://voyager.online/tx/0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a> |
 
-The receipt contains the expected pool event. The remaining work for eligibility is two more
-successful mainnet transactions touching the pool; the product work remains wiring the SDK's
-proving path and executing the §6.6 shadow-account sequence.
+The receipt contains the expected pool event. This paragraph records the state at the first
+eligibility checkpoint, before the later Mainnet helper deployments and wallet-mediated protocol
+receipts.
 
 ### 6.16 Account separation, funding provenance, and Phase A authorization — 19 August 2026
 
@@ -1063,7 +1068,7 @@ encrypted `starknet-gate2` account.
 | Immutable anonymizer | `0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc` | `0x85fbf40e535f188b695c1c3b4492c3045de7305c94e2ce7de4d0f9551adb21` | `0x47ba3ac050abb5b4b94f80bf512afb5c36a623669656134666bf709b09f6706` | `0x708f7621502bf317d0e184c0edc47efc9300651129fc9667c24b3075d4bbeef` | `0x277a84c5b063c235acdd5b5e866e2c6078554517e984536b3bb889b26f07922` |
 | FacetAccount | `0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45` | `0x5d07634600fff340d733946c2c8f925ee4c3c637c33f61e33e187b9024de46d` | `0x147d6e959eada2c5dcd90745a62f968a0ac8813499f9f82ba64de0db2db4793` | `0x384426545f8f59e9603674f309acd1fa749911d6f8573dbd9752f40b4294669` | `0x4e9305a7b362901c0ccd1017bba3269993e724383c1fa9608ba94a63011732f` |
 
-Both deployment receipts are `SUCCEEDED` and `ACCEPTED_ON_L2`: the anonymizer is in block
+Both deployment receipts are `SUCCEEDED` and `ACCEPTED_ON_L1`: the anonymizer is in block
 13,850,369 with an actual fee of `0.073135974514343200 STRK`; `FacetAccount` is in block
 13,850,382 with an actual fee of `0.073136283779715200 STRK`. The deployed addresses return
 the class hashes shown above from `starknet_getClassHashAt`.
@@ -1283,7 +1288,7 @@ Mainnet RPC:
 | Transaction | [`0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`](https://voyager.online/tx/0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab) |
 | Sender | `0x6cc0a8a10349f4296d3b4b948f754080cc993d72b68fc341de087ba6ccbb558` (Ready-managed shadow account) |
 | Block | 14,004,049 |
-| Finality | `ACCEPTED_ON_L2` |
+| Finality | `ACCEPTED_ON_L1` |
 | Execution | `SUCCEEDED` |
 | STRK20 pool event source | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
 | Ekubo core event source | `0x00000005dd3d2f4429af886cd1a3b08289dbcea99a294197e9eb43b0e0325b4b` |
@@ -1311,9 +1316,9 @@ event to claim. Code 156 is only the paymaster wrapper and does not identify whe
 failure was screening, helper execution, or the Vesu vault. The route's previous `errorText`
 formatter discarded the structured cause; the current working tree preserves bounded
 `code`/`message`/`reason`/`details`/`data`/`error`/`execution_error`/`cause` fields and includes
-the last error in safe diagnostics. The next session should deploy and test that diagnostic
-change, then make one controlled Vesu retry. Repeated retries without the nested reason are not
-useful evidence.
+the last error in safe diagnostics. That diagnostic change was subsequently deployed and tested
+once; §6.31 records the resulting live migration-extension reason. Repeated retries without a
+changed vault configuration are not useful evidence.
 
 ### 6.31 The Vesu code-156 wrapper is a live migration-extension revert; Endur passes simulation — 29 August 2026
 
@@ -1350,10 +1355,9 @@ The same read-only Mainnet simulation shape against the deployed Endur xSTRK vau
 including the STRK approval, deposit, xSTRK output, and simulated state diff. It was not broadcast.
 
 The Vesu route is therefore blocked and must not be retried under its current vault configuration.
-The next safe wallet test is the reviewed Endur page:
-`https://usefacet.xyz/mainnet-defi.html?protocol=endur`. A successful Endur receipt still needs
-to contain the Mainnet STRK20 pool event, the deployed Endur helper, and the Endur protocol event
-before it can be added to `strk20.json`.
+At this point in the timeline, the next safe wallet test was the reviewed Endur page; §6.32 records
+that its receipt contains the Mainnet STRK20 pool event, the deployed Endur helper, and the Endur
+protocol event.
 
 ### 6.32 The reviewed Endur route succeeded on Mainnet — 29 August 2026
 

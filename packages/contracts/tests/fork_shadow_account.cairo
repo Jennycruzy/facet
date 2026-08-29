@@ -45,7 +45,9 @@ fn strk() -> IERC20Dispatcher {
 /// A fresh identity, scoped by `seed` so tests never collide on a commitment.
 fn fresh_identity(seed: felt252) -> (felt252, felt252) {
     let identity_key = compute_identity_key(
-        user_addr: get_contract_address(), user_private_key: seed, contract_address: addr(ANONYMIZER),
+        user_addr: get_contract_address(),
+        user_private_key: seed,
+        contract_address: addr(ANONYMIZER),
     );
     let partial = partial_commitment(identity_key, 'facet_fork_test');
     (partial, commitment_from_partial(partial, 0))
@@ -77,7 +79,8 @@ fn predicted_account(partial: felt252) -> (ContractAddress, bool) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Decode checks — no chain state needed, these confirm the selector attribution in FINDINGS §6.5.
+// Decode checks — no chain state needed, these confirm the selector attribution in FINDINGS
+// §6.5.
 // ---------------------------------------------------------------------------------------------
 
 #[test]
@@ -114,7 +117,8 @@ fn on_chain_privacy_compute_matches_local_derivation() {
     assert_eq!(on_chain, local);
 }
 
-/// An undeployed nonce still resolves to an address — the precondition for funding before deploying.
+/// An undeployed nonce still resolves to an address — the precondition for funding before
+/// deploying.
 #[test]
 #[fork("MAINNET")]
 fn undeployed_nonces_resolve_to_a_nonzero_predicted_address() {
@@ -198,7 +202,8 @@ fn one_invoke_runs_several_calls_as_the_shadow_account() {
 
     let sink_before = strk.balance_of(addr(SINK));
     start_cheat_caller_address(anonymizer.contract_address, addr(POOL));
-    let deposits = anonymizer.privacy_invoke_with_computation(commitment, calls, array![note].span());
+    let deposits = anonymizer
+        .privacy_invoke_with_computation(commitment, calls, array![note].span());
     stop_cheat_caller_address(anonymizer.contract_address);
 
     // Both calls ran: the sink gained exactly two halves, and the remainder settled to the note.
@@ -233,9 +238,9 @@ fn a_reverting_dapp_call_reverts_the_whole_invoke() {
 }
 
 /// The stranded-funds question, part two: the case that *can* strand funds is funding and invoking
-/// in **separate** transactions. This shows the exposure is recoverable — a shadow account that has
-/// already been deployed and emptied still sweeps a later top-up, because the commitment resolves
-/// to the same address forever.
+/// in **separate** transactions. This shows the exposure is recoverable — a shadow account that
+/// has already been deployed and emptied still sweeps a later top-up, because the commitment
+/// resolves to the same address forever.
 #[test]
 #[fork("MAINNET")]
 fn an_already_deployed_account_sweeps_a_later_top_up() {

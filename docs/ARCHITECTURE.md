@@ -8,10 +8,10 @@ possible.
 Status: the private account sequence and the Ekubo adapter are verified on Sepolia; the
 immutable anonymizer, `FacetAccount`, Ekubo helper, and protocol-bound Vesu/Endur helpers are
 deployed on mainnet. The browser launcher is deployed at `https://usefacet.xyz` with wallet
-binding and in-memory viewing-key derivation. The Ekubo Wallet API route has a verified Mainnet
-helper/protocol receipt; Vesu and Endur still need funded protocol receipts. The 7 STRK Ready X
-eligibility shield is a successful Mainnet pool transaction and remains separate evidence, not
-Facet DeFi activity.
+binding and in-memory viewing-key derivation. The Ekubo and Endur Wallet API routes have
+verified Mainnet helper/protocol receipts; Vesu is paused after its live migration-extension
+revert. The 7 STRK Ready X eligibility shield is a successful Mainnet pool transaction and
+remains separate evidence, not Facet DeFi activity.
 
 For the product model and user-facing privacy boundary, see [`PRODUCT.md`](PRODUCT.md).
 
@@ -67,7 +67,7 @@ ABI.
 The earlier class declaration transactions were `0x708f7621502bf317d0e184c0edc47efc9300651129fc9667c24b3075d4bbeef`
 and `0x384426545f8f59e9603674f309acd1fa749911d6f8573dbd9752f40b4294669`. The shared
 ERC-4626 helper class was declared in `0x6ec84277bbeea2f6005c265ed7d47cc5a1397fb7c77cb1e88172dc17950a500`
-at block 14,030,634; both helper deployment receipts are `SUCCEEDED` and `ACCEPTED_ON_L2`.
+at block 14,030,634; both helper deployment receipts are `SUCCEEDED` and `ACCEPTED_ON_L1`.
 
 ## Prover trust boundary
 

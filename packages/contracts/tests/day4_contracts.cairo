@@ -6,10 +6,9 @@
 //! with the deployed upstream anonymizer.
 
 use facet_contracts::anonymizer::{
-    IShadowAccountAnonymizerDispatcher, IShadowAccountAnonymizerDispatcherTrait,
+    IShadowAccountAnonymizerDispatcher, IShadowAccountAnonymizerDispatcherTrait, partial_commitment,
 };
 use facet_contracts::facet_account::{IFacetAccountDispatcher, IFacetAccountDispatcherTrait};
-use facet_contracts::anonymizer::partial_commitment;
 use facet_contracts::mainnet::{ANONYMIZER, POOL};
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
@@ -62,7 +61,8 @@ fn immutable_anonymizer_preserves_deterministic_commitments() {
     let dispatcher = IShadowAccountAnonymizerDispatcher { contract_address: anonymizer };
 
     let commitment = dispatcher.privacy_compute('identity', 'ekubo', 4);
-    let accounts = dispatcher.get_shadow_accounts(partial_commitment('identity', 'ekubo'), 0, 1, false);
+    let accounts = dispatcher
+        .get_shadow_accounts(partial_commitment('identity', 'ekubo'), 0, 1, false);
     assert_eq!(commitment, dispatcher.privacy_compute('identity', 'ekubo', 4));
     assert_eq!(accounts.len(), 1);
     let account = *accounts.at(0);

@@ -1,18 +1,26 @@
 const $ = (id) => document.getElementById(id);
 
-const MAINNET_CHAIN_IDS = new Set(["SN_MAIN", "0X534E5F4D41494E"]);
-const MAINNET_RPC = "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10";
-const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
-const ETH = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
-const POOL = "0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a";
-const ROUTER = "0x0199741822c2dc722f6f605204f35e56dbc23bceed54818168c4c49e4fb8737e";
-const HELPER = "0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537";
-const HELPER_CLASS_HASH = "0x2a4ac595283d4d64b9952f5ef5c0da1775bfdb7c9d92237524a21dd8d19ebd7";
 const ROUTE_FEE = 170141183460469235273462165868118016n;
 const TICK_SPACING = 1000n;
 const SWAP_AMOUNT = 100000000000000000n;
 const SLIPPAGE_BPS = 1000n;
 const QUOTE_SWAP_SELECTOR = "0x2904b7c28f3fd4556d8aa4f93483ea2077dd95e61c54db86c2ea5fc1f3ffd54";
+
+const data = await fetch("data/facets.json").then((response) => {
+  if (!response.ok) throw new Error("Facet configuration unavailable (" + response.status + ").");
+  return response.json();
+});
+const mainnet = data.networks.mainnet;
+const ekubo = data.apps.find((app) => app.id === "ekubo");
+if (!ekubo) throw new Error("Ekubo route is missing from Facet configuration.");
+const MAINNET_CHAIN_IDS = new Set(["SN_MAIN", "0X534E5F4D41494E"]);
+const MAINNET_RPC = mainnet.rpc;
+const STRK = data.strk;
+const ETH = mainnet.eth;
+const POOL = mainnet.pool;
+const ROUTER = ekubo.router;
+const HELPER = ekubo.helper;
+const HELPER_CLASS_HASH = ekubo.helperClassHash;
 
 const state = {
   wallet: null,

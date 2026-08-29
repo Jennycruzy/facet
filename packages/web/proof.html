@@ -31,13 +31,21 @@
     <div class="eyebrow">How it works</div>
     <h1>Three actions,<br>one transaction.</h1>
     <p class="sub">A shielded note pays for an identity that does not exist yet, that identity
-    acts, and the change returns to the shield. Nobody had executed this sequence before
-    25 August 2026.</p>
+    acts, and the change returns to the shield. Facet first executed this sequence on Sepolia
+    on 25 August 2026; the current Mainnet integration evidence is listed below.</p>
   </section>
 
   <section class="block">
     <div class="head"><h2>The sequence</h2><div class="aside">Inside one proved execution</div></div>
     <div class="grid" id="steps"></div>
+  </section>
+
+  <section class="block" id="mainnet-evidence">
+    <div class="head"><h2>Mainnet integrations</h2><div class="aside">receipt-backed · wallet-mediated</div></div>
+    <div class="grid" id="mainnet-txs"></div>
+    <p class="note">These are Ready X Wallet API actions through Facet's deployed protocol helpers,
+    not direct FacetAccount-signer transactions. Vesu is shown in the launcher as paused and is not
+    included here because its current vault reverts before a receipt exists.</p>
   </section>
 
   <section class="block">
@@ -76,14 +84,15 @@
   </section>
 
   <section class="block">
-    <div class="head"><h2>Run it yourself</h2><div class="aside">Pinned reproduction in progress</div></div>
+    <div class="head"><h2>Run it yourself</h2><div class="aside">Pinned reproduction</div></div>
     <pre>git clone https://github.com/Jennycruzy/facet
 
 <span class="c"># the transaction prover, rebuilt for older AMD hosts. See docs/PROVER.md</span>
 docker run -p 3000:3000 ghcr.io/jennycruzy/facet-prover:znver2
 
-<span class="c"># recorded pinned-toolchain run; fresh Sierra compiler setup is still pending</span>
-snforge test --workspace</pre>
+<span class="c"># pinned Scarb/Foundry run against Mainnet and Sepolia forks — 20 passed</span>
+cd packages/contracts
+snforge test</pre>
   </section>
 
   <section class="block">
@@ -101,9 +110,10 @@ snforge test --workspace</pre>
       <p>The first run sent one wei to the owner's address because it was a smoke test, so
       that receipt does connect them. The argument rests on the funding leg, which is
       shielded.</p></div>
-      <div><h4>No DeFi protocol yet</h4>
-      <p>All 39 mainnet invocations target the STRK token. Ours ran on testnet. Mainnet DeFi
-      is next and is not claimed here.</p></div>
+      <div><h4>Vesu is not live</h4>
+      <p>Ekubo and Endur have successful wallet-mediated Mainnet receipts. The configured Vesu
+      Genesis vSTRK vault currently reverts at its migration extension, so no Vesu action is
+      requested or claimed.</p></div>
     </div>
   </section>
 

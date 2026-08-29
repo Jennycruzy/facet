@@ -42,9 +42,11 @@ fund a deterministic account, have it call a normal Starknet application, and se
 result back into shielded notes. Facet turns that primitive into an account and portfolio
 model rather than asking users to think in raw commitments, notes, and contract phases.
 
-> **Status: in development.** Nothing here is audited. Do not route funds you cannot
-> afford to lose. Claims in this README are traceable to a source reference or a
-> transaction hash; anything not yet done is marked as such.
+> **Status: live experimental build.** The wallet-mediated Ekubo and Endur routes have
+> receipt-backed Mainnet evidence; the direct Facet runner, async queue, portfolio view, and
+> Vesu route remain incomplete or blocked. Nothing here is externally audited. Do not route
+> funds you cannot afford to lose. Claims in this README are traceable to a source reference
+> or a transaction hash; anything not yet done is marked as such.
 
 ## New here?
 
@@ -56,18 +58,20 @@ and how the protocol makes it possible.
 
 ## Quick validation
 
-The fork-backed contract checks are intended to run locally from the repository root once the
-pinned Sierra compiler is available:
+The fork-backed contract checks run locally from the repository root with the pinned toolchain
+and the configured read-only RPC endpoints:
 
 ```bash
 cd packages/contracts
 snforge test
 ```
 
-The last pinned environment recorded 20 tests against mainnet and Sepolia state. A fresh
-checkout currently has a Sierra compiler/toolchain resolution issue, so do not claim the Cairo
-suite is reproducibly passing until that is fixed. The suite does not prove the full transaction
-path — that path is proved on chain instead, in [`docs/FINDINGS.md`](docs/FINDINGS.md) §6.17.
+The pinned environment is Scarb 2.17.0, Starknet Foundry 0.59.0, and Universal Sierra Compiler
+2.10.0; it currently runs **20 tests, 0 failures** against Mainnet and Sepolia forks. If
+`snforge` reports that `universal-sierra-compiler` is missing, install the toolchain named in
+`.tool-versions` before treating a failed command as a contract failure. The suite does not
+prove the full transaction path — that path is proved on chain instead, in
+[`docs/FINDINGS.md`](docs/FINDINGS.md) §§6.17–6.18 and the Mainnet receipts below.
 
 ---
 
@@ -131,10 +135,14 @@ application execution, settlement, proving, fee payment, recovery, and portfolio
 - A shadow account anonymizer has been live on mainnet since **23 July 2026**
   (`0x4f33230dc57855c6e7eabe66dfa0fde82c5458fd0e54827cdb7cb4c474888a7`, deployed at
   block 12,199,879).
-- It has been invoked **39 times**, and all 39 were decoded. Every single one issues one
-  call against the same contract — the STRK token. Thirty-two are `balance_of` reads;
-  seven use `transfer_from` to pull pre-approved funds into the shadow account.
-  **No shadow account has ever interacted with a DeFi protocol.**
+- It had been invoked **39 times** by the historical measurement cutoff, and all 39 were
+  decoded. Every one in that dataset issues one call against the same contract — the STRK
+  token. Thirty-two are `balance_of` reads; seven use `transfer_from` to pull pre-approved
+  funds into the shadow account. **None of those 39 historical invocations interacted with a
+  DeFi protocol.**
+- The current product state is different: Facet has since verified wallet-mediated Mainnet
+  actions through its Ekubo and Endur helpers. Those receipts are listed below; the historical
+  39-invocation finding is intentionally preserved rather than rewritten.
 - The official docs contain no coverage of it whatsoever. Across the full 121 KB
   documentation dump: `shadow` 0 occurrences, `stealth` 0, `identity_key` 0,
   `identity commitment` 0, `invoke_with_computation` 0.
@@ -177,9 +185,9 @@ anonymizer**, forked at mainnet block 13,329,863 — a predicted address is fund
 any code exists at it, and the shadow account deploys exactly there and collects the
 balance. The pinned environment has run 20 Cairo tests successfully against recorded
 mainnet and Sepolia state, including the decoded invocation replayed against real bytecode
-with a control that breaks the decode as it must. Reproducing those tests in a fresh
-environment still needs the Sierra compiler/toolchain issue resolved; do not treat a prior
-local run as final CI evidence. What those tests cannot cover is the proved half — `UseNote`,
+with a control that breaks the decode as it must. A fresh environment must install the
+Universal Sierra Compiler named in `.tool-versions`; with that dependency present, the same
+fork suite is reproducible. What those tests cannot cover is the proved half — `UseNote`,
 `Withdraw`, and the `ClientAction` → `ServerAction` translation are unreachable from a fork
 test. That half is proved on chain instead: `FINDINGS.md` §6.17.
 
@@ -240,11 +248,11 @@ What is not built is listed as plainly as what is.
 | | |
 |---|---|
 | Research | `docs/FINDINGS.md` — pool, anonymizer, identity derivation, all 39 invocations decoded |
-| Contracts | `packages/contracts` — 20 fork tests recorded as passing in the pinned environment; fresh-clone Sierra toolchain reproduction pending |
+| Contracts | `packages/contracts` — 20 fork tests passing with the pinned Scarb, Foundry, and Universal Sierra Compiler toolchain |
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
 | SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 20 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
-| Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, a deployed launcher, and reviewed Wallet API pages for Ekubo, Vesu V1.1, and Endur exist; the generic async service and portfolio view remain to be built |
+| Product layer | **working wallet-mediated demo** — account contexts, private funding, settlement, adapter foundations, a deployed launcher, and receipt-backed Ekubo/Endur Wallet API pages exist; the generic async service and portfolio view remain to be built |
 | Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, Ekubo helper, and the shared protocol-bound Vesu/Endur helper instances are deployed; the Endur action is verified and the Vesu route is paused |
 | Mainnet interaction | **verified for Ekubo and Endur** — the 7 STRK Ready X eligibility shield plus reviewed Facet/Ekubo and Facet/Endur Wallet API actions are confirmed on Mainnet; Vesu remains blocked by its live migration-extension revert |
 

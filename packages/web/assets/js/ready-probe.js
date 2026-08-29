@@ -1,9 +1,14 @@
 const $ = (id) => document.getElementById(id);
 
 const MAINNET_CHAIN_IDS = new Set(["SN_MAIN", "0X534E5F4D41494E"]);
-const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
-const MAINNET_POOL = "0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a";
-const MAINNET_ANONYMIZER = "0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc";
+
+const data = await fetch("data/facets.json").then((response) => {
+  if (!response.ok) throw new Error("Facet configuration unavailable (" + response.status + ").");
+  return response.json();
+});
+const STRK = data.strk;
+const MAINNET_POOL = data.networks.mainnet.pool;
+const MAINNET_ANONYMIZER = data.networks.mainnet.anonymizer;
 
 const state = {
   wallet: null,

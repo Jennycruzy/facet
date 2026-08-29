@@ -129,10 +129,22 @@ for (const app of data.apps) {
   }
 
   const act = h("div", "act");
-  const btn = h("button", "btn", app.action);
-  btn.disabled = true;
-  act.append(btn);
-  act.append(h("span", "btn-why", app.tolerates_delay ? "live when contracts land" : "after the first two"));
+  if (app.executionPage) {
+    const btn = h("a", "btn", app.executionEnabled === false ? "Read paused route" : `Open ${app.name}`);
+    btn.href = app.executionPage;
+    btn.setAttribute("aria-label", `${app.name}: ${app.executionEnabled === false ? "read paused route" : "open reviewed route"}`);
+    act.append(btn);
+  } else {
+    const btn = h("button", "btn", app.action);
+    btn.disabled = true;
+    act.append(btn);
+  }
+  const status = app.executionEnabled === false
+    ? "blocked by live protocol gate"
+    : app.status === "wallet-mediated-verified"
+      ? "receipt verified"
+      : "reviewed route";
+  act.append(h("span", "btn-why", status));
   parts.push(act);
 
   $("tiles").append(cut(`tile accent-${app.accent ?? "sapphire"}`, parts));

@@ -1,6 +1,7 @@
 //! Replays the exact calldata of the decoded mainnet invocation, `FINDINGS.md` §6.4.
 //!
-//! §6.4 was reconstructed by reading raw calldata against the source Serde layouts, never traced —
+//! §6.4 was reconstructed by reading raw calldata against the source Serde layouts, never traced
+//! —
 //! `starknet_traceTransaction` is unavailable on the public endpoints. This file settles it by
 //! feeding the eleven felts back to the real anonymizer bytecode through
 //! `call_contract_syscall`, with no typed dispatcher in between. A dispatcher would serialise the
@@ -48,8 +49,8 @@ fn deploy_anonymizer() -> IShadowAccountAnonymizerDispatcher {
 const SHADOW_ACCOUNT_ANONYMIZER_CLASS_HASH: felt252 =
     0x7ffaf4f427c8de0ca35d32d44d97a31da3c24641e32b72f340660d5b9e7f5e6;
 
-/// Moves STRK by impersonating a known holder — the network's pool, which holds a large balance on
-/// both chains. STRK sits at the same address on mainnet and Sepolia.
+/// Moves STRK by impersonating a known holder — the network's pool, which holds a large balance
+/// on both chains. STRK sits at the same address on mainnet and Sepolia.
 fn fund_from(source: felt252, recipient: ContractAddress, amount: u256) {
     let strk = IERC20Dispatcher { contract_address: addr(STRK) };
     assert!(strk.balance_of(addr(source)) >= amount, "funding source balance too low");
@@ -132,8 +133,8 @@ fn decoded_payload_deserialises_and_executes() {
 }
 
 /// The same replay against Sepolia state. Sepolia carries the same two class hashes, so this is a
-/// dry run of the live transaction — if the deployment or the payload were going to fail there for
-/// a chain-specific reason, it fails here first, for free.
+/// dry run of the live transaction — if the deployment or the payload were going to fail there
+/// for a chain-specific reason, it fails here first, for free.
 #[test]
 #[fork("SEPOLIA")]
 fn decoded_payload_replays_on_sepolia() {
@@ -142,8 +143,8 @@ fn decoded_payload_replays_on_sepolia() {
     assert!(shadow_account != addr(0), "shadow account should have deployed on sepolia");
 }
 
-/// Slot 11 really is the `CollectPolicy` discriminant: replacing `0x2` with `0x0` turns the trailing
-/// felt into a stray argument, and the payload no longer deserialises to the same call.
+/// Slot 11 really is the `CollectPolicy` discriminant: replacing `0x2` with `0x0` turns the
+/// trailing felt into a stray argument, and the payload no longer deserialises to the same call.
 ///
 /// This is the control. Without it, a payload that happened to execute for unrelated reasons would
 /// look like a confirmed decode.
@@ -170,9 +171,7 @@ fn shifting_the_collect_policy_discriminant_breaks_the_decode() {
     }
 
     call_contract_syscall(
-        anonymizer.contract_address,
-        selector!("privacy_invoke_with_computation"),
-        rebuilt.span(),
+        anonymizer.contract_address, selector!("privacy_invoke_with_computation"), rebuilt.span(),
     )
         .unwrap_syscall();
 }

@@ -38,7 +38,7 @@ pool.** There is no cap, and more is better evidence.
 | # | Transaction | State |
 |---|---|---|
 | 1 | `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a` | **Done** — 7 STRK eligibility shield through Ready X, block 13,538,709; valid pool evidence but not a Facet DeFi action |
-| 2 | `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` | **Done** — reviewed Ready X Wallet API action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,004,049; receipt contains STRK20 pool events, and transaction data carries the Facet helper plus Ekubo router |
+| 2 | `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` | **Done** — reviewed Ready X Wallet API action, `SUCCEEDED` and `ACCEPTED_ON_L1` in block 14,004,049; receipt contains STRK20 pool events, and transaction data carries the Facet helper plus Ekubo router |
 | 3 | `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` | **Done** — reviewed Ready X Wallet API Endur action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,052,044; receipt contains STRK20 pool events, the deployed Endur helper, and Endur xSTRK events |
 
 The Vesu Wallet API attempt returned `PaymasterV2Error` code 156 without a transaction hash. It is
@@ -100,7 +100,7 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
 ## `demo_url`
 
 **Previously deployed and verified — `https://usefacet.xyz`.** The live nginx root currently
-serves the `c513aa6` build with the verified Endur / paused Vesu card state;
+serves the release with the verified Endur / paused Vesu card state;
 `/launch.html`, `/mainnet-ekubo.html`, `/mainnet-defi.html?protocol=vesu`, and
 `/mainnet-defi.html?protocol=endur` returned 200 and passed the VPS-side obvious-secret scan.
 The prior release is preserved at
@@ -113,14 +113,19 @@ curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
 ## `demo_video`
 
 Empty. Target: under two minutes, real Mainnet evidence, hashes visible, and a screen recording
-with no hidden success claim. The proof may be pre-generated for the recording if the description
-says so; the live product must still show the honest queued/proving stages.
+with no hidden success claim. The recording may use the already-verified receipts if it says so;
+it must not imply that the direct Facet runner is instant or that Vesu succeeded.
 
 **State the proving time honestly.** Proving takes roughly five to seven minutes on the
 current self-hosted development host; pre-generating
 proofs for the recording is fine, and saying so in the video description is what keeps it
 honest. A judge who discovers a demo was cut to hide a six-minute wait discounts everything
 else — and by this project's own stated standard, that is disqualifying.
+
+The verified Ekubo and Endur actions used Ready X's wallet-mediated STRK20 path rather than the
+VPS's direct Facet runner. Do not present the local prover measurement as the observed latency of
+those wallet actions, and do not present a wallet-mediated receipt as a direct `FacetAccount`
+signature.
 
 ## Product claims the submission may make
 

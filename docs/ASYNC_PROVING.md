@@ -1,9 +1,10 @@
 # Async proving and launcher execution
 
-Status: product contract and sprint handoff, 27 August 2026. The public launcher currently
-implements wallet binding and application-context preview only. The queue described here is
-the smallest production-shaped path to add after Mainnet evidence is unblocked; it is not a
-claim that the current static site already submits transactions.
+Status: product contract and sprint handoff, 29 August 2026. The public launcher currently
+implements wallet binding and application-context preview only; the separate reviewed Ready X
+route pages can submit only their fixed allowlisted actions. The queue described here is the
+smallest production-shaped path still to add; it is not a claim that the static launcher already
+submits arbitrary transactions.
 
 ## Why this exists
 
@@ -142,8 +143,9 @@ explorer URL after broadcast. It must not return the proof blob or private proof
 ## Route-specific timing
 
 Vesu deposits and Endur stakes tolerate a multi-minute proof better because the requested
-amount or share action does not depend on a short-lived swap quote. Ekubo is the first route
-to wire because its runner exists, but it is the least tolerant of delay:
+amount or share action does not depend on a short-lived swap quote. Endur is currently the
+verified delay-tolerant Mainnet route; Vesu is paused by its live migration-extension revert.
+Ekubo is verified but least tolerant of delay because its quote can expire:
 
 1. Build the route and quote immediately before queueing.
 2. Carry the exact minimum output in the proof intent.
@@ -151,8 +153,8 @@ to wire because its runner exists, but it is the least tolerant of delay:
 4. If the slippage bound is no longer safe, stop and require a new quote and proof.
 
 Starting a long proof before the exact Ekubo quote exists is not a UX optimization; it creates
-stale proof work. The first working launcher may therefore be Vesu or Endur for the reliable
-live path, with Ekubo shown only when the quote and expiry can survive review.
+stale proof work. The working wallet-mediated Endur route demonstrates the delay-tolerant path;
+Ekubo remains enabled only with a fresh quote and minimum-output floor.
 
 ## Current implementation versus target
 
@@ -162,6 +164,7 @@ live path, with Ekubo shown only when the quote and expiry can survive review.
 | Persistent app-context metadata | Previewed by the launcher | `app-context` tests and data file |
 | SDK adapters | Built and unit-tested | Vesu, Endur, and Ekubo serializer tests |
 | Self-hosted warm prover | Running on the trusted VPS, one proof at a time | `starknet_specVersion` plus full proof results |
+| Reviewed wallet-mediated routes | Ekubo and Endur verified; Vesu paused | Mainnet receipts and the Vesu simulation finding |
 | Queue API and worker supervisor | Not wired to the public site | Must return a job id and persist no secrets |
 | Note discovery in browser | Not wired | Real note count and selected note |
 | Browser proving/submission | Not wired | Mainnet receipt through an allowlisted route |
@@ -172,18 +175,20 @@ for a local encrypted keystore password and keeps the Mainnet broadcast gate exp
 first service should reuse its reviewed action-building path, not duplicate protocol logic in
 the frontend.
 
-## Sprint implementation order
+## Post-sprint roadmap
 
-1. Obtain the first valid Facet Mainnet pool receipt. A compatible proof-facts virtual-OS
-   hash is a prerequisite; the prior proof attempts were correctly stopped before broadcast.
-2. Record the receipt/event facts and preserve the command as a reproducible operational path.
-3. Add the narrow job contract and a warm-worker supervisor with local tests. No universal
-   wallet SDK, portfolio indexer, or arbitrary transaction relay.
-4. Wire one real app through one allowlisted path, preferably the route that first passes
-   read-only checks, quote, proof-aware preflight, and a receipt.
-5. Add one genuinely verified second app through the same job path. Keep an unverified tile
-   marked preview-only.
-6. Deploy only after the clean browser path, no-secret bundle scan, and mobile smoke test pass.
+The evidence gates are complete for the current wallet-mediated scope: Ekubo and Endur have
+receipt-backed Mainnet actions, while Vesu is explicitly paused. The remaining product work is
+deliberately narrower:
+
+1. Add the authenticated two-endpoint job service and warm-worker supervisor. No universal wallet
+   SDK, portfolio indexer, or arbitrary transaction relay.
+2. Wire browser note discovery, job polling, receipt verification, and a unified portfolio view.
+3. Enforce fixed funding denominations, quote expiry, and timing policy in code and tests before
+   describing them as guarantees.
+4. Revisit the direct Facet runner only when an authorized Mainnet screening attestation exists.
+5. Retest Vesu only after the live vault/migration configuration changes; do not spend proof time
+   against the current blocked route.
 
 This ordering makes the queue a product improvement around a proven transaction path. It
 does not hide the current prover limitation or substitute a demo spinner for Mainnet evidence.

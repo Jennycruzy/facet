@@ -21,22 +21,21 @@ pub trait IFacetShadowAccount<T> {
 pub mod ImmutableShadowAccountAnonymizer {
     use core::num::traits::{CheckedSub, Zero};
     use openzeppelin::utils::deployments::calculate_contract_address_from_deploy_syscall;
+    use starknet::account::Call;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,
     };
     use starknet::syscalls::deploy_syscall;
-    use starknet::account::Call;
-    use starknet::{ClassHash, ContractAddress, SyscallResultTrait, get_caller_address, get_contract_address};
-
+    use starknet::{
+        ClassHash, ContractAddress, SyscallResultTrait, get_caller_address, get_contract_address,
+    };
     use super::super::anonymizer::{
         CollectPolicy, IShadowAccountAnonymizer, IdentityCommitment, OpenNote, OpenNoteDeposit,
         PartialCommitment, ShadowAccountInfo, commitment_from_partial, errors, partial_commitment,
     };
-    use super::IFacetShadowAccountDispatcher;
-    use super::IFacetShadowAccountDispatcherTrait;
-
     use super::super::erc20::{IERC20Dispatcher, IERC20DispatcherTrait};
+    use super::{IFacetShadowAccountDispatcher, IFacetShadowAccountDispatcherTrait};
 
     #[storage]
     struct Storage {
@@ -189,8 +188,9 @@ pub mod ImmutableShadowAccountAnonymizer {
                 let balance = token_contract.balance_of(account: shadow_account.contract_address);
                 let collected = match collect_policy {
                     CollectPolicy::All => balance,
-                    CollectPolicy::Diff =>
-                        balance.checked_sub(pre_balance).expect(errors::NEGATIVE_DIFF),
+                    CollectPolicy::Diff => balance
+                        .checked_sub(pre_balance)
+                        .expect(errors::NEGATIVE_DIFF),
                     CollectPolicy::Exact(exact) => {
                         assert(balance >= exact.into(), errors::INSUFFICIENT_BALANCE);
                         exact.into()
