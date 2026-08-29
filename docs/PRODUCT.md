@@ -213,6 +213,8 @@ product layer:
 - the SDK contains the action builder, proof-aware preflight, settlement logic, and
   operational runbooks;
 - the launcher has reviewed Mainnet routes for Ekubo, Vesu V1.1 vSTRK, and Endur xSTRK;
+- the shared ERC-4626 helper class and deterministic Vesu/Endur helper instances are declared
+  and deployed on Mainnet;
 - fork-backed contract tests and source/chain findings document the behavior.
 
 The staged browser launcher binds an EOA, derives a viewing key in memory, and previews
@@ -220,8 +222,8 @@ persistent application contexts. Reviewed Wallet API pages now provide narrow Ma
 Ekubo, Vesu V1.1 vSTRK, and Endur xSTRK: Ready X signs, proves, screens, and submits the privacy
 actions, while Facet supplies the fixed protocol-bound helper and protocol calldata. The Ekubo
 route has a verified Mainnet receipt with pool, helper, and Ekubo evidence. The Vesu and Endur
-pages are wired to the same helper class, but their helper declaration/deployments and protocol
-receipts remain pending. These are not direct `FacetAccount`-signer flows. The existing
+pages are wired to the deployed helper instances, but their funded protocol receipts remain
+pending. These are not direct `FacetAccount`-signer flows. The existing
 eligibility shield is a successful Mainnet STRK20 transaction, but it was made through the Ready
 X wallet and is not being relabelled as Facet DeFi activity.
 

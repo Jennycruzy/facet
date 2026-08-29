@@ -39,9 +39,9 @@ to do with privacy, and leading with it would misattribute a timing problem to t
 All three adapters have a reviewed Mainnet execution page using the supported Wallet API path:
 Ready X supplies the shielded state, proof, screening, and submission, while Facet supplies a
 fixed protocol route. Ekubo's helper is deployed and its route has a verified Mainnet receipt.
-Vesu and Endur use the shared `FacetErc4626Anonymizer`; its class and deterministic instances are
-prepared, but declaration, deployment, funded execution, and receipts remain pending. They must
-stay labelled pending rather than live until those checks pass.
+Vesu and Endur use the deployed shared `FacetErc4626Anonymizer`; its class and deterministic
+instances are declared and deployed. Their funded executions and receipts remain pending, so the
+launcher labels them wallet-mediated-ready rather than live until those checks pass.
 
 ## Vesu — deposit
 

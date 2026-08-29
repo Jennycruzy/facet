@@ -40,9 +40,9 @@ The deployed mainnet contracts are:
 | Immutable anonymizer | `0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc` |
 | FacetAccount class deployment | `0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45` |
 | EkuboSwapAnonymizer helper | `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537` |
-| Vesu V1.1 vSTRK helper | `0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6` (reserved; deployment pending) |
-| Endur xSTRK helper | `0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240` (reserved; deployment pending) |
-| Shared helper class | `0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4` (not declared yet) |
+| Vesu V1.1 vSTRK helper | `0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6` (deployed in `0x2f72930587b4621eca8a35fbc8a40c30db0773076a7a46afe9bb49c467d7ff3`) |
+| Endur xSTRK helper | `0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240` (deployed in `0x7bc811b873927bc86adb892d18ca4ea971e74c06939693c76ee91c699fee289`) |
+| Shared helper class | `0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4` (declared in `0x6ec84277bbeea2f6005c265ed7d47cc5a1397fb7c77cb1e88172dc17950a500`) |
 | STRK20 pool | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
 
 ## Proven Sepolia swap
@@ -156,10 +156,9 @@ deployment account is only used to deploy the helper. Do not reuse the existing 
 shield as a Facet DeFi hash. Record a new hash only after its receipt is successful/finalized and
 contains the Mainnet STRK20 pool event, the Facet helper call, and the Ekubo protocol event.
 
-The Vesu and Endur pages are route-complete at the calldata and read-only-check level, but they
-are not live claims yet: the shared helper class must be declared, both deterministic instances
-must be deployed, and each route needs a successful receipt containing the pool, helper, and
-protocol events.
+The Vesu and Endur pages are route-complete at the calldata and read-only-check level, and their
+shared helper class and deterministic instances are now deployed. They are not live claims yet:
+each route still needs a successful receipt containing the pool, helper, and protocol events.
 
 A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with
 an unintended newline and an environment assignment was split. It does not indicate an

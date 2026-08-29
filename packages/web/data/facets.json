@@ -28,7 +28,9 @@
           "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
           "0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2"
         ],
-        "status": "declaration-pending",
+        "status": "deployed",
+        "deploymentTransaction": "0x2f72930587b4621eca8a35fbc8a40c30db0773076a7a46afe9bb49c467d7ff3",
+        "deploymentBlock": 14030645,
         "protocol": "Vesu V1.1 vSTRK"
       },
       "endurHelper": {
@@ -41,7 +43,9 @@
           "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
           "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a"
         ],
-        "status": "declaration-pending",
+        "status": "deployed",
+        "deploymentTransaction": "0x7bc811b873927bc86adb892d18ca4ea971e74c06939693c76ee91c699fee289",
+        "deploymentBlock": 14030657,
         "protocol": "Endur xSTRK"
       }
     }
@@ -140,8 +144,8 @@
       "outputSymbol": "vSTRK",
       "helper": "0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6",
       "helperClassHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
-      "verified": "vSTRK asset(), preview_deposit(), Mainnet ABI, and pinned helper artifact read on 28 Aug 2026; declaration pending",
-      "status": "declaration-pending",
+      "verified": "vSTRK asset(), preview_deposit(), Mainnet ABI, and helper deployment verified on 29 Aug 2026; protocol action pending",
+      "status": "wallet-mediated-ready",
       "executionPage": "mainnet-defi.html?protocol=vesu",
       "monogram": "Ve",
       "accent": "emerald"
@@ -162,8 +166,8 @@
       "outputSymbol": "xSTRK",
       "helper": "0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240",
       "helperClassHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
-      "verified": "asset(), preview_deposit(), Mainnet ABI, and pinned helper artifact read on 28 Aug 2026; declaration pending",
-      "status": "declaration-pending",
+      "verified": "asset(), preview_deposit(), Mainnet ABI, and helper deployment verified on 29 Aug 2026; protocol action pending",
+      "status": "wallet-mediated-ready",
       "executionPage": "mainnet-defi.html?protocol=endur",
       "monogram": "En",
       "accent": "violet"

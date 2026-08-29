@@ -6,11 +6,11 @@ execution boundary, account controls, and settlement path that make that product
 possible.
 
 Status: the private account sequence and the Ekubo adapter are verified on Sepolia; the
-immutable anonymizer and `FacetAccount` are deployed on mainnet. The browser launcher is
-staged locally with wallet binding and in-memory viewing-key derivation. A separate reviewed
-Wallet API Ekubo page is ready for the Mainnet helper route, but no helper/protocol receipt is
-claimed until it is verified. The 7 STRK Ready X eligibility shield is a successful Mainnet
-pool transaction and remains separate evidence, not Facet DeFi activity.
+immutable anonymizer, `FacetAccount`, Ekubo helper, and protocol-bound Vesu/Endur helpers are
+deployed on mainnet. The browser launcher is staged locally with wallet binding and in-memory
+viewing-key derivation. The Ekubo Wallet API route has a verified Mainnet helper/protocol receipt;
+Vesu and Endur still need funded protocol receipts. The 7 STRK Ready X eligibility shield is a
+successful Mainnet pool transaction and remains separate evidence, not Facet DeFi activity.
 
 For the product model and user-facing privacy boundary, see [`PRODUCT.md`](PRODUCT.md).
 
@@ -60,9 +60,13 @@ ABI.
 | Immutable anonymizer | `0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc` | `0x85fbf40e535f188b695c1c3b4492c3045de7305c94e2ce7de4d0f9551adb21` | `0x277a84c5b063c235acdd5b5e866e2c6078554517e984536b3bb889b26f07922` |
 | FacetAccount | `0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45` | `0x5d07634600fff340d733946c2c8f925ee4c3c637c33f61e33e187b9024de46d` | `0x4e9305a7b362901c0ccd1017bba3269993e724383c1fa9608ba94a63011732f` |
 | EkuboSwapAnonymizer helper | `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537` | `0x2a4ac595283d4d64b9952f5ef5c0da1775bfdb7c9d92237524a21dd8d19ebd7` | `0x188808f3c11914c6ada25cae55defe4d34332f4ff955d1eb272ce9962f08dfc` |
+| Vesu V1.1 vSTRK helper | `0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6` | `0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4` | `0x2f72930587b4621eca8a35fbc8a40c30db0773076a7a46afe9bb49c467d7ff3` |
+| Endur xSTRK helper | `0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240` | `0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4` | `0x7bc811b873927bc86adb892d18ca4ea971e74c06939693c76ee91c699fee289` |
 
-The class declaration transactions were `0x708f7621502bf317d0e184c0edc47efc9300651129fc9667c24b3075d4bbeef`
-and `0x384426545f8f59e9603674f309acd1fa749911d6f8573dbd9752f40b4294669`.
+The earlier class declaration transactions were `0x708f7621502bf317d0e184c0edc47efc9300651129fc9667c24b3075d4bbeef`
+and `0x384426545f8f59e9603674f309acd1fa749911d6f8573dbd9752f40b4294669`. The shared
+ERC-4626 helper class was declared in `0x6ec84277bbeea2f6005c265ed7d47cc5a1397fb7c77cb1e88172dc17950a500`
+at block 14,030,634; both helper deployment receipts are `SUCCEEDED` and `ACCEPTED_ON_L2`.
 
 ## Prover trust boundary
 

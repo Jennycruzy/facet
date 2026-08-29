@@ -20,7 +20,9 @@ counts as transaction evidence.
   "contracts": [
     "0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc",
     "0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45",
-    "0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537"
+    "0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537",
+    "0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6",
+    "0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240"
   ],
   "demo_video": "",
   "demo_url": "https://usefacet.xyz"
@@ -63,8 +65,10 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
 
 The immutable anonymizer is
 `0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc`; `FacetAccount` is
-`0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45`; the deployed Ekubo
-helper is `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537`.
+`0x42e9d345c46705408394b7a67e291c2bde9f2638297125a7fec2b5740371a45`; the deployed Ekubo,
+Vesu, and Endur helpers are `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537`,
+`0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6`, and
+`0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240`.
 
 Deployment transactions:
 
@@ -76,9 +80,9 @@ The two Facet contracts and the helper were submitted after successful class dec
 verified with the expected class hashes. The contracts are not added to `transactions` yet:
 that list is reserved for the mainnet activity evidence required by the submission.
 
-The Vesu and Endur helper instances are prepared but not yet declared or deployed. Their
-deterministic addresses are recorded in `docs/PRIVATE_DEFI.md` and are intentionally absent from
-`strk20.json` until Mainnet class/address and route receipts have been verified.
+The Vesu and Endur helper instances are declared and deployed. Their deployment addresses are
+included above; their deployment transactions are intentionally absent from `transactions`,
+which is reserved for successful Mainnet activity touching the STRK20 pool.
 
 Verify each address returns a class hash before adding it:
 
