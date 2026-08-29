@@ -8,6 +8,10 @@ screenshot and nothing is hard-coded except the identifiers being checked, which
 `data/facets.json` — the single source of truth for addresses and transaction hashes. Update
 that file when a new facet is cut; no code change is needed.
 
+The homepage keeps the evidence types separate: the live Mainnet route cards show receipt-backed
+app actions, while the direct Facet identity cards are currently Sepolia proof accounts and are
+labeled as test accounts. A Mainnet receipt is not silently presented as a direct Facet identity.
+
 ## Running it
 
 No build step, no dependencies, no bundler.
@@ -55,7 +59,7 @@ Facet's shadow-account action to the wallet-managed proving path.
 
 | File | Contents |
 |---|---|
-| `index.html` | **The app** — Facet's launcher surface: private account contexts, live on-chain state, and compatible application tiles |
+| `index.html` | **The app** — Facet's launcher surface: live Mainnet route receipts, clearly labeled Sepolia proof identities, and compatible application tiles |
 | `launch.html` | Staged launcher — wallet binding, persistent app-context selection, and reviewed route links |
 | `ready-probe.html` | Internal read-only Ready X capability check for the mainnet Wallet API path |
 | `mainnet-ekubo.html` | Reviewed wallet-mediated Mainnet Ekubo swap using the deployed privacy helper |
@@ -87,6 +91,8 @@ Facet's shadow-account action to the wallet-managed proving path.
   own limits is the one believed on everything else.
 - **The launcher states its stage.** A wallet signature is not a transaction approval, and no
   private key, viewing key, or signature is persisted by the page.
+- **Evidence types stay separate.** Mainnet route receipts and Sepolia identity rehearsals have
+  different labels and are never counted as the same thing.
 - **The launcher must state its execution boundary.** The current reviewed routes delegate
   proving, screening, and submission to Ready X; the browser never receives proof material.
   A direct Facet queue remains roadmap-only until it is wired and receipt-tested.
