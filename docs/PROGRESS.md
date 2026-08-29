@@ -9,9 +9,8 @@ working sprint is being treated as a compressed four-day window ending at that d
 ## Current sprint truth — 29 August 2026
 
 The local checkout is the source of truth on the canonical `main` branch. The current release
-includes bounded wallet-error diagnostics and the verified Endur / paused Vesu state; use
-`git log -1` for the exact publication commit rather than embedding a short-lived commit id in
-the product documentation.
+includes bounded wallet-error diagnostics, the verified Endur / paused Vesu state, the pinned
+Node runtime, and the formatted Cairo sources. It is published as the current public `main`.
 The VPS copy is behind and has a dirty
 `packages/contracts/Scarb.toml`; its diff is preserved outside the repository before any
 sync or deployment.
@@ -93,7 +92,7 @@ new account above, which has completed two independently verified Sepolia facets
 |---|---|---|
 | Push authentication working | Done | Repo-scoped ed25519 deploy key. GitHub requires deploy keys to be globally unique, so a second key was needed for the registry fork. |
 | Repository public with a pushed commit | Done | `github.com/Jennycruzy/facet`, three commits at time of registration. |
-| `strk20.json` at repository root | Done | Empty arrays, valid JSON, CI check pending. |
+| `strk20.json` at repository root | Done | At registration it contained empty arrays; the current file has three verified Mainnet hashes and five deployed contract addresses. |
 | Registry entry appended, nothing else touched | Done | Diff was **+10 / −0**, one file. Slug `facet` confirmed unique against every derived slug in the registry before submission. |
 | Registration pull request opened | Done | [starkience/strk20-hackathon#45](https://github.com/starkience/strk20-hackathon/pull/45). |
 | Entry live in upstream `main` | Done | Applied by `strk20-sprint-bot` as `588c8d0`, "chore: register jennycruzy/facet (#45)". Verified by reading `registry.json` from upstream `main` directly. Registry at 38 entries. |
@@ -126,7 +125,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | Existing SDK shadow support catalogued | Partial | Confirmed present: `sdk/src/internal/shadow-accounts.ts` (98 lines, `ShadowAccountsBuilderImpl`), `ShadowAccountAnonymizerABI` exported at `index.ts:4`, plus references in `interfaces.ts`, `factory.ts`, `internal/builders.ts`, `internal/anonymizer-abi.ts`, `testing/mocknet.ts`. What each one does is not yet catalogued. |
 | Prior-art check | Done | Nothing in the hackathon README, `IDEAS.md`, or `projects.json` mentions shadow or stealth accounts. Field at 35 projects; three have mainnet transactions recorded (cutout 4, redpocket 3, veilpass 1). |
 | Commit identity single-valued | Done after normalization | `Jennycruzy <jennycruzy@users.noreply.github.com>` is the canonical author and committer identity across the published history. |
-| Secret scan clean | Current-tree scan done; full-history final scan pending | |
+| Secret scan clean | **Done after current-tree and full reachable-history scans, 29 August 2026** | No PEM/private-key material, token-shaped credential, or sensitive deployment file found; the pre-identity-rewrite recovery bundle was scanned separately. |
 
 ---
 
@@ -151,7 +150,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | **Facet contracts on mainnet** | **Done, 25 August 2026** | Immutable anonymizer `0x741fe9dc…63bc`, deployment `0x277a84c5…922`; `FacetAccount` `0x42e9d345…1a45`, deployment `0x4e9305a7…732f`. Production classes were declared first and the immutable ABI was checked for privileged entrypoints. Recorded as `FINDINGS.md` §6.19. |
 | **Ekubo helper on mainnet** | **Done, 28 August 2026** | Stateless helper `0x2bd92991…8537`, class `0x2a4ac595…ebd7`, deployment `0x188808f3…08dfc`, block 14,000,701. Class hash and address were rechecked after the successful receipt. |
 | **Vesu/Endur helper routes** | **Endur verified; Vesu blocked, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`, block 14,030,634; Vesu helper `0x7568567a…e4b6` deployed in `0x2f729305…d7ff3`, block 14,030,645; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`, block 14,030,657. Endur action `0x240d2b8285…63f5` succeeded in block 14,052,044; Vesu remains blocked by `not-allowed`. |
-| **Current launcher deployment** | **Verified live, 29 August 2026** | `https://usefacet.xyz` serves the verified Endur card and paused Vesu guard; HTTPS checks returned 200 for the launcher, Ekubo, Vesu, and Endur pages. Previous web root preserved as `/var/www/facet.backup-20260829T064000Z`. |
+| **Current launcher deployment** | **Verified live, 29 August 2026** | `https://usefacet.xyz` serves the verified Endur card and paused Vesu guard; HTTPS checks returned 200 for the launcher, Ekubo, Vesu, Endur, proof, data, and diagnostic pages. Previous web root preserved as `/var/www/facet.backup-20260829T170732Z-release-hardening`. |
 | §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
 | **Mainnet screening attestation** | **Blocked, 28 August 2026** | Compatible proof completed, but AVNU returned `SCREENING_REQUIRED`; live pool screener key is configured and the VPS has no `BLOCKING_CHECK_URL`/proof-interceptor deployment. |
 | **Wallet-mediated Vesu attempt** | **Blocked by live protocol revert, 29 August 2026** | The deployed page still received paymaster code 156 with no hash. A separate read-only Mainnet simulation reaches Vesu's migration extension and reverts `before_modify_position: "not-allowed"`; do not retry this vault. |

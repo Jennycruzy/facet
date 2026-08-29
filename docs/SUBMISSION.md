@@ -104,7 +104,7 @@ serves the release with the verified Endur / paused Vesu card state;
 `/launch.html`, `/mainnet-ekubo.html`, `/mainnet-defi.html?protocol=vesu`, and
 `/mainnet-defi.html?protocol=endur` returned 200 and passed the VPS-side obvious-secret scan.
 The prior release is preserved at
-`/var/www/facet.backup-20260829T064000Z`.
+`/var/www/facet.backup-20260829T170732Z-release-hardening`.
 
 ```bash
 curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
@@ -145,18 +145,20 @@ proof, receipt, expected pool event, protocol event, and post-action state have 
 
 ## Before submitting
 
-- [ ] `git log --format='%an <%ae>' | sort -u` returns exactly one line, `Jennycruzy`
-- [ ] No AI attribution anywhere — messages, docs, comments
-- [ ] `git ls-files | grep -iE 'handoff|runbook'` returns nothing (both are local-only and
+- [x] `git log --format='%an <%ae>' | sort -u` returns exactly one line, `Jennycruzy`
+- [x] No AI attribution anywhere — messages, docs, comments
+- [x] `git ls-files | grep -iE 'handoff|runbook'` returns nothing (both are local-only and
       contain host paths and account names that must not be published)
-- [ ] Secret scan clean across full history
-- [ ] Fresh clone installs, builds and tests with no manual steps
-- [ ] Every claim in the README traceable to a hash, a source reference or a test run
-- [ ] The limitations section still states what is *not* done
-- [ ] `transactions` contains three verified Mainnet hashes, each with a successful receipt and
+- [x] Secret scan clean across the current tree, reachable history, and the pre-identity-rewrite
+      recovery bundle
+- [x] Fresh clone installs, builds and tests with no manual steps
+- [x] Every claim in the README traceable to a hash, a source reference or a test run
+- [x] The limitations section still states what is *not* done
+- [x] `transactions` contains three verified Mainnet hashes, each with a successful receipt and
       STRK20 pool event; the strongest one or two demonstrate Facet's own protocol path
-- [ ] `demo_url` serves the current checkout, including `/launch.html`, over HTTPS
+- [x] `demo_url` serves the current checkout, including `/launch.html`, over HTTPS
 - [ ] `demo_video` is public, under two minutes, and states the real proving/queue behaviour
-- [ ] Async queue records contain no private keys, signatures, viewing keys, passwords, or proof blobs
-- [ ] Any second application shown as live has a real network rehearsal and receipt; otherwise it
+- [x] No async queue is shipped in this release, so there are no queue records containing private
+      keys, signatures, viewing keys, passwords, or proof blobs
+- [x] Any second application shown as live has a real network rehearsal and receipt; otherwise it
       is labelled preview-only

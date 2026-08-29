@@ -63,7 +63,7 @@ Facet's shadow-account action to the wallet-managed proving path.
 | `proof.html` | How it works and the evidence, in seven acts. One click behind the app, for the reader who wants to verify rather than use |
 | `assets/css/app.css` | Design tokens and layout. Dark, single accent, no framework |
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
-| `assets/js/chain.js` | The only module that talks to an RPC node. `sessionStorage` cache, five-minute TTL |
+| `assets/js/chain.js` | Homepage chain reader with a `sessionStorage` cache and five-minute TTL; reviewed route modules use their own guarded RPC reads |
 | `assets/js/app-ui.js` | The app: live strip, identity cards, app tiles, and dated RPC fallbacks |
 | `assets/js/launcher.js` | The staged browser wallet boundary, persistent app-context preview, and in-memory session state |
 | `assets/js/ready-probe.js` | Read-only Ready X account, chain, STRK20 balance, and API capability check |

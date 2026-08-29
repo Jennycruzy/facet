@@ -48,7 +48,9 @@ function normalizeAddress(value) {
 }
 
 function sameAddress(left, right) {
-  return normalizeAddress(left) === normalizeAddress(right);
+  const a = normalizeAddress(left);
+  const b = normalizeAddress(right);
+  return Boolean(a && b && a === b);
 }
 
 function short(value, start = 10, end = 8) {
@@ -307,7 +309,14 @@ function render() {
     ? reviewLines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")
     : "<p>Connect Ready X to begin.</p>";
 
-  $("confirm").disabled = !connected || !state.helperDeployed || !state.quote || state.executing;
+  $("confirm").disabled = !connected
+    || !isMainnet(state.chainId)
+    || !hasNativeStrk20()
+    || !state.helperDeployed
+    || state.balanceWei === null
+    || state.balanceWei < SWAP_AMOUNT
+    || !state.quote
+    || state.executing;
   $("execute").disabled = !canExecute();
   $("refresh").disabled = !connected || state.executing;
   $("copy-diagnostics").disabled = !connected;
