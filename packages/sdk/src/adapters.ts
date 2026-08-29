@@ -140,52 +140,47 @@ export function buildErc20ApproveCall(options: {
 }
 
 export interface BuildVesuDepositPlanOptions {
-  pool: FeltLike;
-  collateralAsset: FeltLike;
-  debtAsset: FeltLike;
-  user: FeltLike;
+  token: FeltLike;
+  vault: FeltLike;
+  receiver: FeltLike;
   amount: FeltLike;
   linkedAddresses: readonly FeltLike[];
 }
 
 /**
- * Build Vesu's supply-only path: collateral approval followed by `modify_position`.
+ * Build Vesu V1.1's ERC-4626 deposit path: STRK approval followed by `deposit`.
  *
- * Vesu's deployed ABI uses `AmountDenomination::Assets = 1` and `i257 = { abs: u256,
- * is_negative: bool }`. The default zero debt is Native-denominated, matching Vesu's
- * `Default::default()` test fixture.
+ * The receiver is the persistent Facet context account. The resulting vSTRK is a
+ * protocol position and must be settled independently from any unused STRK.
  */
 export function buildVesuDepositPlan(options: BuildVesuDepositPlanOptions): AdapterPlan {
-  const pool = address(options.pool, "Vesu pool");
-  const collateralAsset = address(options.collateralAsset, "Vesu collateral asset");
-  const debtAsset = address(options.debtAsset, "Vesu debt asset");
-  const user = unlinkedRecipient(options.user, "Vesu user", options.linkedAddresses);
-  const amount = positiveU256(options.amount, "Vesu collateral amount");
-
-  const collateralAmount = ["0x1", ...amount.calldata, "0x0"];
-  const zeroDebtAmount = ["0x0", "0x0", "0x0", "0x0"];
+  const token = address(options.token, "Vesu input token");
+  const vault = address(options.vault, "Vesu vSTRK vault");
+  const receiver = unlinkedRecipient(options.receiver, "Vesu receiver", options.linkedAddresses);
+  const amount = positiveU256(options.amount, "Vesu deposit amount");
   return {
     protocol: "vesu",
     calls: [
-      buildErc20ApproveCall({ token: collateralAsset, spender: pool, amount: amount.normalized }),
+      buildErc20ApproveCall({ token, spender: vault, amount: amount.normalized }),
       {
-        contractAddress: pool,
-        entrypoint: "modify_position",
-        calldata: [
-          collateralAsset,
-          debtAsset,
-          user,
-          ...collateralAmount,
-          ...zeroDebtAmount,
-        ],
+        contractAddress: vault,
+        entrypoint: "deposit",
+        calldata: [...amount.calldata, receiver],
       },
     ],
-    input: { token: collateralAsset, amount: amount.normalized },
-    settlements: [{
-      token: collateralAsset,
-      policy: { type: "diff" },
-      reason: "Vesu consumes the supplied collateral; return only any remainder to the shield.",
-    }],
+    input: { token, amount: amount.normalized },
+    settlements: [
+      {
+        token,
+        policy: { type: "diff" },
+        reason: "Return unused STRK without sweeping an earlier context balance.",
+      },
+      {
+        token: vault,
+        policy: { type: "diff" },
+        reason: "Vesu returns vSTRK shares, which remain a protocol position on this facet.",
+      },
+    ],
   };
 }
 

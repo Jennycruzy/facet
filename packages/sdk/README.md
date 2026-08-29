@@ -49,8 +49,8 @@ register; use `supportsRegistration` to check first, or build on the core path.
 
 `src/adapters.ts` contains pure call builders for the first three Facet integrations:
 
-- `buildVesuDepositPlan` — ERC-20 approval plus Vesu `modify_position` with an
-  asset-denominated positive `i257` collateral amount.
+- `buildVesuDepositPlan` — STRK approval plus Vesu V1.1 vSTRK
+  `deposit(assets, receiver)`.
 - `buildEndurStakePlan` — ERC-20 approval plus Endur `deposit(assets, receiver)`.
 - `buildEkuboQuoteCall` and `buildEkuboSwapPlan` — the live single-hop Ekubo route, including
   the transfer, swap, and minimum-output clear calls.

@@ -11,12 +11,11 @@ import {
 const linked = ["0xabc", "0xdef"];
 
 describe("protocol adapter builders", () => {
-  it("builds Vesu supply calldata with the deployed i257 layout", () => {
+  it("builds Vesu V1.1 ERC-4626 deposit calldata", () => {
     const plan = buildVesuDepositPlan({
-      pool: "0x100",
-      collateralAsset: "0x200",
-      debtAsset: "0x300",
-      user: "0x400",
+      token: "0x200",
+      vault: "0x300",
+      receiver: "0x400",
       amount: (1n << 128n) + 5n,
       linkedAddresses: linked,
     });
@@ -25,19 +24,18 @@ describe("protocol adapter builders", () => {
       {
         contractAddress: "0x200",
         entrypoint: "approve",
-        calldata: ["0x100", "0x5", "0x1"],
+        calldata: ["0x300", "0x5", "0x1"],
       },
       {
-        contractAddress: "0x100",
-        entrypoint: "modify_position",
-        calldata: [
-          "0x200", "0x300", "0x400",
-          "0x1", "0x5", "0x1", "0x0",
-          "0x0", "0x0", "0x0", "0x0",
-        ],
+        contractAddress: "0x300",
+        entrypoint: "deposit",
+        calldata: ["0x5", "0x1", "0x400"],
       },
     ]);
-    expect(plan.settlements[0]).toMatchObject({ token: "0x200", policy: { type: "diff" } });
+    expect(plan.settlements.map(({ token, policy }) => ({ token, policy }))).toEqual([
+      { token: "0x200", policy: { type: "diff" } },
+      { token: "0x300", policy: { type: "diff" } },
+    ]);
   });
 
   it("builds Endur approval and ERC-4626-shaped deposit", () => {
@@ -118,7 +116,7 @@ describe("adapter recipient guard", () => {
 
   it.each([
     ["Vesu", () => buildVesuDepositPlan({
-      pool: "0x100", collateralAsset: "0x200", debtAsset: "0x300", user: "0xabc",
+      token: "0x200", vault: "0x300", receiver: "0xabc",
       amount: 1n, linkedAddresses: linked,
     })],
     ["Endur", () => buildEndurStakePlan({
