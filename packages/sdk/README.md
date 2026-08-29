@@ -5,6 +5,9 @@ This package is the Facet-specific action builder over
 the SDK turns a shielded note into a context-specific shadow-account call and settles
 the result back into private notes.
 
+Use Node 22.23.0 from the repository's `.nvmrc`; the pinned `starknet` dependency declares
+Node 22 or newer.
+
 `buildGateAActionSet` performs the read-only address lookup and queues the first private
 account operation:
 

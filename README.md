@@ -66,8 +66,9 @@ cd packages/contracts
 snforge test
 ```
 
-The pinned environment is Scarb 2.17.0, Starknet Foundry 0.59.0, and Universal Sierra Compiler
-2.10.0; it currently runs **20 tests, 0 failures** against Mainnet and Sepolia forks. If
+The pinned environment is Node 22.23.0 (`.nvmrc`), Scarb 2.17.0, Starknet Foundry 0.59.0, and
+Universal Sierra Compiler 2.10.0; it currently runs **20 tests, 0 failures** against Mainnet and
+Sepolia forks. If
 `snforge` reports that `universal-sierra-compiler` is missing, install the toolchain named in
 `.tool-versions` before treating a failed command as a contract failure. The suite does not
 prove the full transaction path — that path is proved on chain instead, in
