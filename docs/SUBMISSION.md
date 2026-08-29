@@ -100,7 +100,7 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
 ## `demo_url`
 
 **Previously deployed and verified — `https://usefacet.xyz`.** The live nginx root currently
-serves the `defb44c` build plus the verified Endur / paused Vesu card state;
+serves the `c513aa6` build with the verified Endur / paused Vesu card state;
 `/launch.html`, `/mainnet-ekubo.html`, `/mainnet-defi.html?protocol=vesu`, and
 `/mainnet-defi.html?protocol=endur` returned 200 and passed the VPS-side obvious-secret scan.
 The prior release is preserved at
