@@ -24,8 +24,8 @@ The Mainnet evidence position is:
 | Facet Mainnet registration | **Not completed** — the compatible proof reached AVNU, but the initial deposit path was rejected because no screening attestation was attached |
 | Facet Mainnet private deposit | **Not completed** — latest AVNU response was `SCREENING_REQUIRED`; no transaction hash returned |
 | Facet Mainnet protocol action | **Verified for Ekubo** — Ready X Wallet API action `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049 |
-| Vesu Mainnet protocol action | **Not completed** — read-only checks passed, but the latest Ready request returned `PaymasterV2Error` code 156 with no transaction hash; nested cause still needs to be surfaced |
-| Endur Mainnet protocol action | **Not attempted** — helper is deployed and the route is read-only checked |
+| Vesu Mainnet protocol action | **Blocked** — direct Mainnet simulation reaches the configured Vesu migration extension and reverts `before_modify_position: "not-allowed"`; Ready wraps it as paymaster code 156 and returns no hash |
+| Endur Mainnet protocol action | **Protocol simulation passed** — deployed helper/vault path completes read-only; wallet-mediated receipt still pending |
 | Mainnet Facet hash count | **One qualifying Facet protocol hash plus one qualifying eligibility hash** |
 | Current Mainnet cap | **40 STRK ceiling**, with 0.1 STRK approved for the private deposit and 0.1 STRK for the Ekubo action, plus fees |
 
@@ -34,7 +34,8 @@ The rejected direct-runner proofs consumed proving time but moved no funds. The 
 the direct AVNU path still lacks the live pool's required screening attestation. The supported
 Ready X Wallet API route completed the reviewed Facet/Ekubo action separately; see the verified
 hash above and `FINDINGS.md` §6.29. The latest Vesu wallet failure is recorded in
-`FINDINGS.md` §6.30; it produced no receipt and does not change the evidence count.
+`FINDINGS.md` §§6.30–6.31; it produced no receipt and does not change the evidence count. The
+protocol-only Endur simulation passed without broadcast, so the next wallet test is Endur.
 
 The user-facing speed plan is asynchronous proving: a warm worker, opaque job id, visible
 stages, resumable polling, quote/expiry re-checks, and a final review gate. This improves
@@ -150,10 +151,11 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | **Facet contracts on mainnet** | **Done, 25 August 2026** | Immutable anonymizer `0x741fe9dc…63bc`, deployment `0x277a84c5…922`; `FacetAccount` `0x42e9d345…1a45`, deployment `0x4e9305a7…732f`. Production classes were declared first and the immutable ABI was checked for privileged entrypoints. Recorded as `FINDINGS.md` §6.19. |
 | **Ekubo helper on mainnet** | **Done, 28 August 2026** | Stateless helper `0x2bd92991…8537`, class `0x2a4ac595…ebd7`, deployment `0x188808f3…08dfc`, block 14,000,701. Class hash and address were rechecked after the successful receipt. |
 | **Vesu/Endur helper routes** | **Helpers deployed, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`, block 14,030,634; Vesu helper `0x7568567a…e4b6` deployed in `0x2f729305…d7ff3`, block 14,030,645; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`, block 14,030,657. Vesu's latest wallet request returned paymaster code 156 with no hash; funded protocol receipts remain pending. |
-| **Current launcher deployment** | **Previous build live; redeploy pending, 29 August 2026** | `https://usefacet.xyz` serves the previously verified `9009e30` static build; the pushed `defb44c` diagnostic formatter must be deployed before the next wallet retry. Previous web root preserved as `/var/www/facet.backup-20260829T064000Z`. |
+| **Current launcher deployment** | **`defb44c` web build live, 29 August 2026** | `https://usefacet.xyz` serves the bounded nested-wallet-error diagnostics; HTTPS checks returned 200 for the homepage, launcher, Ekubo, Vesu, and Endur pages. Previous web root preserved as `/var/www/facet.backup-20260829T064000Z`. |
 | §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
 | **Mainnet screening attestation** | **Blocked, 28 August 2026** | Compatible proof completed, but AVNU returned `SCREENING_REQUIRED`; live pool screener key is configured and the VPS has no `BLOCKING_CHECK_URL`/proof-interceptor deployment. |
-| **Wallet-mediated Vesu attempt** | **Blocked for diagnosis, 29 August 2026** | Ready X passed Mainnet/helper/vault read-only checks, then returned `PaymasterV2Error: Paymaster error 156` with no transaction hash. The browser now preserves bounded nested error fields for the next controlled attempt. |
+| **Wallet-mediated Vesu attempt** | **Blocked by live protocol revert, 29 August 2026** | The deployed page still received paymaster code 156 with no hash. A separate read-only Mainnet simulation reaches Vesu's migration extension and reverts `before_modify_position: "not-allowed"`; do not retry this vault. |
+| **Wallet-mediated Endur attempt** | **Next controlled test, 29 August 2026** | Protocol-only simulation of `approve → Endur.deposit(0.1 STRK)` succeeds without broadcast. Use the Endur page for the next manual Ready X approval. |
 
 ---
 

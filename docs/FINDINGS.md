@@ -1315,6 +1315,46 @@ the last error in safe diagnostics. The next session should deploy and test that
 change, then make one controlled Vesu retry. Repeated retries without the nested reason are not
 useful evidence.
 
+### 6.31 The Vesu code-156 wrapper is a live migration-extension revert; Endur passes simulation — 29 August 2026
+
+The diagnostic web build was deployed from the authoritative local checkout and the Vesu route
+was retried once. Ready X returned the same top-level error:
+
+```text
+PaymasterV2Error: Paymaster error 156: An error occurred (TRANSACTION_EXECUTION_ERROR)
+```
+
+It still returned no transaction hash. The page formatter is therefore not the missing fix: the
+wallet is exposing only the paymaster wrapper for this failure.
+
+A non-broadcast Mainnet `starknet_simulateTransactions` call was then run against the funded
+deployment account using the protocol portion of the same route: `approve(STRK, Vesu, 0.1 STRK)`
+followed by `Vesu.deposit(0.1 STRK, owner)`. The live vault passed the ordinary read-only checks,
+but the execution trace reverted at:
+
+```text
+Vesu vault 0x037ae3f583c8d644b7556c93a04b83b52fa96159b2b0cbd83c14d3122aef80a2
+  → singleton 0x02545b2e5d519fc230e9cd781046d3a64e092114f07e44771e0d719d148725ef
+  → migration extension 0x034e4027d136afe7ab2da70ff35b742078581fd4d3c87c74e7c035e7bfdd8f2d
+  → before_modify_position: "not-allowed"
+```
+
+This isolates code 156 to a live Vesu protocol execution failure for the configured Genesis
+vSTRK vault. It is not a proof-version, screening, helper-address, quote, or frontend-formatting
+failure. The simulation was read-only: no token approval, deposit, protocol position, or note was
+created. Vesu's V1.1 vToken source confirms that its `deposit` path delegates into the configured
+singleton position flow; Vesu's migration documentation also treats V2 as a separate pool model.
+
+The same read-only Mainnet simulation shape against the deployed Endur xSTRK vault
+`0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a` completed successfully,
+including the STRK approval, deposit, xSTRK output, and simulated state diff. It was not broadcast.
+
+The Vesu route is therefore blocked and must not be retried under its current vault configuration.
+The next safe wallet test is the reviewed Endur page:
+`https://usefacet.xyz/mainnet-defi.html?protocol=endur`. A successful Endur receipt still needs
+to contain the Mainnet STRK20 pool event, the deployed Endur helper, and the Endur protocol event
+before it can be added to `strk20.json`.
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:
