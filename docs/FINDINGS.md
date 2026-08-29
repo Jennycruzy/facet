@@ -1355,6 +1355,26 @@ The next safe wallet test is the reviewed Endur page:
 to contain the Mainnet STRK20 pool event, the deployed Endur helper, and the Endur protocol event
 before it can be added to `strk20.json`.
 
+### 6.32 The reviewed Endur route succeeded on Mainnet — 29 August 2026
+
+The next controlled Ready X Wallet API action used the deployed Endur xSTRK helper and succeeded:
+
+| Item | Result |
+|---|---|
+| Transaction | [`0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`](https://voyager.online/tx/0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5) |
+| Sender | `0x795a64eaa58c613e489872c8a774138f12cab9390c0c51192ce1c72e926d463` (Ready-managed shadow account) |
+| Block | 14,052,044 |
+| Finality | `ACCEPTED_ON_L2` |
+| Execution | `SUCCEEDED` |
+| STRK20 pool event source | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
+| Endur helper event source | `0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240` |
+| Endur protocol event source | `0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a` |
+
+The transaction calldata contains the STRK20 action bundle, the deployed Endur helper, the STRK
+input, and the Endur vault. Its receipt contains STRK20 pool events, the helper's protocol-bound
+execution event, and Endur xSTRK deposit/share events. This is the second verified Facet protocol
+action on Mainnet and is safe to record in `strk20.json`. The Vesu failure remains excluded.
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:

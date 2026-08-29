@@ -25,6 +25,8 @@ const HELPER = app.helper;
 const HELPER_CLASS_HASH = app.helperClassHash;
 const OUTPUT_TOKEN = app.outputToken;
 const OUTPUT_SYMBOL = app.outputSymbol;
+const EXECUTION_ENABLED = app.executionEnabled !== false;
+const BLOCK_REASON = app.blockReason ?? "This protocol route is paused.";
 
 const state = {
   wallet: null,
@@ -278,6 +280,7 @@ function canExecute() {
       && state.balanceWei >= AMOUNT
       && state.quote
       && $("confirm").checked
+      && EXECUTION_ENABLED
       && !state.executing,
   );
 }
@@ -326,6 +329,7 @@ function render() {
   $("output-recipient").title = state.account ?? "";
 
   const reviewLines = [];
+  if (!EXECUTION_ENABLED) reviewLines.push("PAUSED: " + BLOCK_REASON);
   if (connected && !isMainnet(state.chainId)) reviewLines.push("STOP: switch Ready X to Starknet Mainnet.");
   if (connected && !hasNativeStrk20()) {
     reviewLines.push("STOP: this wallet does not advertise Wallet API 0.10.3 or newer.");
@@ -355,8 +359,10 @@ function render() {
     ? reviewLines.map((line) => "<p>" + escapeHtml(line) + "</p>").join("")
     : "<p>Connect Ready X to begin.</p>";
 
-  const reviewReady = connected && state.helperDeployed && state.protocolDeployed && state.quote;
+  const reviewReady = EXECUTION_ENABLED
+    && connected && state.helperDeployed && state.protocolDeployed && state.quote;
   $("confirm").disabled = !reviewReady || state.executing;
+  $("execute").textContent = EXECUTION_ENABLED ? "Request reviewed action" : "Route paused";
   $("execute").disabled = !canExecute();
   $("refresh").disabled = !connected || state.executing;
   $("copy-diagnostics").disabled = !connected;
@@ -421,6 +427,7 @@ async function connect() {
     }
     if (state.errors.length) setStatus("error", "Ready responded, but a review check needs attention.");
     else if (!isMainnet(state.chainId)) setStatus("error", "Connected to " + chainLabel(state.chainId) + ". Switch to Mainnet.");
+    else if (!EXECUTION_ENABLED) setStatus("error", app.name + " route is paused; no transaction was requested.");
     else if (!state.helperDeployed) setStatus("error", "The reserved Facet helper is not deployed yet.");
     else setStatus("bound", "Mainnet review ready. No transaction was requested.");
   } catch (error) {
@@ -451,9 +458,11 @@ async function refresh() {
       }
     }
     setStatus(
-      state.errors.length ? "error" : "bound",
+      state.errors.length || !EXECUTION_ENABLED ? "error" : "bound",
       state.errors.length
         ? "Refresh returned errors."
+        : !EXECUTION_ENABLED
+        ? app.name + " route is paused; no transaction was requested."
         : "Review state refreshed; no transaction was requested.",
     );
   } catch (error) {
@@ -562,14 +571,18 @@ async function copyDiagnostics() {
 function configurePage() {
   document.title = "Facet · Mainnet " + app.name;
   $("protocol-eyebrow").textContent = "Facet Mainnet path · wallet-mediated " + app.name;
-  $("hero-title").textContent = "Use the live " + app.name + " route.";
-  $("hero-lede").textContent = "Ready X is the signing and proving wallet for this supported route. Facet supplies the "
-    + app.name + " helper, the allowlisted call path, and the exact deposit parameters below.";
+  $("hero-title").textContent = EXECUTION_ENABLED ? "Use the live " + app.name + " route." : app.name + " route paused.";
+  $("hero-lede").textContent = EXECUTION_ENABLED
+    ? "Ready X is the signing and proving wallet for this supported route. Facet supplies the "
+      + app.name + " helper, the allowlisted call path, and the exact deposit parameters below."
+    : BLOCK_REASON + " This page remains available for read-only inspection; no wallet transaction can be requested.";
   $("output-symbol").textContent = OUTPUT_SYMBOL;
   $("protocol-label").textContent = app.contractLabel;
-  $("protocol-note").textContent = "Ready X proves and screens the private action. The receipt must touch the Mainnet STRK20 pool, the Facet "
-    + app.name + " helper, and " + app.contractLabel + " before it is counted as integration evidence. The "
-    + OUTPUT_SYMBOL + " position remains protocol state until an explicit redeem action.";
+  $("protocol-note").textContent = EXECUTION_ENABLED
+    ? "Ready X proves and screens the private action. The receipt must touch the Mainnet STRK20 pool, the Facet "
+      + app.name + " helper, and " + app.contractLabel + " before it is counted as integration evidence. The "
+      + OUTPUT_SYMBOL + " position remains protocol state until an explicit redeem action."
+    : "This route is paused after a live protocol execution failure. No new transaction is requested or counted.";
 }
 
 configurePage();

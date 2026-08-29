@@ -46,6 +46,16 @@ test("Vesu and Endur are bound to reviewed Mainnet ERC-4626 routes", () => {
     assert.equal(typeof helper.deploymentBlock, "number");
     assert.equal(BigInt(helper.constructorCalldata[1]), BigInt(data.strk));
     assert.equal(BigInt(helper.constructorCalldata[2]), BigInt(app.outputToken));
-    assert.equal(app.status, "wallet-mediated-ready");
+    assert.equal(
+      app.status,
+      id === "vesu" ? "wallet-mediated-blocked" : "wallet-mediated-verified",
+    );
+    if (id === "vesu") {
+      assert.equal(app.executionEnabled, false);
+      assert.match(app.blockReason, /not-allowed/);
+    } else {
+      assert.match(app.mainnetTransaction, /^0x[0-9a-f]{60,}$/i);
+      assert.equal(app.mainnetBlock, 14052044);
+    }
   }
 });

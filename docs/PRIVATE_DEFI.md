@@ -157,8 +157,9 @@ shield as a Facet DeFi hash. Record a new hash only after its receipt is success
 contains the Mainnet STRK20 pool event, the Facet helper call, and the Ekubo protocol event.
 
 The Vesu and Endur pages are route-complete at the calldata and read-only-check level, and their
-shared helper class and deterministic instances are now deployed. They are not live claims yet:
-each route still needs a successful receipt containing the pool, helper, and protocol events.
+shared helper class and deterministic instances are now deployed. Endur is now a live claim after
+its successful receipt; Vesu remains blocked by the migration-extension revert and is not a live
+claim.
 
 The first funded wallet-mediated Vesu attempt on 29 August 2026 passed the Mainnet, helper, STRK
 asset, `preview_deposit(0.1 STRK)`, and `max_deposit` checks, but Ready returned only
@@ -171,9 +172,10 @@ block, not a helper, quote, prover, screening, or browser-formatting issue. Do n
 vault live again or add the failure to `strk20.json`.
 
 The same non-broadcast `approve → Endur.deposit(0.1 STRK)` simulation completed successfully,
-including xSTRK output and simulated state changes. The next controlled wallet test is therefore
-the Endur route at `https://usefacet.xyz/mainnet-defi.html?protocol=endur`; only a successful
-receipt with the STRK20 pool, deployed Endur helper, and Endur event may be counted.
+including xSTRK output and simulated state changes. The controlled wallet test then succeeded in
+Mainnet transaction `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`, block
+14,052,044. Its receipt contains the STRK20 pool, deployed Endur helper, and Endur xSTRK events,
+so it is the second verified Facet protocol action.
 
 A line such as `zsh: command not found: mainnet-ekubo-v1` means the command was pasted with
 an unintended newline and an environment assignment was split. It does not indicate an
@@ -193,17 +195,21 @@ production benchmark. See [`ASYNC_PROVING.md`](ASYNC_PROVING.md) for the service
 
 ## Current Mainnet evidence state
 
-Two successful Mainnet STRK20 transactions are now verified. The 7 STRK Ready X eligibility
+Three successful Mainnet STRK20 transactions are now verified. The 7 STRK Ready X eligibility
 shield remains setup evidence. The reviewed Wallet API Ekubo action
 `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` succeeded in block
 14,004,049 (`ACCEPTED_ON_L2`); its receipt contains STRK20 pool events and Ekubo core events,
 and its transaction data contains the deployed Facet helper and Ekubo router.
 
+The reviewed Wallet API Endur action
+`0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` succeeded in block
+14,052,044 (`ACCEPTED_ON_L2`); its receipt contains STRK20 pool events, the deployed Endur helper,
+and Endur xSTRK events.
+
 The direct Facet runner remains blocked by AVNU's `SCREENING_REQUIRED` requirement; it was not
 used for the successful browser action. Vesu has no successful receipt and is blocked by the live
-migration-extension revert; Endur has passed protocol-only simulation but has not yet been tried
-through Ready. One more successful Mainnet pool transaction is still needed for the three-hash
-submission target.
+migration-extension revert; Endur now has a successful wallet-mediated receipt. The minimum
+three-hash Mainnet submission target is satisfied by the eligibility shield, Ekubo, and Endur.
 
 ## Security boundary
 

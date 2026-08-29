@@ -25,8 +25,8 @@ The Mainnet evidence position is:
 | Facet Mainnet private deposit | **Not completed** — latest AVNU response was `SCREENING_REQUIRED`; no transaction hash returned |
 | Facet Mainnet protocol action | **Verified for Ekubo** — Ready X Wallet API action `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049 |
 | Vesu Mainnet protocol action | **Blocked** — direct Mainnet simulation reaches the configured Vesu migration extension and reverts `before_modify_position: "not-allowed"`; Ready wraps it as paymaster code 156 and returns no hash |
-| Endur Mainnet protocol action | **Protocol simulation passed** — deployed helper/vault path completes read-only; wallet-mediated receipt still pending |
-| Mainnet Facet hash count | **One qualifying Facet protocol hash plus one qualifying eligibility hash** |
+| Endur Mainnet protocol action | **Verified** — Ready X Wallet API action `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`, block 14,052,044, with pool/helper/Endur events |
+| Mainnet Facet hash count | **Two qualifying Facet protocol hashes plus one qualifying eligibility hash** |
 | Current Mainnet cap | **40 STRK ceiling**, with 0.1 STRK approved for the private deposit and 0.1 STRK for the Ekubo action, plus fees |
 
 The rejected direct-runner proofs consumed proving time but moved no funds. The running VPS
@@ -35,7 +35,7 @@ the direct AVNU path still lacks the live pool's required screening attestation.
 Ready X Wallet API route completed the reviewed Facet/Ekubo action separately; see the verified
 hash above and `FINDINGS.md` §6.29. The latest Vesu wallet failure is recorded in
 `FINDINGS.md` §§6.30–6.31; it produced no receipt and does not change the evidence count. The
-protocol-only Endur simulation passed without broadcast, so the next wallet test is Endur.
+controlled Endur retry then succeeded and is recorded in `FINDINGS.md` §6.32.
 
 The user-facing speed plan is asynchronous proving: a warm worker, opaque job id, visible
 stages, resumable polling, quote/expiry re-checks, and a final review gate. This improves
@@ -150,12 +150,12 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | **§6.6 sequence executed on Sepolia** | **Done, 25 August 2026** | The first facet succeeded in `0x05faace1d…dedef` and `0x0111b815a…f3693`. A second clean facet named `facet-second` used deposit `0x4cee8465…0a07` and private transaction `0x68510769…6b3a`; shadow `0x560b1983…e2b8` sent 1 wei to `0x…dead`, not the owner, and collected the remainder. The second proof took 400s. Recorded as `FINDINGS.md` §6.17–§6.18. |
 | **Facet contracts on mainnet** | **Done, 25 August 2026** | Immutable anonymizer `0x741fe9dc…63bc`, deployment `0x277a84c5…922`; `FacetAccount` `0x42e9d345…1a45`, deployment `0x4e9305a7…732f`. Production classes were declared first and the immutable ABI was checked for privileged entrypoints. Recorded as `FINDINGS.md` §6.19. |
 | **Ekubo helper on mainnet** | **Done, 28 August 2026** | Stateless helper `0x2bd92991…8537`, class `0x2a4ac595…ebd7`, deployment `0x188808f3…08dfc`, block 14,000,701. Class hash and address were rechecked after the successful receipt. |
-| **Vesu/Endur helper routes** | **Helpers deployed, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`, block 14,030,634; Vesu helper `0x7568567a…e4b6` deployed in `0x2f729305…d7ff3`, block 14,030,645; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`, block 14,030,657. Vesu's latest wallet request returned paymaster code 156 with no hash; funded protocol receipts remain pending. |
+| **Vesu/Endur helper routes** | **Endur verified; Vesu blocked, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`, block 14,030,634; Vesu helper `0x7568567a…e4b6` deployed in `0x2f729305…d7ff3`, block 14,030,645; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`, block 14,030,657. Endur action `0x240d2b8285…63f5` succeeded in block 14,052,044; Vesu remains blocked by `not-allowed`. |
 | **Current launcher deployment** | **`defb44c` web build live, 29 August 2026** | `https://usefacet.xyz` serves the bounded nested-wallet-error diagnostics; HTTPS checks returned 200 for the homepage, launcher, Ekubo, Vesu, and Endur pages. Previous web root preserved as `/var/www/facet.backup-20260829T064000Z`. |
 | §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
 | **Mainnet screening attestation** | **Blocked, 28 August 2026** | Compatible proof completed, but AVNU returned `SCREENING_REQUIRED`; live pool screener key is configured and the VPS has no `BLOCKING_CHECK_URL`/proof-interceptor deployment. |
 | **Wallet-mediated Vesu attempt** | **Blocked by live protocol revert, 29 August 2026** | The deployed page still received paymaster code 156 with no hash. A separate read-only Mainnet simulation reaches Vesu's migration extension and reverts `before_modify_position: "not-allowed"`; do not retry this vault. |
-| **Wallet-mediated Endur attempt** | **Next controlled test, 29 August 2026** | Protocol-only simulation of `approve → Endur.deposit(0.1 STRK)` succeeds without broadcast. Use the Endur page for the next manual Ready X approval. |
+| **Wallet-mediated Endur attempt** | **Verified, 29 August 2026** | Ready X action `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` succeeded in block 14,052,044 with the STRK20 pool, deployed Endur helper, and Endur events. |
 
 ---
 

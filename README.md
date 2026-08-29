@@ -245,8 +245,8 @@ What is not built is listed as plainly as what is.
 | SDK | `packages/sdk` — the private-transaction action builder over the Starknet privacy SDK, plus the operational Sepolia runner; build clean, 20 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
 | Product layer | **in development** — account contexts, private funding, settlement, adapter foundations, a deployed launcher, and reviewed Wallet API pages for Ekubo, Vesu V1.1, and Endur exist; the generic async service and portfolio view remain to be built |
-| Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, Ekubo helper, and the shared protocol-bound Vesu/Endur helper instances are deployed; funded Vesu/Endur actions remain to be verified |
-| Mainnet interaction | **verified for Ekubo** — the 7 STRK Ready X eligibility shield and a reviewed Facet/Ekubo Wallet API action are confirmed on Mainnet; Vesu and Endur helpers are deployed, with their pool/protocol receipts still pending |
+| Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, Ekubo helper, and the shared protocol-bound Vesu/Endur helper instances are deployed; the Endur action is verified and the Vesu route is paused |
+| Mainnet interaction | **verified for Ekubo and Endur** — the 7 STRK Ready X eligibility shield plus reviewed Facet/Ekubo and Facet/Endur Wallet API actions are confirmed on Mainnet; Vesu remains blocked by its live migration-extension revert |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted
@@ -268,10 +268,11 @@ The event-level decode is `docs/FINDINGS.md` §6.17. The reviewed Wallet API Eku
 verified in Mainnet transaction
 `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049:
 the receipt succeeded and emitted STRK20 pool and Ekubo core events, while the transaction data
-contains the deployed helper and router. The launcher also contains reviewed Vesu V1.1 and Endur
-routes built around the same deployed protocol-bound ERC-4626 helper class and instances; each
-still needs a successful funded receipt containing the pool, helper, and protocol events. The
-direct Facet runner remains a separate path blocked by AVNU screening.
+contains the deployed helper and router. The reviewed Wallet API Endur action also succeeded in
+`0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`, block 14,052,044, with
+STRK20 pool, Endur helper, and Endur xSTRK events. The Vesu V1.1 route is retained for diagnosis
+but paused after its live migration-extension revert; it is not a successful integration claim.
+The direct Facet runner remains a separate path blocked by AVNU screening.
 
 ## Documentation
 

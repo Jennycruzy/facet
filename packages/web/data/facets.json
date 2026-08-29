@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25",
+  "generated": "2026-08-29",
   "networks": {
     "sepolia": {
       "label": "Starknet Sepolia",
@@ -144,8 +144,10 @@
       "outputSymbol": "vSTRK",
       "helper": "0x7568567a11a8072521e4e78f635fd3a4fb07c6bcea4dff909b5109a51c5e4b6",
       "helperClassHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
-      "verified": "vSTRK asset(), preview_deposit(), Mainnet ABI, and helper deployment verified on 29 Aug 2026; protocol action pending",
-      "status": "wallet-mediated-ready",
+      "verified": "read-only checks passed, but Mainnet deposit simulation reaches the migration extension and reverts before_modify_position: not-allowed; paused on 29 Aug 2026",
+      "status": "wallet-mediated-blocked",
+      "executionEnabled": false,
+      "blockReason": "Paused: this Vesu Genesis vSTRK vault currently reverts before_modify_position: not-allowed. Do not retry this route.",
       "executionPage": "mainnet-defi.html?protocol=vesu",
       "monogram": "Ve",
       "accent": "emerald"
@@ -166,8 +168,10 @@
       "outputSymbol": "xSTRK",
       "helper": "0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240",
       "helperClassHash": "0x65f9084b78e26882f2dc1f57b5dff660126487d3b2495cf0fec79ef5bc2c9d4",
-      "verified": "asset(), preview_deposit(), Mainnet ABI, and helper deployment verified on 29 Aug 2026; protocol action pending",
-      "status": "wallet-mediated-ready",
+      "verified": "Mainnet Wallet API action succeeded in block 14052044; receipt contains STRK20 pool, deployed helper, and Endur xSTRK events",
+      "status": "wallet-mediated-verified",
+      "mainnetTransaction": "0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5",
+      "mainnetBlock": 14052044,
       "executionPage": "mainnet-defi.html?protocol=endur",
       "monogram": "En",
       "accent": "violet"

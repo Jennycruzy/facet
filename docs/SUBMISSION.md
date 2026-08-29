@@ -15,7 +15,8 @@ counts as transaction evidence.
 {
   "transactions": [
     "0x0721505c…5716a",
-    "0x2d3c449e…36ab"
+    "0x2d3c449e…36ab",
+    "0x240d2b82…163f5"
   ],
   "contracts": [
     "0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc",
@@ -38,17 +39,17 @@ pool.** There is no cap, and more is better evidence.
 |---|---|---|
 | 1 | `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a` | **Done** — 7 STRK eligibility shield through Ready X, block 13,538,709; valid pool evidence but not a Facet DeFi action |
 | 2 | `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` | **Done** — reviewed Ready X Wallet API action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,004,049; receipt contains STRK20 pool events, and transaction data carries the Facet helper plus Ekubo router |
-| 3 | — | A second successful Mainnet Facet/protocol transaction is still needed |
+| 3 | `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` | **Done** — reviewed Ready X Wallet API Endur action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,052,044; receipt contains STRK20 pool events, the deployed Endur helper, and Endur xSTRK events |
 
-The latest Vesu Wallet API attempt returned `PaymasterV2Error` code 156 without a transaction
-hash. It is a failed request, not submission evidence; the nested reason is being surfaced before
-the next controlled attempt. Endur has not yet been attempted.
+The Vesu Wallet API attempt returned `PaymasterV2Error` code 156 without a transaction hash. It is
+a failed request, not submission evidence; direct simulation reproduced the Vesu migration
+extension's `before_modify_position: "not-allowed"` revert, so that route is paused. The Endur
+route now supplies the third successful Mainnet transaction.
 
-The working target is **four usable hashes** so that the three strongest can be submitted:
-the existing eligibility shield, a Facet setup transaction, the first Facet protocol action,
-and a second Facet protocol action if the route is safe and genuinely verified. Registration,
-deposit, and protocol action all require proofs on the deployed pool; none is a proof-free
-shortcut.
+The minimum three-hash target is now satisfied by the eligibility shield, the Facet/Ekubo action,
+and the Facet/Endur action. The optional working target remains **four usable hashes** so that the
+three strongest can be submitted if a further route is safe and genuinely verified. Registration,
+deposit, and protocol action all require proofs on the deployed pool; none is a proof-free shortcut.
 
 **Sepolia hashes do not belong in this file.** The two transactions that prove the §6.6
 sequence — `0x5faace1d…dedef` and `0x111b815a…f3693` — are Sepolia. They are the project's
@@ -99,10 +100,10 @@ curl -s https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10 \
 ## `demo_url`
 
 **Previously deployed and verified — `https://usefacet.xyz`.** The live nginx root currently
-serves the previously verified `9009e30` build; `/launch.html`, `/mainnet-ekubo.html`,
-`/mainnet-defi.html?protocol=vesu`, and `/mainnet-defi.html?protocol=endur` returned 200 and
-passed the VPS-side obvious-secret scan. The pushed `defb44c` build adds bounded nested wallet
-error diagnostics and must be redeployed before the next wallet attempt. The prior release is preserved at
+serves the `defb44c` build plus the verified Endur / paused Vesu card state;
+`/launch.html`, `/mainnet-ekubo.html`, `/mainnet-defi.html?protocol=vesu`, and
+`/mainnet-defi.html?protocol=endur` returned 200 and passed the VPS-side obvious-secret scan.
+The prior release is preserved at
 `/var/www/facet.backup-20260829T064000Z`.
 
 ```bash
