@@ -32,11 +32,14 @@ ln -s /etc/nginx/sites-available/facet /etc/nginx/sites-enabled/facet
 certbot --nginx -d <domain>    # certificate and the HTTPS redirect
 ```
 
+The public pages use clean URLs: `/launch`, `/ekubo`, `/endur`, and `/proof`. Nginx maps those
+paths to their static HTML files and redirects the old `.html` paths to the clean addresses.
+
 There is no build step, no runtime dependency, and no upstream: nginx serves the files, and the
 page reads Starknet RPC from the visitor's browser. Nothing else on the host is reachable through
 the site.
 
-The staged wallet-binding boundary is available at `launch.html`. It can connect to an injected
+The staged wallet-binding boundary is available at `/launch` (backed by `launch.html`). It can connect to an injected
 EIP-1193 EOA provider, request one origin/network/pool-bound `personal_sign` message, derive the
 pool viewing key in memory using the same two-limb recipe as the SDK, and open the selected
 Ekubo or Endur review route. The signature and key are never persisted. The reviewed
@@ -60,11 +63,11 @@ Facet's shadow-account action to the wallet-managed proving path.
 | File | Contents |
 |---|---|
 | `index.html` | **The app** — Facet's launcher surface: live Mainnet route receipts, clearly labeled Sepolia proof identities, and compatible application tiles |
-| `launch.html` | Staged launcher — wallet binding, persistent app-context selection, and reviewed route links |
+| `launch.html` | Staged launcher, served publicly at `/launch` — wallet binding, persistent app-context selection, and reviewed route links |
 | `ready-probe.html` | Internal read-only Ready X capability check for the mainnet Wallet API path |
-| `mainnet-ekubo.html` | Reviewed wallet-mediated Mainnet Ekubo swap using the deployed privacy helper |
-| `mainnet-defi.html` | Reviewed wallet-mediated Mainnet Endur xSTRK deposit route |
-| `proof.html` | How it works and the evidence, in seven acts. One click behind the app, for the reader who wants to verify rather than use |
+| `mainnet-ekubo.html` | Reviewed wallet-mediated Mainnet Ekubo swap, served publicly at `/ekubo` |
+| `mainnet-defi.html` | Reviewed wallet-mediated Mainnet Endur xSTRK deposit route, served publicly at `/endur` |
+| `proof.html` | How it works and the evidence, served publicly at `/proof` |
 | `assets/css/app.css` | Design tokens and layout. Dark, single accent, no framework |
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
 | `assets/js/chain.js` | Homepage chain reader with a `sessionStorage` cache and five-minute TTL; reviewed route modules use their own guarded RPC reads |

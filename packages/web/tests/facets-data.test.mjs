@@ -30,12 +30,19 @@ test("launcher contexts are the two receipt-backed routes documented by the prod
   }
 });
 
+test("receipt-backed routes use clean public paths", () => {
+  assert.deepEqual(
+    Object.fromEntries(data.apps.map((app) => [app.id, app.executionPage])),
+    { ekubo: "/ekubo", endur: "/endur" },
+  );
+});
+
 test("Endur is bound to the reviewed Mainnet ERC-4626 route", () => {
   const mainnet = data.networks.mainnet;
   for (const id of ["endur"]) {
     const app = data.apps.find((candidate) => candidate.id === id);
     assert.ok(app);
-    assert.equal(app.executionPage, "mainnet-defi.html");
+    assert.equal(app.executionPage, "/endur");
     assert.match(app.contract, /^0x[0-9a-f]{60,}$/i);
     assert.match(app.outputToken, /^0x[0-9a-f]{60,}$/i);
     assert.match(app.helper, /^0x[0-9a-f]{60,}$/i);

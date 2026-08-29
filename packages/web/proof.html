@@ -20,8 +20,8 @@
     </a>
     <nav class="appnav">
       <a href="./">The app</a>
-      <a href="launch.html">Launch</a>
-      <a href="proof.html" aria-current="page">How it works</a>
+      <a href="/launch">Launch</a>
+      <a href="/proof" aria-current="page">How it works</a>
       <a href="#verify">Verify</a>
       <a href="https://github.com/Jennycruzy/facet">GitHub</a>
     </nav>
@@ -96,23 +96,23 @@ snforge test</pre>
   </section>
 
   <section class="block">
-    <div class="head"><h2>What we cannot claim</h2><div class="aside">Stated before anyone asks</div></div>
+    <div class="head"><h2>What Facet does not promise</h2><div class="aside">Clear limits</div></div>
     <div class="fine">
-      <div><h4>Not a new privacy protocol</h4>
-      <p>It uses StarkWare's anonymizer unmodified. What is new is the funding pattern, the
-      SDK path, and the first execution of it.</p></div>
-      <div><h4>Not the only users</h4>
-      <p>Most compute path calls on mainnet belong to other teams' anonymizers.</p></div>
-      <div><h4>Not the first to fund one</h4>
-      <p>Seven mainnet transactions did it first, the public way. That is the comparison
-      above, not a strawman.</p></div>
-      <div><h4>Our own test linked an identity</h4>
-      <p>The first run sent one wei to the owner's address because it was a smoke test, so
-      that receipt does connect them. The argument rests on the funding leg, which is
-      shielded.</p></div>
-      <div><h4>Two routes, one boundary</h4>
-      <p>Ekubo and Endur have successful wallet-mediated Mainnet receipts. The launcher exposes
-      only these receipt-backed routes; unsupported protocols are outside the current product.</p></div>
+      <div><h4>Facet is not invisible</h4>
+      <p>Once an app account acts, people can see its address, actions, balances, and timing.
+      Facet hides the link to the funding wallet, not the app activity.</p></div>
+      <div><h4>Facet is not a new network</h4>
+      <p>Facet uses existing Starknet privacy technology. Its contribution is the way it funds
+      and launches a separate account for an app.</p></div>
+      <div><h4>Facet does not claim to be first</h4>
+      <p>The claim is narrower: an app can receive funds without seeing the wallet that supplied
+      them. Facet makes that safer workflow easier to use.</p></div>
+      <div><h4>One test did reveal its owner</h4>
+      <p>Our first test sent a tiny amount to the owner's address, so that transaction was
+      linkable. We do not use it as proof that the owner stayed hidden.</p></div>
+      <div><h4>Only two apps are live</h4>
+      <p>Ekubo and Endur have verified Mainnet actions. Other apps are not supported until their
+      complete route has been tested and a successful public transaction record is available.</p></div>
     </div>
   </section>
 

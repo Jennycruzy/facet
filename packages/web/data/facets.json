@@ -136,7 +136,7 @@
       "status": "wallet-mediated-verified",
       "mainnetTransaction": "0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5",
       "mainnetBlock": 14052044,
-      "executionPage": "mainnet-defi.html",
+      "executionPage": "/endur",
       "monogram": "En",
       "accent": "violet"
     },
@@ -159,7 +159,7 @@
       "status": "wallet-mediated-verified",
       "mainnetTransaction": "0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab",
       "mainnetBlock": 14004049,
-      "executionPage": "mainnet-ekubo.html",
+      "executionPage": "/ekubo",
       "monogram": "Ek",
       "accent": "amber"
     }
