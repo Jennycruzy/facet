@@ -92,7 +92,7 @@ The mainnet route was checked against the live router on 26 August 2026. The ear
 
 ## Funding denominations
 
-**Facet chooses the amount. The user does not type one.**
+**Facet chooses the public pool-funding denomination. The user may choose the later app spend.**
 
 The funding leg is public: it names the token and the exact figure. An arbitrary amount is a
 fingerprint, and it survives across every identity that uses it. Funding one identity with
@@ -101,9 +101,10 @@ fingerprint, and it survives across every identity that uses it. Funding one ide
 The intended policy is to fund identities in fixed steps such as **10, 25, 50, 100, and 250
 STRK**. The step is the anonymity set: an identity funded with 50 STRK is indistinguishable
 from every other identity funded with 50 STRK. Change is collected back into the shield, so the
-amount that leaves the pool never reveals what was actually spent. The current launcher and
-Mainnet runner do not yet enforce the full denomination policy; it must remain documented as a
-policy/roadmap item until the queue and adapter path reject arbitrary amounts in code.
+amount that leaves the pool need not reveal what was actually spent. `assertFundingDenomination`
+implements and tests this rule as an SDK primitive. Facet does not yet offer a Mainnet shielding
+interface, so the live product cannot enforce it at the funding boundary. The Ekubo and Endur pages
+accept any positive app spend up to the shielded balance; that is not the public funding leg.
 
 ## Timing separation
 
@@ -115,12 +116,10 @@ does.
 
 ## Proving starts early
 
-Proving takes five to seven minutes and cannot be shortened on modest hardware. The product
-response is asynchronous rather than deceptive: after exact intent and preflight checks, the
-launcher submits an allowlisted job, returns a job id, and lets a warm worker prove while the
-user leaves the page. The UI polls `queued → preflight → proving → proof_ready → broadcasting
-→ confirmed`, with a typed failure state. This improves page lifetime and prevents duplicate
-work; it does not reduce the cryptographic proof wall time. See [`ASYNC_PROVING.md`](ASYNC_PROVING.md).
+Direct proving takes five to seven minutes on the measured hardware. The proposed direct-Facet
+response is asynchronous: an allowlisted service would return a job id and typed polling states.
+That queue and UI are not implemented. The current Mainnet routes delegate proving and submission
+to Ready X. See [`ASYNC_PROVING.md`](ASYNC_PROVING.md) for the proposed contract, not a live feature.
 
 For a delay-tolerant deposit or stake, the worker can start as soon as the reviewed intent is
 complete. For Ekubo, a quote and minimum output must be captured immediately before proving

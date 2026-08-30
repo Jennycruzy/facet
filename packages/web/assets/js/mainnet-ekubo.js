@@ -1,8 +1,10 @@
+import "./theme.js";
+import { parseTokenAmount } from "./amount.js";
 const $ = (id) => document.getElementById(id);
 
 const ROUTE_FEE = 170141183460469235273462165868118016n;
 const TICK_SPACING = 1000n;
-const SWAP_AMOUNT = 100000000000000000n;
+const DEFAULT_SWAP_AMOUNT = 100000000000000000n;
 const SLIPPAGE_BPS = 1000n;
 const QUOTE_SWAP_SELECTOR = "0x2904b7c28f3fd4556d8aa4f93483ea2077dd95e61c54db86c2ea5fc1f3ffd54";
 
@@ -35,6 +37,8 @@ const state = {
   connected: false,
   executing: false,
   transactionHash: null,
+  amountWei: DEFAULT_SWAP_AMOUNT,
+  amountError: "",
 };
 
 function setStatus(kind, message) {
@@ -158,7 +162,7 @@ function routeCalldata() {
   return [
     STRK, ETH, hex(ROUTE_FEE), hex(TICK_SPACING), "0x0",
     "0x0", "0x0", "0x0",
-    STRK, hex(SWAP_AMOUNT), "0x0",
+    STRK, hex(state.amountWei), "0x0",
   ];
 }
 
@@ -173,7 +177,7 @@ async function readQuote() {
   const inputSign = BigInt(result[1]);
   const output = BigInt(result[2]);
   const outputSign = BigInt(result[3]);
-  if (input !== SWAP_AMOUNT || inputSign !== 0n || outputSign === 0n || output <= 0n) {
+  if (input !== state.amountWei || inputSign !== 0n || outputSign === 0n || output <= 0n) {
     throw new Error(`Unexpected Ekubo quote delta: ${result.join(",")}`);
   }
   const minimum = output * (10000n - SLIPPAGE_BPS) / 10000n;
@@ -252,7 +256,8 @@ function canExecute() {
       && hasNativeStrk20()
       && state.helperDeployed
       && state.balanceWei !== null
-      && state.balanceWei >= SWAP_AMOUNT
+      && !state.amountError
+      && state.balanceWei >= state.amountWei
       && state.quote
       && $("confirm").checked
       && !state.executing,
@@ -276,10 +281,13 @@ function render() {
     $("balance-pill").className = "pill";
   } else {
     $("balance-amount").textContent = formatUnits(state.balanceWei);
-    const enough = state.balanceWei >= SWAP_AMOUNT;
+    const enough = !state.amountError && state.balanceWei >= state.amountWei;
     $("balance-pill").textContent = enough ? "enough for input" : "too small";
     $("balance-pill").className = `pill ${enough ? "pill-good" : ""}`;
   }
+  $("input-summary").textContent = `${formatUnits(state.amountWei, 18, 18)} STRK`;
+  $("amount-error").textContent = state.amountError;
+  $("confirm-copy").textContent = `I reviewed the route. It will use ${formatUnits(state.amountWei, 18, 18)} STRK from my private balance and show the final approval in my wallet.`;
 
   $("helper-address").textContent = short(HELPER);
   $("helper-address").title = HELPER;
@@ -299,11 +307,12 @@ function render() {
   if (connected && !isMainnet(state.chainId)) reviewLines.push("STOP: switch Ready X to Starknet Mainnet.");
   if (connected && !hasNativeStrk20()) reviewLines.push("STOP: this wallet does not support the private action required by this route.");
   if (state.helperDeployed === false) reviewLines.push("The official helper class is declared, but its reserved Mainnet address is not deployed yet.");
-  if (state.balanceWei !== null && state.balanceWei < SWAP_AMOUNT) reviewLines.push("The shielded STRK balance is below the 0.1 STRK input.");
+  if (state.amountError) reviewLines.push(state.amountError);
+  if (state.balanceWei !== null && !state.amountError && state.balanceWei < state.amountWei) reviewLines.push("The shielded STRK balance is below the selected input.");
   if (state.errors.length) reviewLines.push(...state.errors);
   if (!reviewLines.length && connected) {
     reviewLines.push(state.quote ? "Mainnet, route, balance, and live price checks passed." : "Mainnet checks passed; fetching a live Ekubo price…");
-    reviewLines.push("The action will use 0.1 STRK from your private balance, swap on Ekubo, and return ETH to that private balance.");
+    reviewLines.push(`The action will use ${formatUnits(state.amountWei, 18, 18)} STRK from your private balance, swap on Ekubo, and return ETH to that private balance.`);
   }
   $("review-panel").innerHTML = reviewLines.length
     ? reviewLines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")
@@ -314,7 +323,8 @@ function render() {
     || !hasNativeStrk20()
     || !state.helperDeployed
     || state.balanceWei === null
-    || state.balanceWei < SWAP_AMOUNT
+    || Boolean(state.amountError)
+    || state.balanceWei < state.amountWei
     || !state.quote
     || state.executing;
   $("execute").disabled = !canExecute();
@@ -336,6 +346,7 @@ function safeDiagnostics() {
     chain_id: state.chainId,
     wallet_api_versions: state.apiVersions,
     shielded_strk_balance_wei: state.balanceWei?.toString() ?? null,
+    selected_input_wei: state.amountWei.toString(),
     facet_targets: { pool: POOL, router: ROUTER, helper: HELPER, helper_class_hash: HELPER_CLASS_HASH },
     quote: state.quote ? { quoted_wei: state.quote.quotedWei.toString(), minimum_wei: state.quote.minimumWei.toString() } : null,
     last_error: state.errors.at(-1) ?? null,
@@ -346,14 +357,14 @@ function safeDiagnostics() {
 
 function actionsForQuote(quote) {
   return [
-    { type: "withdraw", token: STRK, amount: hex(SWAP_AMOUNT), recipient: HELPER },
+    { type: "withdraw", token: STRK, amount: hex(state.amountWei), recipient: HELPER },
     { type: "transfer", token: ETH, amount: "OPEN", recipient: state.account },
     {
       type: "invoke",
       contract: HELPER,
       calldata: [
         felt(ROUTER),
-        felt(STRK), hex(SWAP_AMOUNT), "0x0",
+        felt(STRK), hex(state.amountWei), "0x0",
         felt(STRK), felt(ETH), hex(ROUTE_FEE), hex(TICK_SPACING), "0x0",
         ...u256(quote.minimumWei),
         "0x0",
@@ -459,7 +470,7 @@ async function execute() {
   try {
     const quote = await readQuote();
     if (!state.connected || !state.account || !isMainnet(state.chainId) || !hasNativeStrk20()
-      || !state.helperDeployed || state.balanceWei === null || state.balanceWei < SWAP_AMOUNT
+      || !state.helperDeployed || state.balanceWei === null || state.balanceWei < state.amountWei
       || !state.quote || !$("confirm").checked) {
       throw new Error("The review changed while refreshing the quote. Review it again.");
     }
@@ -498,6 +509,24 @@ $("refresh").onclick = refresh;
 $("execute").onclick = execute;
 $("confirm").onchange = render;
 $("copy-diagnostics").onclick = copyDiagnostics;
+$("amount-input").oninput = () => {
+  try {
+    state.amountWei = parseTokenAmount($("amount-input").value, 18, "STRK");
+    state.amountError = "";
+  } catch (error) {
+    state.amountError = error instanceof Error ? error.message : "Enter a valid STRK amount.";
+  }
+  state.quote = null;
+  $("confirm").checked = false;
+  render();
+};
+$("amount-input").onchange = async () => {
+  if (!state.amountError && state.connected && isMainnet(state.chainId) && state.helperDeployed) {
+    state.errors = state.errors.filter((error) => !error.startsWith("Ekubo quote:"));
+    try { await readQuote(); } catch (error) { state.errors = [`Ekubo quote: ${errorText(error)}`]; }
+    render();
+  }
+};
 
 if (!candidateWallets().length) setStatus("idle", "Ready X will be checked when you press Connect.");
 else setStatus("connected", "Ready X detected. Press Connect to review the Mainnet action.");

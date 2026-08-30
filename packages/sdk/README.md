@@ -51,18 +51,62 @@ register; use `supportsRegistration` to check first, or build on the core path.
 
 ## Protocol adapters
 
+Apps use one public `ProtocolAdapter` contract. They provide a normal app intent; Facet keeps the
+private-account machinery behind the executor:
+
+```ts
+import { ekuboAdapter, executeAppIntent } from "@facet/sdk";
+
+const result = await executeAppIntent({
+  adapter: ekuboAdapter,
+  intent: { action: "swap", parameters: {
+    router, token0, token1, tokenIn: strk, tokenOut: eth,
+    routeFee, tickSpacing, amountIn: 5n * 10n ** 18n, minimumAmountOut,
+  } },
+  context: {
+    linkedAddresses: [connectedWallet, fundingWallet, recoveryWallet],
+  },
+  facet: ekuboFacet,
+  executor: facetExecutor,
+});
+```
+
+That is the dapp-facing flow: **app intent → adapter plan → Facet execution**. Developers do not
+select notes, derive shadow accounts, or call a prover. Ekubo and Endur demonstrate the interface;
+they are not a claim that arbitrary apps are already supported.
+
 `src/adapters.ts` contains pure call builders for the two current Facet integrations:
 
 - `buildEndurStakePlan` — ERC-20 approval plus Endur `deposit(assets, receiver)`.
 - `buildEkuboQuoteCall` and `buildEkuboSwapPlan` — the live single-hop Ekubo route, including
   the transfer, swap, and minimum-output clear calls.
 
-Each plan returns canonical `PrivacyCall`s, the input token and amount, and independent
+Pool funding and app spending are separate boundaries. Use `assertFundingDenomination` when adding
+money to the private pool; users may choose any valid app spend up to their private balance. Each
+adapter enforces the shared linked-address guard before it returns a plan. Each plan returns
+canonical `PrivacyCall`s, the input token and amount, and independent
 settlement policies for every token whose balance can change. Endur requires a list of addresses
 already linked to the user and refuses a matching protocol recipient with a typed
 `LinkedRecipientError`; this is a hard privacy guard, not a warning. The builders do not quote,
 prove, or broadcast. Quote Ekubo immediately before starting a proof because its minimum output
 can decay during the proving window.
+
+## Facet lifecycle and recovery
+
+`createOrRetainFacet` keeps one deterministic record per wallet, app, and strategy. Its explicit
+state machine is `launch → use → hold → recover → retire`; a held facet can be used again, and a
+recovering facet can return to hold when an explicit protocol exit remains. The user supplies the
+store, so recovery metadata can remain local or be encrypted before persistence.
+
+`recoveryPlan` classifies ordinary fungible-token deltas as automatically recoverable. xSTRK, LP
+positions, debt, NFTs, and receipts are persistent positions: they require the protocol's explicit
+exit path and are never silently swept or described as recovered.
+
+These are library primitives, not an end-to-end recovery product. `createOrRetainFacet` retains a
+record whose address is supplied by the caller; it does not deploy or derive that account.
+`recoveryPlan` classifies positions but does not execute transfers, redemptions, debt repayment, or
+protocol exits. The browser launcher uses a smaller local metadata map and is not wired to this SDK
+state machine.
 
 ## Wallet-derived viewing key
 

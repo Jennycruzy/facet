@@ -41,7 +41,7 @@
     <div>
       <strong>No transaction is requested until you approve the review.</strong>
       <p>This page never receives your private key. It asks for a transaction only after you check
-      the details and approve the action in your wallet. The route uses exactly <code>0.1 STRK</code>.</p>
+      the details and approve the action in your wallet. You choose the STRK input.</p>
     </div>
   </section>
 
@@ -69,11 +69,12 @@
           <div><div class="mono-badge">02</div><h2>Private input</h2></div>
           <span class="pill" id="balance-pill">not checked</span>
         </div>
-        <p class="launch-copy">The route uses exactly 0.1 STRK from the private balance in your
+        <p class="launch-copy">Choose how much STRK to use from the private balance in your
         wallet, not from your public wallet address. The protocol shares return to that private balance.</p>
         <div class="ready-balance" id="balance-value"><span id="balance-amount">—</span> <small>STRK</small></div>
+        <label class="amount-field" for="amount-input"><span>Stake amount</span><div><input id="amount-input" type="number" min="0" step="any" value="0.1" inputmode="decimal"><strong>STRK</strong></div><small id="amount-error"></small></label>
         <div class="ready-kv compact">
-          <span>input</span><strong>0.1 STRK</strong>
+          <span>input</span><strong id="input-summary">0.1 STRK</strong>
           <span>source</span><strong>wallet_strk20Balances</strong>
           <span>output</span><strong id="output-symbol">—</strong>
         </div>
@@ -106,12 +107,12 @@
     </div>
     <div class="ready-kv compact review-kv">
       <span>application</span><strong id="protocol-label">—</strong>
-      <span>deposit</span><strong>0.1 STRK</strong>
+      <span>deposit</span><strong id="deposit-summary">0.1 STRK</strong>
       <span>estimated shares</span><strong id="quoted-output">—</strong>
       <span>recipient</span><strong id="output-recipient">—</strong>
     </div>
     <label class="ready-check"><input id="confirm" type="checkbox" disabled>
-      <span>I reviewed the route. It will use 0.1 STRK from my private balance and show the final
+      <span id="confirm-copy">I reviewed the route. It will use the amount shown above from my private balance and show the final
       approval in my wallet.</span>
     </label>
     <div class="ready-actions">
@@ -137,6 +138,6 @@
 </div>
 
 <noscript><p class="noscript">JavaScript is required for the Mainnet route.</p></noscript>
-<script type="module" src="assets/js/mainnet-defi.js?v=20260829-4"></script>
+<script type="module" src="assets/js/mainnet-defi.js?v=20260830-1"></script>
 </body>
 </html>

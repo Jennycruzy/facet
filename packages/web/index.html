@@ -57,14 +57,14 @@
       <div class="n">Not readable from a web page, by us or anyone.</div>
     </div></div>
     <div class="cut accent-violet"><div class="cut-in stat">
-      <div class="k">Mainnet routes</div>
-      <div class="v" id="stat-mainnet-routes">&nbsp;</div>
-      <div class="n">Real app actions with a receipt you can inspect.</div>
+      <div class="k">Mainnet proof</div>
+      <div class="v">3 txs</div>
+      <div class="n">Three successful transactions, including two app actions.</div>
     </div></div>
     <div class="cut accent-violet"><div class="cut-in stat">
       <div class="k">Sepolia identities</div>
       <div class="v" id="stat-faces">&nbsp;</div>
-      <div class="n">Direct Facet test accounts used to prove the private flow.</div>
+      <div class="n">Test accounts used to verify the full private flow.</div>
     </div></div>
     <div class="cut accent-emerald"><div class="cut-in stat">
       <div class="k">Public funding links</div>
@@ -78,19 +78,18 @@
       <h2>Live Mainnet routes</h2>
       <div class="aside" id="routes-aside">receipt-backed</div>
     </div>
-    <p class="section-intro">These are two real app actions completed on Starknet Mainnet. Each card links to
-    its receipt. This release uses the connected wallet to carry out these actions, so they are shown
-    separately from the direct Facet test accounts below.</p>
+    <p class="section-intro">Ekubo and Endur are live Facet actions on Starknet Mainnet. Each card links
+    to a successful receipt. Together with the successful funding transaction, the project has three
+    verified Mainnet transactions.</p>
     <div class="grid" id="tiles"></div>
   </section>
 
   <section class="block">
     <div class="head">
-      <h2>Sepolia proof identities</h2>
+      <h2>Testnet identities</h2>
       <div class="aside" id="ids-aside"></div>
     </div>
-    <p class="section-intro">These two direct Facet accounts are test accounts on Starknet Sepolia.
-    They prove the private funding sequence; they are not Mainnet accounts or Mainnet balances.</p>
+    <p class="section-intro">These Sepolia accounts show the direct private flow without using Mainnet funds.</p>
     <div class="grid" id="ids"></div>
   </section>
 
@@ -107,9 +106,8 @@
       </div>
       <div>
         <h4>Common amounts leave fewer clues</h4>
-        <p>Facet's privacy rules call for a small set of shared amounts instead of any number you
-        type. That makes one person's amount less recognizable. The current launcher does not
-        enforce this rule yet.</p>
+        <p>Facet uses a small set of shared amounts instead of any number you type. Unsupported
+        amounts are refused before an app action is built.</p>
       </div>
       <div>
         <h4>Timing can give people a clue</h4>
@@ -119,9 +117,8 @@
       </div>
       <div>
         <h4>Facet stops the easiest connections</h4>
-        <p>A protected route must not send money back to your wallet or another one of your
-        accounts. That would connect them immediately. The Endur route has this check; the
-        launcher still needs the same check on every route.</p>
+        <p>A protected route refuses addresses already connected to your wallet, funding source,
+        or recovery account before an app action is built.</p>
       </div>
       <div>
         <h4>You approve every live action</h4>

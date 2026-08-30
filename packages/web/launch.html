@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/css/app.css?v=20260830-3">
 </head>
 <body>
 
@@ -19,22 +19,35 @@
       <span class="wordmark">Facet<small>private launcher</small></span>
     </a>
     <nav class="appnav">
-      <a href="./">The app</a>
+      <a href="./">Home</a>
       <a href="/launch" aria-current="page">Launch</a>
-      <a href="/ekubo">Ekubo</a>
       <a href="/proof">How it works</a>
       <a href="https://github.com/Jennycruzy/facet">GitHub</a>
     </nav>
   </header>
 
   <section class="launch-hero">
-    <div class="eyebrow">Private app launcher</div>
-    <h1>Give every app<br>a different face.</h1>
-    <p class="launch-lede">Connect a wallet, sign one message, and choose an app. Facet gives that app
-    a separate face while keeping your main wallet out of its funding trail.</p>
+    <div class="eyebrow">Persistent private identities</div>
+    <h1>One private balance.<br>A different identity<br>for every app.</h1>
+    <p class="launch-lede">Facet gives each app or strategy its own retained identity. Ekubo and
+    Endur are the first two Mainnet adapters; they do not receive your funding-wallet identity.</p>
     <div class="launch-status" id="wallet-status" data-state="idle" role="status" aria-live="polite">
       <span class="dot"></span><span id="wallet-status-text">checking for a compatible wallet…</span>
     </div>
+  </section>
+
+  <div class="network-switch" role="tablist" aria-label="Choose network">
+    <button type="button" role="tab" id="mainnet-tab" data-network-tab="mainnet" aria-selected="true">Mainnet</button>
+    <button type="button" role="tab" id="testnet-tab" data-network-tab="testnet" aria-selected="false">Testnet</button>
+  </div>
+
+  <div data-network-panel="mainnet">
+
+  <section class="identity-flow" aria-label="How Facet identities work">
+    <div class="identity-root"><span>PRIVATE ROOT</span><strong>One balance</strong><small>managed through Ready X</small></div>
+    <div class="identity-line" aria-hidden="true"></div>
+    <div class="identity-branch accent-amber"><span>FACET 01</span><strong>Ekubo identity</strong><small>retained for swaps</small></div>
+    <div class="identity-branch accent-violet"><span>FACET 02</span><strong>Endur identity</strong><small>retained for staking</small></div>
   </section>
 
   <section class="launch-layout">
@@ -43,21 +56,20 @@
         <div class="launch-card-head">
           <div>
             <div class="mono-badge">01</div>
-          <h2>Connect your wallet</h2>
+          <h2>Connect Ready X</h2>
           </div>
           <span class="pill" id="bound-pill">not bound</span>
         </div>
-        <p class="launch-copy">Sign one message to start a private Facet session. Facet never asks
-        for your private key. This route currently works with standard wallets; smart-account
-        support is not ready yet.</p>
+        <p class="launch-copy">Ready X handles the private Mainnet session and asks for approval
+        before any app action. Facet never asks for your private key.</p>
         <div class="launch-kv">
           <span>account</span><strong id="wallet-address">not connected</strong>
           <span>network</span><strong id="network">—</strong>
           <span>pool</span><strong id="pool">—</strong>
         </div>
         <div class="launch-actions">
-          <button class="btn" id="connect" type="button">Connect wallet</button>
-          <button class="btn ghost" id="sign" type="button" disabled>Sign to continue</button>
+          <button class="btn" id="connect" type="button">Connect Ready X</button>
+          <button class="btn ghost" id="sign" type="button" hidden>Sign to continue</button>
           <button class="text-button" id="reset" type="button" hidden>Clear this tab</button>
         </div>
       </div>
@@ -68,15 +80,16 @@
         <div class="launch-card-head">
           <div>
             <div class="mono-badge">02</div>
-          <h2>Check what you sign</h2>
+          <h2>Your Facet identity map</h2>
           </div>
-          <span class="pill">before signing</span>
+          <span class="pill">one per app</span>
         </div>
-        <p class="launch-copy">Facet shows the exact message before asking you to sign it. It ties
-        this session to this site, this network, and this wallet.</p>
-        <pre class="binding-message" id="binding-message">Connect an EOA wallet to preview the exact message. Nothing is signed on page load.</pre>
+        <p class="launch-copy">Facet retains one versioned identity per app and strategy on this
+        device. Reopening Ekubo returns to the Ekubo identity; it does not create a random account.</p>
+        <div class="identity-status" id="binding-message">Connect Ready X to open your local identity map.</div>
+        <div id="facet-map" class="facet-map"><span class="muted">Connect Ready X to view this device's map.</span></div>
         <div class="message-actions">
-          <button class="text-button" id="copy-message" type="button" disabled>Copy message</button>
+          <button class="text-button" id="copy-message" type="button" disabled hidden>Copy message</button>
           <span class="copy-status" id="copy-message-status" role="status" aria-live="polite"></span>
         </div>
       </div>
@@ -92,7 +105,7 @@
       <div class="launch-step" data-launch-step="verify"><span>06</span><div><strong>Check the result</strong><small>Follow the receipt after the action completes.</small></div></div>
     </div>
     <div class="launch-selection" id="selection-note" role="status" aria-live="polite">
-      Sign the message to choose an app. Signing does not move money.
+      Choose an identity to preview its route. Ready X is required before an action can be approved.
     </div>
     <div class="launch-context" id="context-detail" hidden>
       <span>chosen app</span>
@@ -101,16 +114,15 @@
       <code id="context-nonce">—</code>
     </div>
     <div class="launch-integrations" aria-label="Application contexts">
-      <button class="launch-app" data-launch-action data-app-id="ekubo" type="button" disabled aria-pressed="false"><span>EK</span><strong>Ekubo</strong><small>live Mainnet route · wallet approval</small></button>
-      <button class="launch-app" data-launch-action data-app-id="endur" type="button" disabled aria-pressed="false"><span>EN</span><strong>Endur</strong><small>live Mainnet route · wallet approval</small></button>
+      <button class="launch-app" data-launch-action data-app-id="ekubo" type="button" aria-pressed="false"><span>01</span><strong>Ekubo identity</strong><small>retained swap context · Mainnet</small></button>
+      <button class="launch-app" data-launch-action data-app-id="endur" type="button" aria-pressed="false"><span>02</span><strong>Endur identity</strong><small>retained staking context · Mainnet</small></button>
     </div>
   </section>
 
   <section class="block launch-mainnet-route">
     <div class="head"><h2>Mainnet routes</h2><div class="aside">your approval required</div></div>
-    <p class="note">Both routes keep the private balance inside Ready X while Facet supplies the
-    app-specific instructions. Your wallet shows the final action before anything is submitted.
-    The wallet binding preview above does not silently move money or approve a transaction.</p>
+    <p class="note">Facet turns your intent into an app-specific plan for the selected identity.
+    Ready X handles proving and submission, and shows the final action before anything is approved.</p>
     <div class="launch-actions">
       <a class="btn" href="/ekubo">Open Ekubo review</a>
       <a class="btn ghost" href="/endur">Open Endur review</a>
@@ -118,11 +130,21 @@
   </section>
 
   <section class="block launch-boundary">
-    <div class="head"><h2>Honest boundary</h2><div class="aside">No silent signing</div></div>
-    <p class="note">Connecting and signing the message above does not move money. The two live routes
-    open separate review pages and ask for a transaction only after you choose the route and approve
-    it in your wallet. The <a href="/proof">evidence page</a> remains the place to verify completed receipts.</p>
+    <div class="head"><h2>What is protected</h2><div class="aside">Clear limits</div></div>
+    <p class="note">Facet separates the account an app sees from your funding wallet. App activity,
+    balances, and timing are still public. Connecting Ready X does not move money.
+    Facet does not promise random timing; that feature is not implemented.</p>
   </section>
+  </div>
+
+  <div data-network-panel="testnet" hidden>
+    <section class="block">
+      <div class="head"><h2>Testnet</h2><div class="aside">Direct Facet tests</div></div>
+      <p class="section-intro">Use these Sepolia identities to inspect the direct Facet flow without
+      Mainnet funds. Only Testnet content is shown while this tab is selected.</p>
+      <div class="grid" id="testnet-facets"></div>
+    </section>
+  </div>
 
   <footer>
     <nav>
@@ -136,6 +158,6 @@
 
 <noscript><p class="noscript">JavaScript is required to inspect wallet state. The evidence page remains available without a wallet.</p></noscript>
 
-<script type="module" src="assets/js/launcher.js"></script>
+<script type="module" src="assets/js/launcher.js?v=20260830-4"></script>
 </body>
 </html>

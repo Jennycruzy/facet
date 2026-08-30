@@ -39,14 +39,13 @@ There is no build step, no runtime dependency, and no upstream: nginx serves the
 page reads Starknet RPC from the visitor's browser. Nothing else on the host is reachable through
 the site.
 
-The staged wallet-binding boundary is available at `/launch` (backed by `launch.html`). It can connect to an injected
-EIP-1193 EOA provider, request one origin/network/pool-bound `personal_sign` message, derive the
-pool viewing key in memory using the same two-limb recipe as the SDK, and open the selected
-Ekubo or Endur review route. The signature and key are never persisted. The reviewed
-Mainnet pages use Ready X's native STRK20 proving/screening API; they only request a transaction
-after the user checks the exact route and amount.
+The launcher at `/launch` connects Ready X on Starknet Mainnet and opens the selected Ekubo or
+Endur review route. It stores only wallet/app/strategy/version/status metadata in browser local
+storage. That map does not create or control an on-chain facet, store recovery secrets, or implement
+the SDK lifecycle. The reviewed Mainnet pages use Ready X's native STRK20 proving/screening API;
+they request a transaction only after the user checks the exact route and user-selected amount.
 
-The current reviewed execution path is `bind` → choose an app → exact route review → Ready X
+The current reviewed execution path is connect Ready X → choose an app → exact route review → Ready X
 wallet approval → receipt. A future direct Facet queue may add resumable job polling around the
 five-to-seven-minute development proof; that is not presented as a live browser feature. See
 [`../../docs/ASYNC_PROVING.md`](../../docs/ASYNC_PROVING.md) for the contract and security
@@ -63,7 +62,7 @@ Facet's shadow-account action to the wallet-managed proving path.
 | File | Contents |
 |---|---|
 | `index.html` | **The app** — Facet's launcher surface: live Mainnet route receipts, clearly labeled Sepolia proof identities, and compatible application tiles |
-| `launch.html` | Staged launcher, served publicly at `/launch` — wallet binding, persistent app-context selection, and reviewed route links |
+| `launch.html` | Mainnet launcher, served at `/launch` — Ready X connection, local app-context metadata, and reviewed route links |
 | `ready-probe.html` | Internal read-only Ready X capability check for the mainnet Wallet API path |
 | `mainnet-ekubo.html` | Reviewed wallet-mediated Mainnet Ekubo swap, served publicly at `/ekubo` |
 | `mainnet-defi.html` | Reviewed wallet-mediated Mainnet Endur xSTRK deposit route, served publicly at `/endur` |
@@ -72,7 +71,7 @@ Facet's shadow-account action to the wallet-managed proving path.
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
 | `assets/js/chain.js` | Homepage chain reader with a `sessionStorage` cache and five-minute TTL; reviewed route modules use their own guarded RPC reads |
 | `assets/js/app-ui.js` | The app: live strip, identity cards, app tiles, and dated RPC fallbacks |
-| `assets/js/launcher.js` | The staged browser wallet boundary, persistent app-context preview, and in-memory session state |
+| `assets/js/launcher.js` | Ready X connection, local metadata map, route selection, and in-memory session state |
 | `assets/js/ready-probe.js` | Read-only Ready X account, chain, STRK20 balance, and API capability check |
 | `assets/js/wallet-binding.js` | Canonical binding message, EIP-1193 account handling, and signature validation |
 | `assets/js/wallet-derivation.js` | Dependency-free Keccak and bridge-compatible viewing-key derivation |
@@ -92,8 +91,8 @@ Facet's shadow-account action to the wallet-managed proving path.
   must not heat a laptop.
 - **The limits section is not optional.** Among sixty submissions, the one that states its
   own limits is the one believed on everything else.
-- **The launcher states its stage.** A wallet signature is not a transaction approval, and no
-  private key, viewing key, or signature is persisted by the page.
+- **The launcher states its stage.** Connecting Ready X is not a transaction approval. The page
+  does not receive a private key, viewing key, screening attestation, or proof.
 - **Evidence types stay separate.** Mainnet route receipts and Sepolia identity rehearsals have
   different labels and are never counted as the same thing.
 - **The launcher must state its execution boundary.** The current reviewed routes delegate

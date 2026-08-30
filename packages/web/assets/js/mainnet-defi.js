@@ -1,6 +1,8 @@
+import "./theme.js";
+import { parseTokenAmount } from "./amount.js";
 const $ = (id) => document.getElementById(id);
 
-const AMOUNT = 100000000000000000n;
+const DEFAULT_AMOUNT = 100000000000000000n;
 const ASSET_SELECTOR = "0x3d4060688a1800ae986e4840aebc924bb40b5bf44de4583df2257220b54b77c";
 const PREVIEW_DEPOSIT_SELECTOR = "0x2152e6631b3dd14160be68ee388eeb94d1e2b02e5c1a4c6ce5da69272c5057e";
 const MAX_DEPOSIT_SELECTOR = "0x2fd569757f93fe6ed633ee19eed3342f42bf8bf6cad11cc5d4e24c50e354ccd";
@@ -40,6 +42,8 @@ const state = {
   connected: false,
   executing: false,
   transactionHash: null,
+  amountWei: DEFAULT_AMOUNT,
+  amountError: "",
 };
 
 function setStatus(kind, message) {
@@ -175,17 +179,17 @@ async function readProtocolState() {
   const preview = await rpc("starknet_call", [{
     contract_address: app.contract,
     entry_point_selector: PREVIEW_DEPOSIT_SELECTOR,
-    calldata: u256(AMOUNT),
+    calldata: u256(state.amountWei),
   }, "latest"]);
   const shares = u256FromResult(preview);
-  if (shares <= 0n) throw new Error(app.contractLabel + " returned zero shares for a 0.1 STRK preview.");
+  if (shares <= 0n) throw new Error(app.contractLabel + " returned zero shares for the selected input.");
   const maxDeposit = u256FromResult(await rpc("starknet_call", [{
     contract_address: app.contract,
     entry_point_selector: MAX_DEPOSIT_SELECTOR,
     calldata: [HELPER],
   }, "latest"]));
-  if (maxDeposit < AMOUNT) {
-    throw new Error(app.contractLabel + " currently accepts less than the reviewed 0.1 STRK deposit.");
+  if (maxDeposit < state.amountWei) {
+    throw new Error(app.contractLabel + " currently accepts less than the selected deposit.");
   }
   state.protocolDeployed = Boolean(classHash && !sameAddress(classHash, "0x0"));
   state.quote = { shares, maxDeposit, checkedAt: Date.now(), classHash };
@@ -275,7 +279,8 @@ function canExecute() {
       && state.helperDeployed
       && state.protocolDeployed
       && state.balanceWei !== null
-      && state.balanceWei >= AMOUNT
+      && !state.amountError
+      && state.balanceWei >= state.amountWei
       && state.quote
       && $("confirm").checked
       && EXECUTION_ENABLED
@@ -303,10 +308,16 @@ function render() {
     $("balance-pill").className = "pill";
   } else {
     $("balance-amount").textContent = formatUnits(state.balanceWei);
-    const enough = state.balanceWei >= AMOUNT;
+    const enough = !state.amountError && state.balanceWei >= state.amountWei;
     $("balance-pill").textContent = enough ? "enough for input" : "too small";
     $("balance-pill").className = "pill " + (enough ? "pill-good" : "");
   }
+  const selectedAmount = formatUnits(state.amountWei, 18, 18) + " STRK";
+  $("input-summary").textContent = selectedAmount;
+  $("deposit-summary").textContent = selectedAmount;
+  $("amount-error").textContent = state.amountError;
+  $("confirm-copy").textContent = "I reviewed the route. It will use " + selectedAmount
+    + " from my private balance and show the final approval in my wallet.";
 
   $("helper-address").textContent = short(HELPER);
   $("helper-address").title = HELPER;
@@ -338,8 +349,9 @@ function render() {
   if (state.helperDeployed === false) {
     reviewLines.push("The reviewed helper address is reserved but not deployed yet.");
   }
-  if (state.balanceWei !== null && state.balanceWei < AMOUNT) {
-    reviewLines.push("The shielded STRK balance is below the 0.1 STRK input.");
+  if (state.amountError) reviewLines.push(state.amountError);
+  if (state.balanceWei !== null && !state.amountError && state.balanceWei < state.amountWei) {
+    reviewLines.push("The shielded STRK balance is below the selected input.");
   }
   if (state.errors.length) reviewLines.push(...state.errors);
   if (!reviewLines.length && connected) {
@@ -349,7 +361,7 @@ function render() {
         : "Mainnet and route checks passed; fetching a live " + app.name + " rate…",
     );
     reviewLines.push(
-      "The action will use 0.1 STRK from your private balance, call " + app.contractLabel
+      "The action will use " + selectedAmount + " from your private balance, call " + app.contractLabel
         + ", and return " + OUTPUT_SYMBOL + " to that private balance.",
     );
   }
@@ -358,7 +370,9 @@ function render() {
     : "<p>Connect Ready X to begin.</p>";
 
   const reviewReady = EXECUTION_ENABLED
-    && connected && state.helperDeployed && state.protocolDeployed && state.quote;
+    && connected && isMainnet(state.chainId) && hasNativeStrk20()
+    && state.helperDeployed && state.protocolDeployed && state.quote
+    && !state.amountError && state.balanceWei !== null && state.balanceWei >= state.amountWei;
   $("confirm").disabled = !reviewReady || state.executing;
   $("execute").textContent = EXECUTION_ENABLED ? "Request reviewed action" : "Route paused";
   $("execute").disabled = !canExecute();
@@ -374,7 +388,7 @@ function escapeHtml(value) {
 
 function actionsForProtocol() {
   return [
-    { type: "withdraw", token: STRK, amount: hex(AMOUNT), recipient: HELPER },
+    { type: "withdraw", token: STRK, amount: hex(state.amountWei), recipient: HELPER },
     { type: "transfer", token: OUTPUT_TOKEN, amount: "OPEN", recipient: state.account },
     {
       type: "invoke",
@@ -383,7 +397,7 @@ function actionsForProtocol() {
         "0x0",
         felt(STRK),
         felt(OUTPUT_TOKEN),
-        ...u256(AMOUNT),
+        ...u256(state.amountWei),
         "$" + "{openNoteIds[0]}",
       ],
     },
@@ -504,7 +518,7 @@ async function execute() {
     await readProtocolState();
     if (!state.connected || !state.account || !isMainnet(state.chainId) || !hasNativeStrk20()
       || !state.helperDeployed || !state.protocolDeployed || state.balanceWei === null
-      || state.balanceWei < AMOUNT || !state.quote || !$("confirm").checked) {
+      || state.balanceWei < state.amountWei || !state.quote || !$("confirm").checked) {
       throw new Error("The review changed while refreshing the protocol quote. Review it again.");
     }
     const result = await request(state.wallet, {
@@ -543,6 +557,7 @@ async function copyDiagnostics() {
       chain_id: state.chainId,
       wallet_api_versions: state.apiVersions,
       shielded_strk_balance_wei: state.balanceWei?.toString() ?? null,
+      selected_input_wei: state.amountWei.toString(),
       facet_targets: {
         pool: MAINNET_POOL,
         helper: HELPER,
@@ -589,6 +604,24 @@ $("refresh").onclick = refresh;
 $("execute").onclick = execute;
 $("confirm").onchange = render;
 $("copy-diagnostics").onclick = copyDiagnostics;
+$("amount-input").oninput = () => {
+  try {
+    state.amountWei = parseTokenAmount($("amount-input").value, 18, "STRK");
+    state.amountError = "";
+  } catch (error) {
+    state.amountError = error instanceof Error ? error.message : "Enter a valid STRK amount.";
+  }
+  state.quote = null;
+  $("confirm").checked = false;
+  render();
+};
+$("amount-input").onchange = async () => {
+  if (!state.amountError && state.connected && isMainnet(state.chainId) && state.helperDeployed) {
+    state.errors = state.errors.filter((error) => !error.startsWith(`${app.name} quote:`));
+    try { await readProtocolState(); } catch (error) { state.errors = [`${app.name} quote: ${errorText(error)}`]; }
+    render();
+  }
+};
 
 if (!candidateWallets().length) setStatus("idle", "Ready X will be checked when you press Connect.");
 else setStatus("connected", "Ready X detected. Press Connect to review the Mainnet action.");

@@ -22,6 +22,31 @@ export class LinkedRecipientError extends Error {
   }
 }
 
+export class FundingDenominationError extends Error {
+  readonly code: "invalid_funding_denomination" = "invalid_funding_denomination";
+
+  constructor(readonly amount: string, readonly allowed: readonly string[]) {
+    super(`Funding amount ${amount} is not an allowed fixed denomination.`);
+    this.name = "FundingDenominationError";
+  }
+}
+
+export interface AdapterContext {
+  /** Wallets, funders, recovery accounts, and other addresses already linked to the user. */
+  linkedAddresses: readonly FeltLike[];
+}
+
+export interface AppIntent<TAction extends string = string, TParameters = unknown> {
+  action: TAction;
+  parameters: TParameters;
+}
+
+/** One intentionally small integration surface shared by every supported protocol. */
+export interface ProtocolAdapter<TIntent extends AppIntent = AppIntent> {
+  readonly id: string;
+  plan(intent: TIntent, context: AdapterContext): AdapterPlan;
+}
+
 export interface AdapterSettlement {
   token: string;
   policy: CollectPolicy;
@@ -29,13 +54,27 @@ export interface AdapterSettlement {
 }
 
 export interface AdapterPlan {
-  protocol: "endur" | "ekubo";
+  protocol: string;
   calls: PrivacyCall[];
   input: {
     token: string;
     amount: string;
   };
   settlements: AdapterSettlement[];
+}
+
+function fixedDenomination(amount: FeltLike, allowed: readonly FeltLike[]): string {
+  const normalized = felt(amount, "funding amount");
+  const denominations = allowed.map((value) => felt(value, "funding denomination"));
+  if (denominations.length === 0 || !denominations.some((value) => BigInt(value) === BigInt(normalized))) {
+    throw new FundingDenominationError(normalized, denominations);
+  }
+  return normalized;
+}
+
+/** Enforce shared denominations at the pool-funding boundary, independently of app spend size. */
+export function assertFundingDenomination(amount: FeltLike, allowed: readonly FeltLike[]): string {
+  return fixedDenomination(amount, allowed);
 }
 
 function integer(value: FeltLike, label: string): bigint {
@@ -194,6 +233,7 @@ export interface EkuboRouteOptions {
 export interface BuildEkuboSwapPlanOptions extends EkuboRouteOptions {
   tokenOut: FeltLike;
   minimumAmountOut: FeltLike;
+  linkedAddresses: readonly FeltLike[];
 }
 
 function ekuboRouteCalldata(options: EkuboRouteOptions): {
@@ -253,6 +293,12 @@ export function buildEkuboQuoteCall(options: EkuboRouteOptions): PrivacyCall {
  * output token only when it meets the caller's quoted minimum.
  */
 export function buildEkuboSwapPlan(options: BuildEkuboSwapPlanOptions): AdapterPlan {
+  // Ekubo's reviewed route has no user-selected public receiver. Still validate every address
+  // named by the intent so adding a receiver later cannot silently bypass the shared guard.
+  for (const [field, value] of [["Ekubo router", options.router], ["Ekubo token0", options.token0],
+    ["Ekubo token1", options.token1]] as const) {
+    assertRecipientUnlinked(value, options.linkedAddresses, field);
+  }
   const route = ekuboRouteCalldata(options);
   const tokenOut = address(options.tokenOut, "Ekubo output token");
   if (tokenOut === route.tokenIn) throw new RangeError("Ekubo output token must differ from input token");
@@ -295,3 +341,24 @@ export function buildEkuboSwapPlan(options: BuildEkuboSwapPlanOptions): AdapterP
     ],
   };
 }
+
+export type EndurStakeIntent = AppIntent<"stake", Omit<BuildEndurStakePlanOptions,
+  "linkedAddresses">>;
+export type EkuboSwapIntent = AppIntent<"swap", Omit<BuildEkuboSwapPlanOptions,
+  "linkedAddresses">>;
+
+export const endurAdapter: ProtocolAdapter<EndurStakeIntent> = {
+  id: "endur",
+  plan(intent, context) {
+    if (intent.action !== "stake") throw new TypeError("Endur supports only the stake intent.");
+    return buildEndurStakePlan({ ...intent.parameters, ...context });
+  },
+};
+
+export const ekuboAdapter: ProtocolAdapter<EkuboSwapIntent> = {
+  id: "ekubo",
+  plan(intent, context) {
+    if (intent.action !== "swap") throw new TypeError("Ekubo supports only the swap intent.");
+    return buildEkuboSwapPlan({ ...intent.parameters, ...context });
+  },
+};

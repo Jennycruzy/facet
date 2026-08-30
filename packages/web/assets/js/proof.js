@@ -1,3 +1,4 @@
+import "./theme.js";
 import { createGem } from "./gem.js";
 import { createChain, short, ago } from "./chain.js";
 import { enableTilt } from "./tilt.js";
@@ -82,13 +83,13 @@ for (const app of mainnetApps) {
   top.append(h("div", "mono-badge", app.monogram));
   const title = h("div");
   title.append(h("div", "id-name", `${app.name} · ${app.action}`));
-  title.append(h("div", "id-ctx", "wallet-mediated Mainnet receipt"));
+  title.append(h("div", "id-ctx", "verified Mainnet receipt"));
   top.append(title);
   top.append(h("span", "pill", "Mainnet"));
 
   const body = h("p", "step-text",
-    `${app.name} received the Facet helper call in block ${Number(app.mainnetBlock).toLocaleString()}. ` +
-    "The receipt and protocol event are the evidence; the direct Facet runner is a separate path.");
+    `${app.name} completed a Facet action in block ${Number(app.mainnetBlock).toLocaleString()}. ` +
+    "The receipt and protocol event are independently inspectable evidence.");
   const link = h("div", "addr");
   const a = h("a", null, short(app.mainnetTransaction, 12, 10));
   a.href = `${explorer("mainnet")}/tx/${app.mainnetTransaction}`;

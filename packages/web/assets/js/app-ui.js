@@ -1,3 +1,4 @@
+import "./theme.js";
 import { createGem } from "./gem.js";
 import { createChain, short, strk, ago } from "./chain.js";
 import { enableTilt } from "./tilt.js";
@@ -37,7 +38,7 @@ for (const [id, opts] of [["stone", {}], ["mark", { segments: 6 }]]) {
 const mainnetRoutes = data.apps.filter((app) =>
   app.status === "wallet-mediated-verified" && app.mainnetTransaction,
 );
-$("stat-mainnet-routes").textContent = String(mainnetRoutes.length);
+if ($("stat-mainnet-routes")) $("stat-mainnet-routes").textContent = String(mainnetRoutes.length);
 $("stat-faces").textContent = String(data.facets.length);
 const publicLinks = data.facets.filter((f) => f.fundedPublicly).length;
 $("stat-links").textContent = String(publicLinks);
@@ -110,7 +111,7 @@ data.facets.forEach((f) => $("ids").append(identityCard(f)));
   const top = h("div", "id-top");
   top.append(h("div", "mono-badge dim", "+"));
   const names = h("div");
-  names.append(h("div", "id-name", "Direct Mainnet identity next"));
+  names.append(h("div", "id-name", "Next Mainnet route"));
   names.append(h("div", "id-ctx", data.uncutNote));
   top.append(names);
   $("ids").append(cut("id-card empty", [top]));

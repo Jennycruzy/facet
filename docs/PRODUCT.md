@@ -1,12 +1,14 @@
 # Facet: a private Starknet app launcher
 
-Facet provides unlinkability between a shielded balance and the application-specific
-identities that use it. It is not an invisibility layer for downstream protocol activity.
+Facet is designed to remove the direct public funding link between a shielded balance and the
+application-specific identities that use it. This is not a guarantee against correlation or an
+invisibility layer for downstream protocol activity.
 
-The primary product is the launcher: choose a compatible Starknet application and Facet
-funds a persistent app-specific account from that balance. The private portfolio is the
-underlying model for recovery and future unified position tracking, not a claim that the
-current browser surface already indexes every asset type.
+The target product is a launcher that funds and retains an app-specific account from a shielded
+balance. The current Mainnet browser product instead supplies reviewed Ekubo and Endur plans to
+Ready X and keeps only local app/version metadata; it does not yet control that persistent account
+lifecycle. The private portfolio is the recovery model, not a claim that a portfolio indexer or
+recovery actuator already exists.
 
 The simplest way to understand it is **Hide My Email for your money**: one person can
 keep a unified private portfolio while presenting a separate account to every app,
@@ -64,9 +66,8 @@ Facet + app B + nonce 0  →  shadow account B
 Facet + app A + nonce 1  →  shadow account A2
 ```
 
-These accounts are deterministic for recovery and unlinkable by construction across
-their derivation contexts, assuming the user does not voluntarily link them through
-their own behavior. A facet is scoped to an application or strategy and is normally
+These accounts are deterministically separated across derivation contexts, but public amounts,
+timing, recipients, or later transfers can still correlate them. A facet is scoped to an application or strategy and is normally
 retained across that application's actions. The nonce is a deliberate rotation control,
 not a new identity that should be generated for every transaction.
 
@@ -146,6 +147,10 @@ user's portfolio or the relationship between the user's other commitments.
 
 ## The account lifecycle
 
+This is the target direct-Facet lifecycle. The Sepolia runner has exercised the core proved
+sequence, but the current Mainnet browser launcher delegates execution to Ready X and does not
+implement these lifecycle controls end to end.
+
 1. The wallet authorizes a session and the client derives the private identity in memory.
 2. The client selects a shielded note and a context (`app`, chain, policy, nonce).
 3. Facet computes the deterministic shadow-account address before the account exists.
@@ -162,8 +167,8 @@ the full transaction, including the funding leg.
 
 ## Privacy model
 
-Facet provides unlinkability between the user's shielded balance and an app-specific
-identity. It does not hide the app-specific identity or the activity that identity
+Facet is designed to avoid publishing the direct funding relationship between the user's shielded
+balance and an app-specific identity. It does not prevent correlation and does not hide the app-specific identity or the activity that identity
 performs after it reaches a protocol.
 
 Public or inferable information includes:
@@ -207,8 +212,8 @@ into the proving path, so the current prover must remain authenticated infrastru
 
 ## Current implementation status
 
-The repository contains a working protocol integration and the foundations of the
-product layer:
+The repository contains working protocol integrations and SDK foundations, not the complete
+product lifecycle:
 
 - the private funding and settlement sequence has succeeded twice on Sepolia;
 - a second clean context sent its smoke call to an unrelated address and did not pay the
@@ -222,9 +227,9 @@ product layer:
   deployed on Mainnet;
 - fork-backed contract tests and source/chain findings document the behavior.
 
-The staged browser launcher binds an EOA, derives a viewing key in memory, and previews
-persistent application contexts. Reviewed Wallet API pages now provide narrow Mainnet routes for
-Ekubo and Endur: Ready X signs, proves, screens, and submits the privacy actions, while Facet
+The browser launcher connects Ready X and stores local app/version/status metadata. It does not
+derive or control an on-chain facet from that map. Reviewed Wallet API pages provide narrow Mainnet
+routes for Ekubo and Endur: Ready X signs, proves, screens, and submits the privacy actions, while Facet
 supplies the fixed protocol-bound helper and protocol calldata. Both have verified Mainnet
 receipts with pool, helper, and protocol evidence. These are not direct `FacetAccount`-signer
 flows. The existing eligibility shield is a successful Mainnet STRK20 transaction, but it was
@@ -233,11 +238,11 @@ Vesu experiment is retained in `FINDINGS.md` as failure analysis, not as a produ
 
 The development prover currently takes roughly five to seven minutes on the small reference
 host. That is an infrastructure measurement, not the intended user experience. The intended
-launcher submits an allowlisted job, returns immediately with a job id, keeps a warm worker
+direct-Facet launcher would submit an allowlisted job, return immediately with a job id, keep a warm worker
 proving asynchronously, lets the user leave the page, and resumes by polling. This improves
 the visible wait and avoids duplicate work; it does not make the cryptographic proof faster.
 Only faster hardware or a supported hosted/client-side proving implementation changes the
-raw proof wall time.
+raw proof wall time. This queue and its polling UI are design work, not implemented product code.
 
 The product execution contract is documented in [`ASYNC_PROVING.md`](ASYNC_PROVING.md).
 

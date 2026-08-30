@@ -138,7 +138,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | §6.4 payload replayed against real bytecode | Done | `decoded_invocation.cairo` — the eleven felts fed back through `call_contract_syscall`, no dispatcher in between, plus a control that breaks the decode by shifting slot 11. Answers open question 1 in substance. |
 | Same replay against Sepolia state | Done | `decoded_payload_replays_on_sepolia`, forked at block 13,518,500. A free dry run of the live transaction. |
 | Pure protocol adapter serializers | **Done, 26 August 2026** | `packages/sdk/src/adapters.ts` builds Endur stake and the tested Ekubo single-hop route; it returns per-token settlement hints and hard-fails linked recipients. Unit coverage passes. Both current routes have Mainnet evidence. |
-| Browser launcher wallet boundary | **Staged, 29 August 2026** | `packages/web/launch.html` connects an injected EIP-1193 EOA, requests one origin/network/pool-bound `personal_sign` message, and opens reviewed Wallet API routes. The route pages let Ready X own note discovery, proving, screening, and broadcast; the launcher itself never handles proof material. |
+| Browser launcher wallet boundary | **Ready X route selector, 30 August 2026** | `packages/web/launch.html` connects Ready X on Mainnet, stores local app/version/status metadata, and opens reviewed Wallet API routes. It does not create or control an actual persistent facet. Ready X owns note discovery, screening, proving, and broadcast; the launcher never handles proof material. |
 | Live Sepolia transaction | **Done, 18 August 2026** | Account `0x1bd5f6f84a45d7f547876d1d083d5bcbeb3d7544e96638851959da32813cbb5`; anonymizer deploy `0x014eb1f86482ae09c32d5784d604115b9e8ab24c3c6f9349308028e6d5a3ab29`; materialisation `0x0719c8ddafc64eebaea496f84d0ec4ccbee46d561a227422d94e5f0be874e9b7`; funding `0x067c272692c0afe9f95535504a81352b0ec664c4b09eb8ccbe0c5ae84a571193`; replay `0x01278bd9634d952da1502118c3bf6f8578b5e4148da6ab992384aeca110675cf`. Exact 0.5 STRK was collected; derived shadow balance is 0. |
 | First funded mainnet interaction | **Done, 19 August 2026** | Ready X shielded 7 STRK into the mainnet STRK20 pool; transaction `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, block 13,538,709, accepted on L2. |
 | Phase A owner authorization | **Confirmed, 19 August 2026; current run updated 28 August 2026** | Owner approved the Sepolia account above, trusted VPS prover `38.49.216.59`, an initial 0.5 STRK rehearsal target plus fees, and a current 40 STRK mainnet ceiling. The current test principal is 0.1 STRK for the private deposit and 0.1 STRK for the Ekubo action, plus fees. The ceiling is a safety limit, not an instruction to spend it all. |
@@ -207,9 +207,9 @@ transaction hash are different. The prover proves the user's invoke; the paymast
 broadcasts an `apply_actions` call. Looking up the proved hash returns "Transaction hash not
 found" on a run that fully succeeded, which reads exactly like failure.
 
-**Where the private key lives for a browser product — answered, 25 August 2026.**
+**Where the private key lives for a direct-Facet browser product — researched, not used by the current launcher.**
 
-A facet can be derived from a wallet signature alone. `privacy-bridge/packages/bridge-core`
+A facet can in principle be derived from a wallet signature alone. `privacy-bridge/packages/bridge-core`
 derives a Starknet private key and a privacy viewing key from one `personal_sign` signature;
 the privacy SDK requires only `{ address, signer }` and a `viewingKeyProvider`, never a raw
 private key. This was the highest-priority unknown in the project because a browser wallet
@@ -217,10 +217,9 @@ will not release a key and we must never accept one.
 
 **It resolves with a constraint that changes the product, not a clean yes.** The derivation
 depends on a standard EOA signature, and Starknet wallets are smart contract accounts whose
-signatures are not in that form. A browser launcher therefore connects an EOA wallet and
-derives a Starknet identity from it, rather than deriving facets from the user's existing
-Argent X or Braavos wallet. Detail and the implementation requirements are in
-`SHADOW_ACCOUNTS.md` §10.
+signatures are not in that form. The current launcher does not implement this proposed bridge: it
+connects Ready X and delegates identity, shielding, screening, proving, and submission. Detail for
+a future direct path remains in `SHADOW_ACCOUNTS.md` §10.
 
 Established by reading the source against the SDK's proving path; pure adapter builders are now
 implemented and unit-tested, but the browser composition and adapter path have not been
@@ -257,5 +256,6 @@ Carried forward until answered from a primary source or by the user.
 3. **How should facet funding amounts be chosen?** The funding leg is public
    (`FINDINGS.md` §6.7): the shadow account address, token, and exact amount are all in
    the clear. Distinctive or repeated amounts relink facets to each other. The intended fixed
-   denominations are documented, but the current launcher and runner do not enforce them yet;
-   implementation and tests remain open.
+   denominations are documented and `assertFundingDenomination` is unit-tested, but the current
+   product has no Facet-operated Mainnet shielding boundary at which to enforce it. End-to-end
+   enforcement remains open; user-selected app spend amounts are a separate concern.

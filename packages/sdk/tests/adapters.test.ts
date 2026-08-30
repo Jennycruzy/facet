@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   assertRecipientUnlinked,
+  assertFundingDenomination,
   buildEkuboQuoteCall,
   buildEkuboSwapPlan,
   buildEndurStakePlan,
+  endurAdapter,
+  FundingDenominationError,
   LinkedRecipientError,
 } from "../src/index.js";
 
@@ -56,7 +59,8 @@ describe("protocol adapter builders", () => {
       ],
     });
 
-    const plan = buildEkuboSwapPlan({ ...route, tokenOut: "0x300", minimumAmountOut: 4n });
+    const plan = buildEkuboSwapPlan({ ...route, tokenOut: "0x300", minimumAmountOut: 4n,
+      linkedAddresses: linked });
     expect(plan.calls).toEqual([
       {
         contractAddress: "0x200",
@@ -105,6 +109,23 @@ describe("adapter recipient guard", () => {
       amountIn: 1n << 128n,
       tokenOut: "0x300",
       minimumAmountOut: 1n,
+      linkedAddresses: linked,
     })).toThrow(/i129/);
+  });
+
+  it("enforces fixed denominations at funding without restricting app spend", () => {
+    expect(() => assertFundingDenomination(3n, [1n, 2n, 5n]))
+      .toThrowError(FundingDenominationError);
+    expect(endurAdapter.plan({ action: "stake", parameters: {
+      token: "0x200", endur: "0x500", receiver: "0x400", amount: 3n,
+    } }, { linkedAddresses: linked }).input.amount).toBe("0x3");
+  });
+
+  it("applies the linked-address guard to Ekubo route addresses", () => {
+    expect(() => buildEkuboSwapPlan({
+      router: "0xabc", token0: "0x200", token1: "0x300", routeFee: 7n,
+      tickSpacing: 50n, tokenIn: "0x200", amountIn: 10n, tokenOut: "0x300",
+      minimumAmountOut: 4n, linkedAddresses: linked,
+    })).toThrowError(LinkedRecipientError);
   });
 });

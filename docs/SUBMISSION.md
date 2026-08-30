@@ -128,8 +128,10 @@ signature.
 ## Product claims the submission may make
 
 - “One balance. A different face in every app.”
-- Facet provides unlinkability between the shielded balance and app-specific identities.
-- A facet is persistent per application or strategy; the nonce is for deliberate rotation.
+- Facet is designed to remove the direct public funding link between a shielded balance and an
+  app-specific identity; downstream correlation remains possible.
+- The architecture defines a persistent facet per application or strategy and deliberate nonce
+  rotation; the current browser map is metadata only and does not control that on-chain lifecycle.
 - Facet reaches compatible Starknet applications through account-level execution and does not
   require protocol contract changes.
 - Downstream activity from a facet is public or inferable once it touches a protocol.

@@ -17,17 +17,40 @@ export {
 
 export {
   assertRecipientUnlinked,
+  assertFundingDenomination,
   buildErc20ApproveCall,
   buildEkuboQuoteCall,
   buildEkuboSwapPlan,
   buildEndurStakePlan,
   LinkedRecipientError,
+  FundingDenominationError,
+  endurAdapter,
+  ekuboAdapter,
+  type ProtocolAdapter,
+  type AdapterContext,
+  type AppIntent,
+  type EndurStakeIntent,
+  type EkuboSwapIntent,
   type AdapterPlan,
   type AdapterSettlement,
   type BuildEndurStakePlanOptions,
   type BuildEkuboSwapPlanOptions,
   type EkuboRouteOptions,
 } from "./adapters.js";
+
+export {
+  createOrRetainFacet,
+  executeAppIntent,
+  facetKey,
+  moveFacet,
+  recoveryPlan,
+  type AssetKind,
+  type FacetExecutor,
+  type FacetPosition,
+  type FacetRecord,
+  type FacetState,
+  type FacetStore,
+} from "./facets.js";
 
 export {
   deriveViewingKeyFromSignature,
