@@ -3,7 +3,7 @@ import { recordActivity } from "./facet-map.js";
 import { parseTokenAmount } from "./amount.js";
 import {
   $, candidateWallets, chainLabel, checkHelper, copyToClipboard, createRpc, errorText, escapeHtml,
-  felt, formatUnits, hasNativeStrk20, hex, isMainnet, readWalletState, request, sameAddress,
+  executionBlockReason, felt, formatUnits, hasNativeStrk20, hex, isMainnet, readWalletState, request, sameAddress,
   setStatus, short, u256, u256FromResult, waitForReceipt,
 } from "./route-runtime.js";
 import { ekuboHelperBinding, submitPlan } from "./executor.js";
@@ -102,19 +102,18 @@ async function readQuote() {
 }
 
 function canExecute() {
-  return Boolean(
-    state.connected
-      && state.account
-      && isMainnet(state.chainId)
-      && hasNativeStrk20(state.apiVersions)
-      && state.helperDeployed
-      && state.balanceWei !== null
-      && !state.amountError
-      && state.balanceWei >= state.amountWei
-      && state.quote
-      && $("confirm").checked
-      && !state.executing,
-  );
+  return !executionBlockReason(state, {
+    confirmChecked: $("confirm").checked,
+    protocolName: ekubo.name,
+  });
+}
+
+function showResult(message) {
+  $("result-panel").innerHTML = `<p>${escapeHtml(message)}</p>`;
+}
+
+function showTransactionResult(prefix, transactionHash) {
+  $("result-panel").innerHTML = `<p>${escapeHtml(prefix)}: <a href="${mainnet.explorer}/tx/${encodeURIComponent(transactionHash)}" target="_blank" rel="noreferrer">${escapeHtml(transactionHash)}</a></p>`;
 }
 
 function render() {
@@ -171,15 +170,11 @@ function render() {
     ? reviewLines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")
     : "<p>Connect Ready X to begin.</p>";
 
-  $("confirm").disabled = !connected
-    || !isMainnet(state.chainId)
-    || !hasNativeStrk20(state.apiVersions)
-    || !state.helperDeployed
-    || state.balanceWei === null
-    || Boolean(state.amountError)
-    || state.balanceWei < state.amountWei
-    || !state.quote
-    || state.executing;
+  const reviewReady = !executionBlockReason(state, {
+    confirmChecked: true,
+    protocolName: ekubo.name,
+  });
+  $("confirm").disabled = !reviewReady || state.executing;
   $("execute").disabled = !canExecute();
   $("refresh").disabled = !connected || state.executing;
   $("copy-diagnostics").disabled = !connected;
@@ -294,10 +289,21 @@ async function refresh() {
 }
 
 async function execute() {
-  if (!state.wallet || !canExecute()) return;
+  const blocked = executionBlockReason(state, {
+    confirmChecked: $("confirm").checked,
+    protocolName: ekubo.name,
+  });
+  if (blocked) {
+    state.errors = [blocked];
+    setStatus("error", blocked);
+    showResult(blocked);
+    render();
+    return;
+  }
   state.executing = true;
   state.transactionHash = null;
   setStatus("signing", "Refreshing the price, then asking your wallet to complete the private swap…");
+  showResult("Preparing the reviewed " + ekubo.name + " action…");
   render();
   try {
     const quote = await readQuote();
@@ -306,12 +312,13 @@ async function execute() {
       || !state.quote || !$("confirm").checked) {
       throw new Error("The review changed while refreshing the quote. Review it again.");
     }
+    showResult("Ready X is waiting for your approval. The transaction link will appear here after approval.");
     const transactionHash = await submitPlan(state.wallet, planForQuote(quote), {
       owner: state.account, linkedAddresses: [state.account], binding: BINDING, policy: POLICY,
     });
     state.transactionHash = transactionHash;
     setStatus("submitted", "Your wallet returned a transaction hash; waiting for Mainnet acceptance…");
-    $("result-panel").innerHTML = `<p>Submitted: <a href="https://voyager.online/tx/${encodeURIComponent(transactionHash)}" target="_blank" rel="noreferrer">${escapeHtml(transactionHash)}</a></p>`;
+    showTransactionResult("Submitted", transactionHash);
     const receipt = await waitForReceipt(rpc, transactionHash);
     if (receipt) {
       // Local activity record only: this notes what this browser did, and controls nothing on chain.
@@ -325,7 +332,7 @@ async function execute() {
   } catch (error) {
     state.errors = [errorText(error)];
     setStatus("error", "Ready did not complete the reviewed Mainnet action.");
-    $("result-panel").innerHTML = `<p>${escapeHtml(errorText(error))}</p>`;
+    showResult(errorText(error));
   } finally {
     state.executing = false;
     render();

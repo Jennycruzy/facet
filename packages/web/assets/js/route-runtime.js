@@ -143,6 +143,42 @@ export function versionAtLeast(version, major, minor, patch = 0) {
 export const hasNativeStrk20 = (versions) =>
   versions.some((version) => versionAtLeast(version, 0, 10, 3));
 
+/**
+ * Returns the first reason a reviewed route must not be submitted.
+ *
+ * The buttons are disabled while a review is incomplete, but this check also runs from the
+ * click handler. That matters for an old tab, a wallet response that arrives out of order, or
+ * an injected provider that invokes the handler programmatically: the user gets the missing
+ * step instead of a silent no-op and a stale "no transaction" message.
+ */
+export function executionBlockReason(state, {
+  confirmChecked = false,
+  protocolName = "route",
+  protocolReady = true,
+  executionEnabled = true,
+  pausedReason = "This route is paused.",
+} = {}) {
+  if (!executionEnabled) return pausedReason;
+  if (!state.wallet || !state.connected || !state.account) {
+    return "Connect Ready X before requesting a transaction.";
+  }
+  if (!isMainnet(state.chainId)) {
+    return "Switch Ready X to Starknet Mainnet before requesting this action.";
+  }
+  if (!hasNativeStrk20(state.apiVersions)) {
+    return "This wallet does not support the private action required by this route.";
+  }
+  if (!state.helperDeployed) return "The Facet helper is not available yet.";
+  if (protocolReady === false) return `The ${protocolName} protocol check is not ready.`;
+  if (state.balanceWei === null) return "Refresh the private balance before requesting a transaction.";
+  if (state.amountError) return state.amountError;
+  if (state.balanceWei < state.amountWei) return "The private STRK balance is below the selected input.";
+  if (!state.quote) return `Refresh the ${protocolName} quote before requesting a transaction.`;
+  if (!confirmChecked) return "Check the review box before requesting a transaction.";
+  if (state.executing) return "A transaction is already in progress.";
+  return null;
+}
+
 /** Reads account, chain, advertised API versions and the shielded balance of one token. */
 export async function readWalletState(wallet, token, silent = false) {
   const errors = [];
