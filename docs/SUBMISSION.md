@@ -39,8 +39,30 @@ pool.** There is no cap, and more is better evidence.
 |---|---|---|
 | 1 | `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a` | **Done** — 7 STRK eligibility shield through Ready X, block 13,538,709; valid pool evidence but not a Facet DeFi action |
 | 2 | `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` | **Done** — reviewed Ready X Wallet API action, `SUCCEEDED` and `ACCEPTED_ON_L1` in block 14,004,049; receipt contains STRK20 pool events, and transaction data carries the Facet helper plus Ekubo router |
-| 3 | `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` | **Done** — reviewed Ready X Wallet API Endur action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,052,044; receipt contains STRK20 pool events, the deployed Endur helper, and Endur xSTRK events |
+| 3 | `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` | **Done** — reviewed Ready X Wallet API Endur action, `SUCCEEDED` and `ACCEPTED_ON_L1` in block 14,052,044; receipt contains STRK20 pool events, the deployed Endur helper, and Endur xSTRK events |
 | 4 | `0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0` | **Done** — reviewed xSTRK exit action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,134,005; transaction uses the deployed Facet helper and Ekubo router, with STRK20 pool/protocol events and xSTRK/STRK transfers in the receipt |
+
+### How the registry actually counts these
+
+The sprint registry does not simply count hashes. Its published `projects.json` records a
+`verified_txs` figure and a per-transaction `mine` flag, and the observed rule across the
+field is that a transaction counts only when the project's **own** contract addresses appear
+in that transaction, and the `mainnet` requirement flips true at **three** such transactions.
+
+The registry's own note against the eligibility shield is explicit: *"touched the pool, but
+not through this project's contracts"*. It is scored `mine: false`. The Ekubo, Endur, and
+xSTRK exit actions each carry a deployed Facet helper in their calldata and are scored
+`mine: true`.
+
+The practical consequences, worth stating plainly:
+
+- The 7 STRK eligibility shield is real pool evidence but **does not count toward the
+  three-transaction requirement**. Only the three Facet protocol actions do.
+- Facet's helpers appear in transaction **calldata**, not as event emitters — the helper is
+  the caller, so the events belong to STRK, the pool, and the protocol. That is the expected
+  shape and is what the scored transactions already demonstrate.
+- A registry snapshot reflects the repository at the commit it last scanned, not the current
+  `strk20.json`. A newly added hash is only counted after a rescan.
 
 The retired Vesu experiment is not submission evidence; its failed request and direct simulation
 are preserved in `FINDINGS.md` §§6.30–6.31. The current submission surface contains three
@@ -158,7 +180,8 @@ proof, receipt, expected pool event, protocol event, and post-action state have 
 - [x] The limitations section still states what is *not* done
 - [x] `transactions` contains four verified Mainnet hashes, each with a successful receipt and
       STRK20 pool event; the strongest one or two demonstrate Facet's own protocol path
-- [x] `demo_url` serves the current checkout, including `/launch.html`, over HTTPS
+- [x] `demo_url` serves the current checkout over HTTPS, including the clean route URLs
+      `/launch`, `/ekubo`, `/endur` and `/proof` (the `.html` paths 301 to these)
 - [ ] `demo_video` is public, under two minutes, and states the real proving/queue behaviour
 - [x] No async queue is shipped in this release, so there are no queue records containing private
       keys, signatures, viewing keys, passwords, or proof blobs
