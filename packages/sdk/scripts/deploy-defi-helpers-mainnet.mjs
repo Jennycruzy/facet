@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { keccak_256 } from "@noble/hashes/sha3";
+import { homedir } from "node:os";
 import {
   Account,
   CallData,
@@ -23,7 +24,7 @@ const HELPER_COMPILED_CLASS_HASH =
 
 const RPC_URL = process.env.FACET_MAINNET_RPC_URL ?? "https://rpc.starknet.lava.build";
 const ACCOUNT_DIR = process.env.FACET_MAINNET_ACCOUNT_DIR
-  ?? "/Users/user/.facet-secrets/starknet-gate2";
+  ?? `${homedir()}/.facet-secrets/starknet-gate2`;
 const ACCOUNT_FILE = resolve(ACCOUNT_DIR, "account.json");
 const KEYSTORE_FILE = resolve(ACCOUNT_DIR, "keystore.json");
 const ARTIFACT_DIR = process.env.FACET_CONTRACT_ARTIFACT_DIR

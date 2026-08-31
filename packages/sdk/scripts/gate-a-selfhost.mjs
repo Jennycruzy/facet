@@ -1,8 +1,9 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
 
-const defaultClientFile = "/Users/user/.facet-secrets/starknet-gate-a-new/selfhost-paymaster-client-v2.json";
+const defaultClientFile = `${homedir()}/.facet-secrets/starknet-gate-a-new/selfhost-paymaster-client-v2.json`;
 const configuredClientFile = process.env.FACET_PAYMASTER_CLIENT_FILE;
 const clientFile = configuredClientFile && existsSync(configuredClientFile)
   ? configuredClientFile

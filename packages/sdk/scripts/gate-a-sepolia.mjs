@@ -16,8 +16,9 @@ import {
   stark,
 } from "starknet";
 import { keccak_256 } from "@noble/hashes/sha3";
+import { homedir } from "node:os";
 const PRIVACY_SDK_ROOT = process.env.FACET_PRIVACY_SDK_ROOT
-  ?? "/Users/user/starknet-privacy/sdk";
+  ?? `${homedir()}/starknet-privacy/sdk`;
 const {
   ContractDiscoveryProvider,
   SCREENING_SIGNER_PRIVATE_KEY,
@@ -37,7 +38,7 @@ const PAYMASTER_URL = process.env.FACET_PAYMASTER_URL ?? "https://sepolia.paymas
 const PAYMASTER_API_KEY = process.env.FACET_PAYMASTER_API_KEY;
 const PROVER_SSH_HOST = process.env.FACET_PROVER_SSH_HOST ?? "root@38.49.216.59";
 const PROVER_SSH_KEY = process.env.FACET_PROVER_SSH_KEY
-  ?? "/Users/user/.ssh/devfun_jennycruzy";
+  ?? `${homedir()}/.ssh/devfun_jennycruzy`;
 let POOL = process.env.FACET_POOL_ADDRESS
   ?? "0x0254a6b2997ef52e9f830ce1f543f6b29768295e8d17e2267d672c552cfe0d91";
 const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
@@ -45,7 +46,7 @@ const ANONYMIZER_CLASS_HASH = "0x7ffaf4f427c8de0ca35d32d44d97a31da3c24641e32b72f
 const SHADOW_ACCOUNT_CLASS_HASH = "0x346e143e3b353473a0d6f681c31ffcf2866537898008027fb3b57335bad7b5f";
 // Reuse the deployment that succeeded before the prover rejected the unregistered sender.
 const EXISTING_ANONYMIZER = "0x21c875a218b083af2bc7e48b8ee753cce3d77380053a659ebbe931ca056879b";
-const ACCOUNT_DIR = "/Users/user/.facet-secrets/starknet-gate-a-new";
+const ACCOUNT_DIR = `${homedir()}/.facet-secrets/starknet-gate-a-new`;
 const ACCOUNT_FILE = `${ACCOUNT_DIR}/account.json`;
 const KEYSTORE_FILE = `${ACCOUNT_DIR}/keystore.json`;
 const TEST_POOL_FILE = `${ACCOUNT_DIR}/test-pool.json`;

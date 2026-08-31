@@ -2,8 +2,9 @@ import { createDecipheriv, scryptSync, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { keccak_256 } from "@noble/hashes/sha3";
 import { Account, RpcProvider, Signer } from "starknet";
+import { homedir } from "node:os";
 
-const secretDir = "/Users/user/.facet-secrets/starknet-gate-a-new";
+const secretDir = `${homedir()}/.facet-secrets/starknet-gate-a-new`;
 const accountFile = `${secretDir}/account.json`;
 const keystoreFile = `${secretDir}/keystore.json`;
 const profileFile = process.env.FACET_PAYMASTER_PROFILE

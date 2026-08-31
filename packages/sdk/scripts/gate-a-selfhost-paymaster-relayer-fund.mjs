@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { Account, RpcProvider, Signer } from "starknet";
+import { homedir } from "node:os";
 
-const secretDir = "/Users/user/.facet-secrets/starknet-gate-a-new";
+const secretDir = `${homedir()}/.facet-secrets/starknet-gate-a-new`;
 const profileFile = process.env.FACET_PAYMASTER_PROFILE
   ?? `${secretDir}/selfhost-paymaster-v2.json`;
 const rpcUrl = process.env.FACET_PAYMASTER_RPC_URL

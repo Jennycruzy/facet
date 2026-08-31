@@ -17,12 +17,13 @@ import {
   stark,
 } from "starknet";
 import { keccak_256 } from "@noble/hashes/sha3";
+import { homedir } from "node:os";
 
 // Gate C deliberately uses the generic shadow-account call path. No executor contract is
 // required: the shadow account transfers STRK to Ekubo, swaps, clears the input remainder, and
 // clears the ETH output. The private pool then settles both token balances into open notes.
 const PRIVACY_SDK_ROOT = process.env.FACET_PRIVACY_SDK_ROOT
-  ?? "/Users/user/starknet-privacy/sdk";
+  ?? `${homedir()}/starknet-privacy/sdk`;
 const { ContractDiscoveryProvider } = await import(
   pathToFileURL(`${PRIVACY_SDK_ROOT}/dist/testing/index.js`),
 );
@@ -43,7 +44,7 @@ const RPC_URL = process.env.FACET_RPC_URL ?? (IS_MAINNET
   : "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10");
 const CHAIN_ID = IS_MAINNET ? constants.StarknetChainId.SN_MAIN : constants.StarknetChainId.SN_SEPOLIA;
 const PROVER_SSH_HOST = process.env.FACET_PROVER_SSH_HOST ?? "root@38.49.216.59";
-const PROVER_SSH_KEY = process.env.FACET_PROVER_SSH_KEY ?? "/Users/user/.ssh/devfun_jennycruzy";
+const PROVER_SSH_KEY = process.env.FACET_PROVER_SSH_KEY ?? `${homedir()}/.ssh/devfun_jennycruzy`;
 const PROVER_REMOTE_PORT = Number(process.env.FACET_PROVER_REMOTE_PORT ?? "3100");
 // Keep detached SSH forwards for different VPS workers on different local ports. A
 // prior run may have left a healthy tunnel open, but health alone does not identify
@@ -54,8 +55,8 @@ const PROVER_URL = process.env.FACET_PROVER_URL ?? `http://127.0.0.1:${PROVER_LO
 const PROVER_CONTAINER = process.env.FACET_PROVER_CONTAINER
   ?? (IS_MAINNET ? "facet-prover-gate-a-53f6" : "facet-prover-gate-a");
 
-const SEPOLIA_GATE_DIR = "/Users/user/.facet-secrets/starknet-gate-a-new";
-const MAINNET_GATE_DIR = "/Users/user/.facet-secrets/starknet-gate2";
+const SEPOLIA_GATE_DIR = `${homedir()}/.facet-secrets/starknet-gate-a-new`;
+const MAINNET_GATE_DIR = `${homedir()}/.facet-secrets/starknet-gate2`;
 const ACCOUNT_DIR = process.env.FACET_ACCOUNT_DIR ?? (IS_MAINNET ? MAINNET_GATE_DIR : SEPOLIA_GATE_DIR);
 const ACCOUNT_FILE = `${ACCOUNT_DIR}/account.json`;
 const KEYSTORE_FILE = `${ACCOUNT_DIR}/keystore.json`;

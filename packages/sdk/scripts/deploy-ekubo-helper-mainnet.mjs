@@ -11,6 +11,7 @@ import {
   hash,
 } from "starknet";
 import { keccak_256 } from "@noble/hashes/sha3";
+import { homedir } from "node:os";
 
 // This is the official stateless Ekubo privacy helper from
 // starkware-libs/starknet-privacy. The class is already declared on Mainnet;
@@ -20,7 +21,7 @@ const HELPER_CLASS_HASH =
 const HELPER_SALT = "0x46414345545f454b55424f5f7631";
 const RPC_URL = process.env.FACET_MAINNET_RPC_URL ?? "https://rpc.starknet.lava.build";
 const ACCOUNT_DIR = process.env.FACET_MAINNET_ACCOUNT_DIR
-  ?? "/Users/user/.facet-secrets/starknet-gate2";
+  ?? `${homedir()}/.facet-secrets/starknet-gate2`;
 const ACCOUNT_FILE = resolve(ACCOUNT_DIR, "account.json");
 const KEYSTORE_FILE = resolve(ACCOUNT_DIR, "keystore.json");
 

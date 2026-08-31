@@ -2,10 +2,11 @@ import { createDecipheriv, scryptSync, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { Account, RpcProvider, Signer, ec } from "starknet";
 import { keccak_256 } from "@noble/hashes/sha3";
+import { homedir } from "node:os";
 
 const RPC_URL = process.env.FACET_RPC_URL
   ?? "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10";
-const ACCOUNT_DIR = "/Users/user/.facet-secrets/starknet-gate-a-new";
+const ACCOUNT_DIR = `${homedir()}/.facet-secrets/starknet-gate-a-new`;
 const ACCOUNT_FILE = `${ACCOUNT_DIR}/account.json`;
 const KEYSTORE_FILE = `${ACCOUNT_DIR}/keystore.json`;
 const POOL = "0x073f3c4bc1ef39490f09587b11f6ea7f2cc66854d5df3306cda4736234693546";

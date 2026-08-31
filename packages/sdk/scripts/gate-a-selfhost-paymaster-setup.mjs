@@ -3,10 +3,11 @@ import { spawn } from "node:child_process";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { keccak_256 } from "@noble/hashes/sha3";
 import { Account, RpcProvider, Signer, ec, hash } from "starknet";
+import { homedir } from "node:os";
 
 const RPC_URL = process.env.FACET_RPC_URL
   ?? "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_10";
-const SECRET_DIR = "/Users/user/.facet-secrets/starknet-gate-a-new";
+const SECRET_DIR = `${homedir()}/.facet-secrets/starknet-gate-a-new`;
 const ACCOUNT_FILE = `${SECRET_DIR}/account.json`;
 const KEYSTORE_FILE = `${SECRET_DIR}/keystore.json`;
 const TEST_POOL_FILE = `${SECRET_DIR}/test-pool.json`;
@@ -16,12 +17,12 @@ const CLIENT_FILE = process.env.FACET_PAYMASTER_CLIENT
   ?? `${SECRET_DIR}/selfhost-paymaster-client.json`;
 const FORCE_SETUP = process.env.FACET_PAYMASTER_FORCE_SETUP === "1";
 const FORWARDER_CLASS_FILE = process.env.FACET_FORWARDER_CLASS_FILE
-  ?? "/Users/user/.facet-tools/avnu-paymaster/contracts/target/dev/avnu_Forwarder.contract_class.json";
+  ?? `${homedir()}/.facet-tools/avnu-paymaster/contracts/target/dev/avnu_Forwarder.contract_class.json`;
 const FORWARDER_CASM_FILE = process.env.FACET_FORWARDER_CASM_FILE
-  ?? "/Users/user/.facet-tools/avnu-paymaster/contracts/target/dev/avnu_Forwarder.compiled_contract_class.json";
+  ?? `${homedir()}/.facet-tools/avnu-paymaster/contracts/target/dev/avnu_Forwarder.compiled_contract_class.json`;
 const FORWARDER_CLASS_HASH = "0x7812f3a7013dd0e4e1de6ee97a52949257b7d2a904b63b1d8ace8346d1e0c55";
 const PAYMASTER_CLI = process.env.FACET_PAYMASTER_CLI
-  ?? "/Users/user/.facet-tools/avnu-paymaster/target/release/paymaster-cli";
+  ?? `${homedir()}/.facet-tools/avnu-paymaster/target/release/paymaster-cli`;
 const STRK = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 
 function promptHidden(prompt) {
