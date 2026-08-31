@@ -22,7 +22,8 @@ const cut = (cls, inner) => {
 
 const data = await fetch("data/facets.json").then((r) => r.json());
 const chain = createChain(data.networks);
-const net = data.deployment.network;
+// The hero chip reports the network the product runs on, not the rehearsal deployment.
+const net = data.deployment.liveNetwork ?? data.deployment.network;
 const explorer = (n) => data.networks[n].explorer;
 
 /* ---------- the stone, and the mark ---------- */

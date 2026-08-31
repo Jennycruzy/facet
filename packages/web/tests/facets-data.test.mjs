@@ -137,3 +137,11 @@ test("reviewed route code can resolve every Mainnet target from the data file", 
   assert.equal(ekubo.helperClassHash, mainnet.ekuboHelper.classHash);
   assert.equal(ekubo.router, mainnet.ekuboRouter);
 });
+
+test("the live chip reports Mainnet while the verify commands stay on the rehearsal chain", () => {
+  // The homepage hero and the proof page report liveness for the network the product runs on.
+  assert.equal(data.deployment.liveNetwork, "mainnet");
+  assert.ok(data.networks[data.deployment.liveNetwork], "liveNetwork must name a configured network");
+  // The verify commands query the Sepolia sequence, so the rehearsal network must stay Sepolia.
+  assert.equal(data.deployment.network, "sepolia");
+});

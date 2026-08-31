@@ -21,7 +21,8 @@ const cut = (cls, inner) => {
 
 const data = await fetch("data/facets.json").then((r) => r.json());
 const chain = createChain(data.networks);
-const net = data.deployment.network;
+const net = data.deployment.network;            // the rehearsal chain the verify commands query
+const liveNet = data.deployment.liveNetwork ?? net;  // the chain the live chip reports
 const explorer = (n) => data.networks[n].explorer;
 const facet = data.facets[0];
 
@@ -187,8 +188,8 @@ $("copy").onclick = async () => {
 /* ---------- live ---------- */
 
 try {
-  const head = await chain.head(net);
-  $("proof-live").textContent = `${data.networks[net].label} · block ${head.number.toLocaleString()} · ${ago(head.timestamp)}`;
+  const head = await chain.head(liveNet);
+  $("proof-live").textContent = `${data.networks[liveNet].label} · block ${head.number.toLocaleString()} · ${ago(head.timestamp)}`;
   for (const tx of facet.transactions) {
     const r = await chain.receipt(facet.network, tx.hash);
     $(`st-${tx.role}`).textContent = `${r.execution_status} · block ${Number(r.block_number).toLocaleString()}`;

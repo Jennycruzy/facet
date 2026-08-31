@@ -42,6 +42,7 @@
   "strk": "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
   "deployment": {
     "network": "sepolia",
+    "liveNetwork": "mainnet",
     "pool": "0x73f3c4bc1ef39490f09587b11f6ea7f2cc66854d5df3306cda4736234693546",
     "anonymizer": "0x57e5052865eb08bc1134a62fadfef067015802ce7e989af29fe94913c535efd",
     "owner": "0x7a00bfa75ea68c2baa0d6ef2a10f42905d17f9868bfe2d4424072d06139b135"
