@@ -23,7 +23,7 @@ const VERIFIED = "wallet-mediated-verified";
 test("only routes with a Mainnet receipt carry the verified status", () => {
   assert.deepEqual(
     data.apps.filter((app) => app.status === VERIFIED).map((app) => app.id).sort(),
-    ["ekubo", "endur"],
+    ["ekubo", "ekubo-exit", "endur"],
   );
   for (const app of data.apps) {
     assert.ok(app.name);
@@ -67,6 +67,14 @@ test("the Endur exit is pinned to the initialised xSTRK/STRK pool key", () => {
   assert.deepEqual(exit.lifecycle.closesAssets.map(BigInt), [BigInt(endur.outputToken)]);
 });
 
+test("the xSTRK exit carries the verified Mainnet receipt", () => {
+  const exit = data.apps.find((app) => app.id === "ekubo-exit");
+  assert.equal(exit.status, VERIFIED);
+  assert.equal(exit.mainnetTransaction,
+    "0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0");
+  assert.equal(exit.mainnetBlock, 14134005);
+});
+
 test("every Ekubo-shaped route carries the parameters the shared page reads", () => {
   for (const app of data.apps.filter((candidate) => candidate.route)) {
     for (const key of ["token0","token1","fee","tickSpacing","tokenIn","tokenInSymbol",
@@ -102,7 +110,7 @@ test("Endur is bound to the reviewed Mainnet ERC-4626 route", () => {
 
 test("verified Mainnet integrations are unique receipts and blocked routes have no hash", () => {
   const verified = data.apps.filter((app) => app.status === "wallet-mediated-verified");
-  assert.deepEqual(verified.map((app) => app.id).sort(), ["ekubo", "endur"]);
+  assert.deepEqual(verified.map((app) => app.id).sort(), ["ekubo", "ekubo-exit", "endur"]);
   assert.equal(new Set(verified.map((app) => app.mainnetTransaction)).size, verified.length);
   for (const app of verified) {
     assert.match(app.mainnetTransaction, /^0x[0-9a-f]{60,}$/i);
@@ -114,7 +122,7 @@ test("verified Mainnet integrations are unique receipts and blocked routes have 
 test("the product separates Mainnet route evidence from Sepolia identity evidence", () => {
   assert.ok(data.facets.every((facet) => facet.network === "sepolia"));
   const verified = data.apps.filter((app) => app.status === "wallet-mediated-verified");
-  assert.equal(verified.length, 2);
+  assert.equal(verified.length, 3);
   assert.ok(verified.every((app) => app.mainnetTransaction && app.mainnetBlock));
   assert.match(data.uncutNote, /identity on Mainnet/i);
 });

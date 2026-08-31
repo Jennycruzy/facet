@@ -229,8 +229,10 @@
         "defaultAmount": "84999208389004780",
         "slippageBps": 1000
       },
-      "verified": "route quoted live against the mainnet router on 30 Aug 2026; the 0.05%/1000 xSTRK pool key returns NOT_INITIALIZED, the 0.01%/200 key quotes",
-      "status": "route-verified-unexecuted",
+      "verified": "Mainnet Wallet API action succeeded in block 14134005; receipt contains STRK20 pool and protocol/token events, with the Facet helper and Ekubo router in the transfer path",
+      "status": "wallet-mediated-verified",
+      "mainnetTransaction": "0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0",
+      "mainnetBlock": 14134005,
       "executionPage": "/ekubo-exit",
       "lifecycle": {
         "contextApp": "endur",

@@ -4,8 +4,8 @@
 
 Facet is a private application launcher for Starknet. Its target model is one shielded balance
 funding a persistent, context-specific account for each compatible application or strategy. Mainnet
-evidence includes receipt-backed Facet/Ekubo and Facet/Endur actions and deployed Facet helper
-contracts; the direct identity sequence is proven on Sepolia.
+evidence includes receipt-backed Facet/Ekubo, Facet/Endur, and xSTRK exit actions and deployed
+Facet helper contracts; the direct identity sequence is proven on Sepolia.
 
 > **One balance. A different face in every app.**
 
@@ -141,8 +141,8 @@ application execution, settlement, proving, fee payment, recovery, and portfolio
   funds into the shadow account. **None of those 39 historical invocations interacted with a
   DeFi protocol.**
 - The current product state is different: Facet has since verified wallet-mediated Mainnet
-  actions through its Ekubo and Endur helpers. Those receipts are listed below; the historical
-  39-invocation finding is intentionally preserved rather than rewritten.
+  actions through its Ekubo and Endur helpers, including the xSTRK exit. Those receipts are listed
+  below; the historical 39-invocation finding is intentionally preserved rather than rewritten.
 - The official docs contain no coverage of it whatsoever. Across the full 121 KB
   documentation dump: `shadow` 0 occurrences, `stealth` 0, `identity_key` 0,
   `identity commitment` 0, `invoke_with_computation` 0.
@@ -252,9 +252,9 @@ What is not built is listed as plainly as what is.
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
 | SDK | `packages/sdk` — adapter, lifecycle, recovery-classification, and private-transaction primitives plus the operational Sepolia runner; build clean, 40 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
-| Product layer | **working wallet-mediated demo** — Facet's reviewed Ekubo/Endur routes, one shared reference executor, a tested Endur exit composition, and a local activity map exist; actual persistent-facet execution control, automatic on-chain recovery, the async service, and a unified portfolio view remain to be built |
-| Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, Ekubo helper, and Endur helper are deployed; both current protocol routes have receipt-backed evidence |
-| Mainnet interaction | **verified for Ekubo and Endur** — the 7 STRK eligibility shield plus reviewed Facet/Ekubo and Facet/Endur Wallet API actions are confirmed on Mainnet |
+| Product layer | **working wallet-mediated demo** — Facet's reviewed Ekubo/Endur routes, the tested xSTRK exit composition, one shared reference executor, and a local activity map exist; actual persistent-facet execution control, automatic on-chain recovery, the async service, and a unified portfolio view remain to be built |
+| Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, Ekubo helper, and Endur helper are deployed; the current protocol routes have receipt-backed evidence |
+| Mainnet interaction | **verified across Ekubo and Endur** — the 7 STRK eligibility shield plus reviewed Facet/Ekubo, Facet/Endur, and xSTRK exit actions are confirmed on Mainnet |
 
 The `UseNote → Withdraw → ComputeAndInvoke` sequence was first executed by this project on
 25 August 2026. It ran on Starknet Sepolia twice and succeeded — proved by a self-hosted
@@ -279,6 +279,12 @@ the receipt succeeded and emitted STRK20 pool and Ekubo core events, while the t
 contains the deployed helper and router. The reviewed Wallet API Endur action also succeeded in
 `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`, block 14,052,044, with
 STRK20 pool, Endur helper, and Endur xSTRK events.
+
+The reviewed xSTRK exit then succeeded in
+`0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0`, block 14,134,005:
+the configured Facet helper sent the xSTRK position through Ekubo's initialised pool and the
+STRK result returned to the private balance. The receipt contains STRK20 pool and protocol/token
+events, and its transfer path identifies the configured helper and Ekubo router.
 
 There is also a direct Facet Mainnet transaction:
 [`0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e`](https://voyager.online/tx/0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e).
@@ -307,14 +313,14 @@ not presented as a supported route.
 | Concern | Implemented work and current boundary |
 |---|---|
 | Protocol adapters | **Implemented and exercised.** One public `ProtocolAdapter` interface powers the Ekubo and Endur builders. Each produces reviewed protocol calls, helper bindings, amount bounds, settlement hints, and recipient declarations; the browser and SDK executors are pinned by parity tests. Facet supports compatible, reviewed applications rather than arbitrary calldata. |
-| Dapp SDK flow | **Implemented reference flow.** An application supplies intent; Facet selects the adapter, builds and validates the plan, then hands it to `FacetExecutor`. `executeAppIntent` and the shared executor cover the complete `intent → plan → execution` composition, with golden vectors matching both verified Mainnet actions. A different submission transport can implement the same executor interface. |
+| Dapp SDK flow | **Implemented reference flow.** An application supplies intent; Facet selects the adapter, builds and validates the plan, then hands it to `FacetExecutor`. `executeAppIntent` and the shared executor cover the complete `intent → plan → execution` composition, with golden vectors matching the verified Ekubo and Endur actions. A different submission transport can implement the same executor interface. |
 | Funding and spend policy | **Separated and tested.** Facet defines fixed public pool-funding denominations while allowing a user-selected app spend within each route's bounds. `assertFundingDenomination` and the route policies are covered by tests; the current Mainnet shielding surface remains a wallet integration boundary rather than a Facet UI feature. |
 | Recipient and route safeguards | **Implemented for declared route inputs.** Every plan declares its public recipients, and the SDK/browser executors reject linked recipients, unsupported assets, invalid amount bounds, undeclared asset kinds, unsafe collection policies, and settlement/open-note mismatches. This is a strong adapter policy boundary, not an arbitrary-calldata decoder or a promise that downstream activity cannot correlate. |
-| Lifecycle and recovery | **Implemented model plus tested protocol composition.** The launcher and SDK use `launch → use → hold → recover → retire`, classify fungible deltas separately from persistent positions, and include the Endur xSTRK → STRK exit through Ekubo. Fungible balances can be recovered where the route declares them safe; xSTRK, LP positions, debt, NFTs, and receipts still require explicit protocol exits, and the exit route has not yet produced a Mainnet receipt. |
+| Lifecycle and recovery | **Implemented model plus tested protocol composition.** The launcher and SDK use `launch → use → hold → recover → retire`, classify fungible deltas separately from persistent positions, and include the Endur xSTRK → STRK exit through Ekubo. Fungible balances can be recovered where the route declares them safe; xSTRK, LP positions, debt, NFTs, and receipts still require explicit protocol exits. The configured xSTRK exit now has a receipt-backed Mainnet execution. |
 | Persistent facets | **Deterministic model and local controls shipped.** The SDK and browser map retain one context per wallet/app/strategy, record confirmed activity and positions, and enforce lifecycle transitions; the Sepolia direct path proves deterministic account derivation, materialization, use, and settlement. Connecting that map to a persistent Mainnet account signer and encrypted recovery record remains an account-layer integration. |
-| Mainnet execution | **Facet-owned routes are live.** Facet owns the intent, adapter plan, helper contracts, route allowlist, calldata, amount/recipient policy, settlement rules, and lifecycle record behind the verified Ekubo and Endur actions. The current Wallet API is the transport adapter for wallet-side signing, proof handling, and submission; it does not define Facet's product or route policy. |
+| Mainnet execution | **Facet-owned routes are live.** Facet owns the intent, adapter plan, helper contracts, route allowlist, calldata, amount/recipient policy, settlement rules, and lifecycle record behind the verified Ekubo, Endur, and xSTRK exit actions. The current Wallet API is the transport adapter for wallet-side signing, proof handling, and submission; it does not define Facet's product or route policy. |
 | Direct Facet Mainnet path | **Direct transport evidence exists.** The direct Facet transaction reached and finalized on Mainnet before reverting with `EMPTY_PROOF_FACTS`; a later compatible proof reached AVNU and stopped before broadcast with `SCREENING_REQUIRED`. The complete direct identity sequence is proven on Sepolia. A production screening-attestation source is the remaining Mainnet infrastructure dependency, documented with StarkWare's [shadow-account derivation](https://github.com/starkware-libs/starknet-privacy/pull/954), [pool-policy client](https://github.com/starkware-libs/starknet-privacy/pull/955), and [deposit-address screening](https://github.com/starkware-libs/starknet-privacy/pull/957) work. |
-| Mainnet evidence | **Receipt-backed and deployed.** Facet/Ekubo succeeded in [`0x2d3c…36ab`](https://voyager.online/tx/0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab), and Facet/Endur succeeded in [`0x240d…163f5`](https://voyager.online/tx/0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5), with pool, helper, and protocol events. The 7 STRK eligibility shield is separate evidence; the reverted direct attempt is recorded but not counted as a successful action. |
+| Mainnet evidence | **Receipt-backed and deployed.** Facet/Ekubo succeeded in [`0x2d3c…36ab`](https://voyager.online/tx/0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab), Facet/Endur succeeded in [`0x240d…163f5`](https://voyager.online/tx/0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5), and the xSTRK exit succeeded in [`0xf5ac…90b0`](https://voyager.online/tx/0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0), with pool/protocol events and configured helper calls. The 7 STRK eligibility shield is separate evidence; the reverted direct attempt is recorded but not counted as a successful action. |
 
 ## License
 

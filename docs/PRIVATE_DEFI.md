@@ -184,8 +184,8 @@ production benchmark. See [`ASYNC_PROVING.md`](ASYNC_PROVING.md) for the service
 
 ## Current Mainnet evidence state
 
-Three successful Mainnet STRK20 transactions are now verified. The 7 STRK Ready X eligibility
-shield remains setup evidence. The reviewed Wallet API Ekubo action
+Three successful Facet protocol actions on Mainnet are now verified, in addition to the 7 STRK
+Ready X eligibility shield used as setup evidence. The reviewed Wallet API Ekubo action
 `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` succeeded in block
 14,004,049 (`ACCEPTED_ON_L1`); its receipt contains STRK20 pool events and Ekubo core events,
 and its transaction data contains the deployed Facet helper and Ekubo router.
@@ -195,10 +195,15 @@ The reviewed Wallet API Endur action
 14,052,044 (`ACCEPTED_ON_L2`); its receipt contains STRK20 pool events, the deployed Endur helper,
 and Endur xSTRK events.
 
+The reviewed xSTRK exit action
+`0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0` succeeded in block
+14,134,005 (`ACCEPTED_ON_L2`); its transaction uses the deployed Facet helper and Ekubo router,
+while the receipt contains STRK20 pool/protocol events and xSTRK/STRK transfers.
+
 The direct Facet runner remains blocked by AVNU's `SCREENING_REQUIRED` requirement; it was not
 used for the successful browser action. Endur now has a successful wallet-mediated receipt. The
-minimum three-hash Mainnet submission target is satisfied by the eligibility shield, Ekubo, and
-Endur.
+minimum three-hash Mainnet submission target is exceeded by the eligibility shield, Ekubo, Endur,
+and the xSTRK exit.
 
 ## Security boundary
 

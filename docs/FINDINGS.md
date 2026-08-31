@@ -1506,8 +1506,7 @@ key is `0.01% / 200`:
 A flat 38 basis points out to 10,000 xSTRK: the discount is the spread, not depth. Paying 38 bps
 to settle in one transaction instead of joining a 10,456-deep queue is the trade a position
 holder would choose on the merits, so the exit route is the product answer and not a workaround.
-It is implemented as the `ekubo-exit` route and ships as `route-verified-unexecuted` until a
-receipt exists.
+It is implemented as the `ekubo-exit` route; its successful Mainnet receipt is recorded in §6.37.
 
 **The trap is now guarded in code, not only documented.** `erc4626HelperBinding` requires a
 `withdraw` binding to name its vault, and refuses any vault listed in `QUEUED_REDEMPTION_VAULTS` —
@@ -1575,8 +1574,34 @@ The correction is deliberately narrow:
   live tree and backup.
 
 The remaining product boundaries are unchanged: the local map does not control persistent on-chain
-app accounts; general automatic recovery is not implemented; Facet has no Mainnet shielding UI;
-randomized timing is not implemented; and the xSTRK exit still needs its Mainnet receipt.
+app accounts; general automatic recovery is not implemented; Facet has no Mainnet shielding UI; and
+randomized timing is not implemented.
+
+
+### 6.37 The reviewed xSTRK exit succeeded on Mainnet — 31 August 2026
+
+The configured `ekubo-exit` route was executed against the initialised xSTRK/STRK Ekubo pool after
+the Endur position was created. The transaction succeeded and returned the STRK result to the
+privacy pool in the same action:
+
+| Item | Result |
+|---|---|
+| Transaction | [`0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0`](https://voyager.online/tx/0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0) |
+| Sender | `0x1a8b86c9bb05047b0136a96146c3a5bb5c806afa90687756be45341a86f8e37` (wallet-managed shadow account) |
+| Block | 14,134,005 |
+| Finality | `ACCEPTED_ON_L2` |
+| Execution | `SUCCEEDED` |
+| xSTRK input | `0.084999208389004780 xSTRK` |
+| STRK output | `0.099599126592305147 STRK` |
+| STRK20 pool | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
+| Facet helper | `0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537` |
+| Ekubo router | `0x0199741822c2dc722f6f605204f35e56dbc23bceed54818168c4c49e4fb8737e` |
+
+The receipt contains the xSTRK transfer from the pool through the deployed Facet helper to the
+Ekubo router, the router's STRK output, and the return transfer through the helper into the pool.
+The pool and protocol events are present alongside those token transfers, and the helper/router
+addresses are visible in the transfer path, so this is the receipt-backed Mainnet execution of the
+exit route—not only a quote or simulation.
 
 
 ## 7. Toolchain

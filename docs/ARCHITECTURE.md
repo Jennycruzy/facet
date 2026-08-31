@@ -8,7 +8,7 @@ possible.
 Status: the private account sequence and the Ekubo adapter are verified on Sepolia; the
 immutable anonymizer, `FacetAccount`, Ekubo helper, and Endur helper are deployed on mainnet.
 The browser launcher is deployed at `https://usefacet.xyz` with wallet binding and in-memory
-viewing-key derivation. The Ekubo and Endur Wallet API routes have verified Mainnet
+viewing-key derivation. The Ekubo, Endur, and xSTRK exit Wallet API routes have verified Mainnet
 helper/protocol receipts. The 7 STRK Ready X eligibility shield is a successful Mainnet pool
 transaction and remains separate evidence, not Facet DeFi activity. The retired Vesu experiment
 is documented only as historical failure analysis in `FINDINGS.md`.

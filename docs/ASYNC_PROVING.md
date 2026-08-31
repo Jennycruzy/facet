@@ -164,7 +164,7 @@ Ekubo remains enabled only with a fresh quote and minimum-output floor.
 | Persistent app-context metadata | Previewed by the launcher | `app-context` tests and data file |
 | SDK adapters | Built and unit-tested | Endur and Ekubo serializer tests |
 | Self-hosted warm prover | Running on the trusted VPS, one proof at a time | `starknet_specVersion` plus full proof results |
-| Reviewed wallet-mediated routes | Ekubo and Endur verified | Mainnet receipts and route-specific preflight |
+| Reviewed wallet-mediated routes | Ekubo, Endur, and xSTRK exit verified | Mainnet receipts and route-specific preflight |
 | Queue API and worker supervisor | Not wired to the public site | Must return a job id and persist no secrets |
 | Note discovery in browser | Not wired | Real note count and selected note |
 | Browser proving/submission | Not wired | Mainnet receipt through an allowlisted route |
@@ -177,8 +177,8 @@ the frontend.
 
 ## Post-sprint roadmap
 
-The evidence gates are complete for the current wallet-mediated scope: Ekubo and Endur have
-receipt-backed Mainnet actions. The remaining product work is
+The current wallet-mediated scope has receipt-backed Mainnet actions for Ekubo, Endur, and the
+xSTRK exit. The remaining product work is
 deliberately narrower:
 
 1. Add the authenticated two-endpoint job service and warm-worker supervisor. No universal wallet

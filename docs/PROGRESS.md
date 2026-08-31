@@ -6,10 +6,10 @@ file path, or command output. A missing prerequisite blocks the dependent work.
 Sprint window: 14–31 August 2026. Submissions close 31 August, 23:59 UTC. The final
 working sprint is being treated as a compressed four-day window ending at that deadline.
 
-## Current sprint truth — 29 August 2026
+## Current sprint truth — 31 August 2026
 
 The local checkout is the source of truth on the canonical `main` branch. The current release
-includes bounded wallet-error diagnostics, the two verified Mainnet routes, the pinned
+includes bounded wallet-error diagnostics, the three verified Mainnet routes, the pinned
 Node runtime, and the formatted Cairo sources. It is published as the current public `main`.
 The VPS copy is behind and has a dirty
 `packages/contracts/Scarb.toml`; its diff is preserved outside the repository before any
@@ -24,7 +24,8 @@ The Mainnet evidence position is:
 | Facet Mainnet private deposit | **Not completed** — latest AVNU response was `SCREENING_REQUIRED`; no transaction hash returned |
 | Facet Mainnet protocol action | **Verified for Ekubo** — Ready X Wallet API action `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049 |
 | Endur Mainnet protocol action | **Verified** — Ready X Wallet API action `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`, block 14,052,044, with pool/helper/Endur events |
-| Mainnet Facet hash count | **Two qualifying Facet protocol hashes plus one qualifying eligibility hash** |
+| xSTRK exit Mainnet action | **Verified** — reviewed action `0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0`, block 14,134,005, with pool/protocol events and the configured helper/router transfer path |
+| Mainnet Facet hash count | **Three qualifying Facet protocol hashes plus one qualifying eligibility hash** |
 | Current Mainnet cap | **40 STRK ceiling**, with 0.1 STRK approved for the private deposit and 0.1 STRK for the Ekubo action, plus fees |
 
 The rejected direct-runner proofs consumed proving time but moved no funds. The running VPS
@@ -32,7 +33,8 @@ The rejected direct-runner proofs consumed proving time but moved no funds. The 
 the direct AVNU path still lacks the live pool's required screening attestation. The supported
 Ready X Wallet API route completed the reviewed Facet/Ekubo action separately; see the verified
 hash above and `FINDINGS.md` §6.29. The controlled Endur retry then succeeded and is recorded in
-`FINDINGS.md` §6.32. The retired Vesu experiment is retained only in `FINDINGS.md` §§6.30–6.31.
+`FINDINGS.md` §6.32. The configured xSTRK exit subsequently succeeded and is recorded in
+`FINDINGS.md` §6.37. The retired Vesu experiment is retained only in `FINDINGS.md` §§6.30–6.31.
 
 The user-facing speed plan is asynchronous proving: a warm worker, opaque job id, visible
 stages, resumable polling, quote/expiry re-checks, and a final review gate. This improves
@@ -90,7 +92,7 @@ new account above, which has completed two independently verified Sepolia facets
 |---|---|---|
 | Push authentication working | Done | Repo-scoped ed25519 deploy key. GitHub requires deploy keys to be globally unique, so a second key was needed for the registry fork. |
 | Repository public with a pushed commit | Done | `github.com/Jennycruzy/facet`, three commits at time of registration. |
-| `strk20.json` at repository root | Done | At registration it contained empty arrays; the current file has three verified Mainnet hashes and five deployed contract addresses. |
+| `strk20.json` at repository root | Done | At registration it contained empty arrays; the current file has four verified Mainnet hashes and five deployed contract addresses. |
 | Registry entry appended, nothing else touched | Done | Diff was **+10 / −0**, one file. Slug `facet` confirmed unique against every derived slug in the registry before submission. |
 | Registration pull request opened | Done | [starkience/strk20-hackathon#45](https://github.com/starkience/strk20-hackathon/pull/45). |
 | Entry live in upstream `main` | Done | Applied by `strk20-sprint-bot` as `588c8d0`, "chore: register jennycruzy/facet (#45)". Verified by reading `registry.json` from upstream `main` directly. Registry at 38 entries. |
@@ -148,10 +150,11 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | **Facet contracts on mainnet** | **Done, 25 August 2026** | Immutable anonymizer `0x741fe9dc…63bc`, deployment `0x277a84c5…922`; `FacetAccount` `0x42e9d345…1a45`, deployment `0x4e9305a7…732f`. Production classes were declared first and the immutable ABI was checked for privileged entrypoints. Recorded as `FINDINGS.md` §6.19. |
 | **Ekubo helper on mainnet** | **Done, 28 August 2026** | Stateless helper `0x2bd92991…8537`, class `0x2a4ac595…ebd7`, deployment `0x188808f3…08dfc`, block 14,000,701. Class hash and address were rechecked after the successful receipt. |
 | **Endur helper route** | **Verified, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`. Endur action `0x240d2b8285…63f5` succeeded in block 14,052,044. |
-| **Current launcher deployment** | **Verified live, 29 August 2026** | `https://usefacet.xyz` serves the two verified route cards; HTTPS checks returned 200 for the launcher, Ekubo, Endur, proof, data, and diagnostic pages. Previous web root preserved as `/var/www/facet.backup-20260829T170732Z-release-hardening`. |
+| **Current launcher deployment** | **Verified live, 29 August 2026** | `https://usefacet.xyz` serves the verified route cards; HTTPS checks returned 200 for the launcher, Ekubo, Endur, proof, data, and diagnostic pages. Previous web root preserved as `/var/www/facet.backup-20260829T170732Z-release-hardening`. |
 | §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
 | **Mainnet screening attestation** | **Blocked, 28 August 2026** | Compatible proof completed, but AVNU returned `SCREENING_REQUIRED`; live pool screener key is configured and the VPS has no `BLOCKING_CHECK_URL`/proof-interceptor deployment. |
 | **Wallet-mediated Endur attempt** | **Verified, 29 August 2026** | Ready X action `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` succeeded in block 14,052,044 with the STRK20 pool, deployed Endur helper, and Endur events. |
+| **Wallet-mediated xSTRK exit** | **Verified, 31 August 2026** | Reviewed action `0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0` succeeded in block 14,134,005 with pool/protocol events and the configured helper/router transfer path. |
 
 ---
 

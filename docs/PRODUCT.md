@@ -222,7 +222,7 @@ product lifecycle:
 - the Ekubo adapter has completed a shielded STRK-to-ETH rehearsal on Sepolia;
 - the SDK contains the action builder, proof-aware preflight, settlement logic, and
   operational runbooks;
-- the launcher has reviewed Mainnet routes for Ekubo and Endur xSTRK;
+- the launcher has reviewed Mainnet routes for Ekubo and Endur xSTRK, including the xSTRK exit;
 - the shared ERC-4626 helper class and deterministic Endur helper instance are declared and
   deployed on Mainnet;
 - fork-backed contract tests and source/chain findings document the behavior.
@@ -230,9 +230,10 @@ product lifecycle:
 The browser launcher connects Ready X and stores local app/version/status metadata. It does not
 derive or control an on-chain facet from that map. Reviewed Wallet API pages provide narrow Mainnet
 routes for Ekubo and Endur: Ready X signs, proves, screens, and submits the privacy actions, while Facet
-supplies the fixed protocol-bound helper and protocol calldata. Both have verified Mainnet
-receipts with pool, helper, and protocol evidence. These are not direct `FacetAccount`-signer
-flows. The existing eligibility shield is a successful Mainnet STRK20 transaction, but it was
+supplies the fixed protocol-bound helper and protocol calldata. The reviewed Ekubo, Endur, and xSTRK
+exit actions have verified Mainnet receipts with pool/protocol evidence and configured helper paths.
+These are not direct `FacetAccount`-signer flows. The existing eligibility shield is a successful
+Mainnet STRK20 transaction, but it was
 made through the Ready X wallet and is not being relabeled as Facet DeFi activity. The retired
 Vesu experiment is retained in `FINDINGS.md` as failure analysis, not as a product route.
 
