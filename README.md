@@ -3,9 +3,9 @@
 **Hide My Email, for your money.**
 
 Facet is a private application launcher for Starknet. Its target model is one shielded balance
-funding a persistent, context-specific account for each compatible application or strategy. The
-current Mainnet launcher instead sends reviewed Ekubo and Endur plans through Ready X and keeps a
-device-local activity record; it does not yet control one on-chain account per app.
+funding a persistent, context-specific account for each compatible application or strategy. Mainnet
+evidence includes receipt-backed Facet/Ekubo and Facet/Endur actions and deployed Facet helper
+contracts; the direct identity sequence is proven on Sepolia.
 
 > **One balance. A different face in every app.**
 
