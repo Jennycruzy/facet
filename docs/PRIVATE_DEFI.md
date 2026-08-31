@@ -79,7 +79,7 @@ Run the read-only mainnet check first. It validates the account, network, pool, 
 live Ekubo quote, registration state, and available notes without proving or broadcasting:
 
 ```bash
-cd /Users/user/facet/packages/sdk
+cd packages/sdk   # from the repository root
 unset FACET_USE_SELFHOST FACET_PAYMASTER_CLIENT_FILE FACET_FORCE_NEW_DEPOSIT FACET_ALLOW_MAINNET_BROADCAST
 export FACET_NETWORK=mainnet
 export FACET_MAINNET_PREFLIGHT_ONLY=1
@@ -94,7 +94,7 @@ From `packages/sdk`, paste this block. Each line is a complete shell command, so
 terminal wrapping cannot split an option or an environment-variable assignment:
 
 ```bash
-cd /Users/user/facet/packages/sdk
+cd packages/sdk   # from the repository root
 unset FACET_USE_SELFHOST FACET_PAYMASTER_CLIENT_FILE FACET_FORCE_NEW_DEPOSIT FACET_ALLOW_MAINNET_BROADCAST FACET_MAINNET_PREFLIGHT_ONLY
 export FACET_NETWORK=mainnet
 export FACET_PROVER_CONTAINER=facet-prover-gate-a-53f6

@@ -152,8 +152,13 @@ consuming the Starknet privacy SDK as a dependency. They never store the Sepolia
 in the repository.
 
 Until the upstream package is available from the configured npm registry, operational scripts load
-its built output from `FACET_PRIVACY_SDK_ROOT` (default: `/Users/user/starknet-privacy/sdk`). Run
-`npm run build` in that upstream SDK checkout before running a private transaction.
+its built output from `FACET_PRIVACY_SDK_ROOT`. Set it to your own checkout of the upstream
+Starknet privacy SDK — the built-in fallback is the author's local path and will not exist on
+another machine — then run `npm run build` in that checkout before running a private transaction:
+
+```bash
+export FACET_PRIVACY_SDK_ROOT=/path/to/starknet-privacy/sdk
+```
 
 ```bash
 npm run private:sepolia:preflight
