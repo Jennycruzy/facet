@@ -25,7 +25,7 @@ counts as transaction evidence.
     "0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537",
     "0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240"
   ],
-  "demo_video": "",
+  "demo_video": "https://youtu.be/LQwBiPYvbAw?si=i4wV57fpjLK4u0Sa",
   "demo_url": "https://usefacet.xyz"
 }
 ```
@@ -134,10 +134,13 @@ curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
 
 ## `demo_video`
 
-Empty. Target: **three minutes** — the length the sprint asks for — with real Mainnet
-evidence, hashes visible, and a screen recording that makes no hidden success claim. The
-recording may use the already-verified receipts if it says so, and must not imply that an
-unverified route succeeded.
+Filled with the supplied public recording:
+`https://youtu.be/LQwBiPYvbAw?si=i4wV57fpjLK4u0Sa`.
+
+The YouTube oEmbed endpoint identifies the recording as **“Facet - Hide my email for your
+money”** by Jenny. Target: **three minutes** — the length the sprint asks for — with real
+Mainnet evidence, hashes visible, and a screen recording that makes no hidden success claim.
+Confirm the final runtime and on-screen claims against the shipped take before submitting.
 
 **The recording is the Ready X wallet path.** That is the path with receipts, so it is the
 path to film, and it proves on Ready X's infrastructure rather than ours. Record it live;

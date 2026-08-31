@@ -2,6 +2,14 @@
 
 **Hide My Email, for your money.**
 
+## Demo
+
+- **Live demo:** [usefacet.xyz](https://usefacet.xyz)
+- **Demo video:** [Watch the Facet walkthrough](https://youtu.be/LQwBiPYvbAw?si=i4wV57fpjLK4u0Sa)
+
+The recording shows the reviewed wallet-mediated Mainnet path. Receipt-backed transactions,
+technical evidence, and the product boundary are documented below.
+
 Facet is a private application launcher for Starknet. Its target model is one shielded balance
 funding a persistent, context-specific account for each compatible application or strategy. Mainnet
 evidence includes receipt-backed Facet/Ekubo, Facet/Endur, and xSTRK exit actions and deployed
