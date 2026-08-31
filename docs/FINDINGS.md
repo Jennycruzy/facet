@@ -1509,8 +1509,14 @@ holder would choose on the merits, so the exit route is the product answer and n
 It is implemented as the `ekubo-exit` route and ships as `route-verified-unexecuted` until a
 receipt exists.
 
+**The trap is now guarded in code, not only documented.** `erc4626HelperBinding` requires a
+`withdraw` binding to name its vault, and refuses any vault listed in `QUEUED_REDEMPTION_VAULTS` —
+Endur's xSTRK among them. A queued redemption is rejected when the binding is constructed rather
+than reverting on chain after a proof has been paid for. The registry is mirrored in the browser
+executor and the two copies are pinned to each other by `tests/executor-parity.test.mjs`.
 
-### 6.35 The Ekubo adapter declares two settlements; the deployed helper settles one — 30 August 2026
+
+### 6.35 The Ekubo route settles one token, not two — resolved 30 August 2026
 
 Found by routing the SDK adapters through the reference executor for the first time, which is the
 point of having one.
@@ -1527,10 +1533,18 @@ two independent action constructions: the divergence is invisible until somethin
 `buildWalletActions` now refuses the combination rather than truncating it, and
 `tests/executor.test.ts` pins the refusal.
 
-The open question is which side is right. Either the helper should accept a note per settled
-token, or the adapter should declare one settlement and document that the input remainder stays
-with the helper. This is a design decision, not a bug fix, and it is recorded here rather than
-guessed at.
+**Resolved in favour of one settlement**, because the chain says there is no second thing to
+settle. This route is an exact-input single hop: the whole input is transferred to the router and
+consumed by the swap. In the verified Mainnet transaction `0x2d3c449e…` the full 0.1 STRK reached
+the router, and the swap's reported input delta equalled it exactly; the live `quote_swap` returns
+the same. There is no input-token remainder, so the adapter was describing a settlement that
+cannot occur.
+
+`buildEkuboSwapPlan` now returns a single settlement for the output token, matching both the chain
+and the deployed helper's one `note_id`. The comment on that builder records the boundary: a
+multi-hop or exact-output route *can* leave an input remainder and must not reuse the builder
+unchanged. `buildWalletActions` still refuses any plan whose settlement count exceeds what its
+helper can settle, so the class of error stays caught even though this instance is gone.
 
 
 ## 7. Toolchain

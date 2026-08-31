@@ -64,6 +64,28 @@ for (const [name, plan, binding] of cases) {
   });
 }
 
+test("web and SDK refuse the same withdraw bindings for the same reason", () => {
+  const ENDUR_XSTRK = "0x28d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a";
+  for (const options of [
+    { helper: ENDUR_HELPER, operation: "withdraw" },
+    { helper: ENDUR_HELPER, operation: "withdraw", vault: ENDUR_XSTRK },
+  ]) {
+    const errors = [web, sdk].map((m) => {
+      try { m.erc4626HelperBinding(options); return null; } catch (error) { return error.message; }
+    });
+    assert.ok(errors[0], "web accepted a withdraw binding it should refuse");
+    assert.equal(errors[0], errors[1], "the two executors disagree on the refusal");
+  }
+  // A vault that settles synchronously is still allowed by both.
+  assert.doesNotThrow(() => web.erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "withdraw", vault: "0xfeed" }));
+  assert.doesNotThrow(() => sdk.erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "withdraw", vault: "0xfeed" }));
+});
+
+test("the queued-redemption registries match", () => {
+  assert.deepEqual(Object.keys(web.QUEUED_REDEMPTION_VAULTS).sort(),
+                   Object.keys(sdk.QUEUED_REDEMPTION_VAULTS).sort());
+});
+
 test("web and SDK executors reject the same plans for the same reason", () => {
   const rejections = [
     ["unsupported asset", { ...swap, input: { token: "0xdead", amount: AMOUNT } }, policy],

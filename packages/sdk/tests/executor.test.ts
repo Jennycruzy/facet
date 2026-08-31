@@ -16,6 +16,7 @@ const ROUTER = "0x199741822c2dc722f6f605204f35e56dbc23bceed54818168c4c49e4fb8737
 const OWNER = "0x1234";
 const FEE = "0x20c49ba5e353f80000000000000000";
 const AMOUNT = "0x16345785d8a0000"; // 0.1e18
+const SYNC_VAULT = "0xfeed"; // a vault that pays out in the same transaction
 const facet = { address: EKUBO_HELPER } as unknown as FacetRecord;
 
 const policy = {
@@ -84,20 +85,32 @@ describe("the reference wallet executor", () => {
     const actions = buildWalletActions(plan, {
       owner: OWNER,
       policy,
-      binding: erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "withdraw" }),
+      binding: erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "withdraw", vault: SYNC_VAULT }),
     });
     expect((actions[2] as { calldata: string[] }).calldata[0]).toBe("0x1");
   });
 
-  it("refuses a plan whose settlements outnumber the notes the helper can settle", () => {
-    // buildEkuboSwapPlan declares two settlements (input remainder and output); the deployed
-    // helper's privacy_invoke takes exactly one note_id. The live page happens to send one.
-    // This mismatch was silent while each page built its own actions — see FINDINGS 6.35.
+  it("builds the Ekubo plan with one settlement, matching the deployed helper", () => {
     const plan = buildEkuboSwapPlan({
       router: ROUTER, token0: STRK, token1: ETH, tokenIn: STRK, tokenOut: ETH,
       routeFee: FEE, tickSpacing: 1000, amountIn: AMOUNT, minimumAmountOut: "0xea",
       linkedAddresses: [],
     });
+    // Exact-input single hop: the whole input is consumed, so there is no remainder to clear.
+    expect(plan.settlements).toHaveLength(1);
+    expect(plan.settlements[0].token).toBe(ETH);
+  });
+
+  it("refuses a plan whose settlements outnumber the notes the helper can settle", () => {
+    const plan: AdapterPlan = {
+      protocol: "ekubo",
+      calls: ekuboPlan.calls,
+      input: { token: STRK, amount: AMOUNT },
+      settlements: [
+        { token: ETH, policy: { type: "diff" }, reason: "output" },
+        { token: STRK, policy: { type: "diff" }, reason: "an input remainder this route never has" },
+      ],
+    };
     expect(plan.settlements).toHaveLength(2);
     expect(() => buildWalletActions(plan, {
       owner: OWNER,
@@ -150,6 +163,20 @@ describe("the reference wallet executor", () => {
     })).toThrow(/persistent position/);
   });
 
+  it("refuses a withdraw binding for a vault that redeems through a queue", () => {
+    // FINDINGS 6.34: Endur's redeem mints an ERC-721 ticket and returns no underlying, so the
+    // helper's non-zero-output assert would revert the invoke after a proof had been paid for.
+    const ENDUR_XSTRK = "0x28d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a";
+    expect(() => erc4626HelperBinding({
+      helper: ENDUR_HELPER, operation: "withdraw", vault: ENDUR_XSTRK,
+    })).toThrow(/withdrawal queue/);
+  });
+
+  it("refuses a withdraw binding that does not name its vault", () => {
+    expect(() => erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "withdraw" }))
+      .toThrow(/must name its vault/);
+  });
+
   it("refuses a call that targets an address linked to the user", () => {
     expect(() => buildWalletActions(ekuboPlan, {
       owner: OWNER,
@@ -179,7 +206,7 @@ describe("the reference wallet executor", () => {
     const request = vi.fn().mockResolvedValue({ transaction_hash: "0xabc" });
     const executor = new WalletFacetExecutor({
       wallet: { request }, owner: OWNER, policy,
-      binding: erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "withdraw" }),
+      binding: erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "withdraw", vault: SYNC_VAULT }),
     });
     const plan: AdapterPlan = {
       protocol: "endur-exit",

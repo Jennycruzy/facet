@@ -327,12 +327,13 @@ export function buildEkuboSwapPlan(options: BuildEkuboSwapPlanOptions): AdapterP
       },
     ],
     input: { token: route.tokenIn, amount: route.amountIn.normalized },
+    // One settlement, because this route is an exact-input single hop: the whole input is
+    // transferred to the router and consumed by the swap, so there is no input-token remainder to
+    // clear. Confirmed on Mainnet in 0x2d3c449e… — the full 0.1 STRK reached the router and the
+    // swap's reported input delta equalled it exactly — and matched by the deployed helper, whose
+    // `privacy_invoke` accepts exactly one `note_id`. A multi-hop or exact-output route would
+    // settle differently and must not reuse this builder unchanged. See FINDINGS 6.35.
     settlements: [
-      {
-        token: route.tokenIn,
-        policy: { type: "diff" },
-        reason: "Clear only the input-token remainder after the swap.",
-      },
       {
         token: tokenOut,
         policy: { type: "diff" },

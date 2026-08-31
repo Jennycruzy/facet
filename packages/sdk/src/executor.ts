@@ -230,10 +230,39 @@ export function ekuboHelperBinding(options: {
   };
 }
 
-/** Helper binding for the deployed ERC-4626 helper (`IFacetErc4626Anonymizer::privacy_invoke`). */
+/**
+ * Vaults whose ERC-4626 `redeem` does not return the underlying in the same transaction. The
+ * helper computes `balance_after - balance_before` on the output token and asserts it is non-zero,
+ * so a queued redemption reverts the whole invoke. Keyed by vault address.
+ */
+export const QUEUED_REDEMPTION_VAULTS: Readonly<Record<string, string>> = {
+  // Endur xSTRK: `redeem` burns shares and mints an ERC-721 withdrawal-queue ticket. FINDINGS 6.34.
+  "0x28d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a":
+    "Endur xSTRK redeems through an ERC-721 withdrawal queue, so no underlying arrives in the " +
+    "same transaction. Exit the position on a secondary market instead.",
+};
+
+/**
+ * Helper binding for the deployed ERC-4626 helper (`IFacetErc4626Anonymizer::privacy_invoke`).
+ *
+ * A `withdraw` binding must name its vault, because whether redemption settles synchronously is a
+ * property of the vault and not of this helper. Naming a vault with a queued redemption is refused
+ * here rather than reverting on chain after a proof has been paid for.
+ */
 export function erc4626HelperBinding(options: {
-  helper: string; operation: "deposit" | "withdraw";
+  helper: string; operation: "deposit" | "withdraw"; vault?: FeltLike;
 }): HelperBinding {
+  if (options.operation === "withdraw") {
+    if (options.vault === undefined) {
+      throw new ExecutorPolicyError(
+        "A withdraw binding must name its vault so its redemption mode can be checked.",
+      );
+    }
+    const reason = QUEUED_REDEMPTION_VAULTS[toHexFelt(options.vault)];
+    if (reason) {
+      throw new ExecutorPolicyError(`Refusing a withdraw binding for ${toHexFelt(options.vault)}: ${reason}`);
+    }
+  }
   return {
     helper: options.helper,
     calldata(plan) {
