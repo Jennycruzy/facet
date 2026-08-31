@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Facet">
+  <title>Facet</title>
+  <rect width="64" height="64" rx="14" fill="#050b1a"/>
+  <!-- crown: table edge down to the girdle -->
+  <path d="M24 18 L21 30 L10 30 Z" fill="#3f74e0"/>
+  <path d="M24 18 L32 18 L32 30 L21 30 Z" fill="#7fb2ff"/>
+  <path d="M32 18 L40 18 L43 30 L32 30 Z" fill="#5b95ff"/>
+  <path d="M40 18 L54 30 L43 30 Z" fill="#3f74e0"/>
+  <!-- pavilion: girdle converging on the culet -->
+  <path d="M10 30 L21 30 L32 54 Z" fill="#2f5cc0"/>
+  <path d="M21 30 L32 30 L32 54 Z" fill="#57dcff"/>
+  <path d="M32 30 L43 30 L32 54 Z" fill="#3f74e0"/>
+  <path d="M43 30 L54 30 L32 54 Z" fill="#234a9e"/>
+  <!-- girdle -->
+  <path d="M10 30 H54" stroke="#eaf0ff" stroke-opacity=".55" stroke-width="1.1"/>
+</svg>
