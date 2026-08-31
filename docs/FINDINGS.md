@@ -1379,6 +1379,158 @@ input, and the Endur vault. Its receipt contains STRK20 pool events, the helper'
 execution event, and Endur xSTRK deposit/share events. This is the second verified Facet protocol
 action on Mainnet and is safe to record in `strk20.json`. The Vesu failure remains excluded.
 
+### 6.33 A shadow-account DeFi action is unreachable on Mainnet from either direction — 30 August 2026
+
+This is the central negative result of the project, and it is the reason the Mainnet routes are
+wallet-mediated calls to a shared helper rather than calls made by a per-application account.
+
+**The primitive works.** §6.6, §6.12 and §6.17 establish the `UseNote → Withdraw →
+ComputeAndInvoke` sequence in source, in fork tests against deployed bytecode, and finally on
+Sepolia, twice. Nothing below contradicts that. What follows is about Mainnet reachability, not
+about whether the mechanism is sound.
+
+There are exactly two ways to drive a shadow account. Both are closed today, for unrelated
+reasons owned by different parties.
+
+**(a) The SDK route is blocked by screening.** Recorded in §6.27: a compatible proof completed
+and AVNU returned `SCREENING_REQUIRED`. The live pool's screener key is configured, and this
+project has no authorized screening endpoint, no `BLOCKING_CHECK_URL`, and no proof-interceptor
+deployment. Anyone holding a viewing key can build the actions; nobody outside the authorized
+screening service can get them applied to the Mainnet pool.
+
+**(b) The Wallet API route depends on wallet support this project cannot confirm.** The action
+exists in the specification — `shadow_account_invoke`, carrying `dapp_name`, `nonce`, `calls`
+and a `collect_policy`, alongside `wallet_strk20ShadowAccountCommitment` for resolving the
+partial commitment. It is **not present in any type package this repository installs**, checked
+on 30 August 2026:
+
+```
+starknet                          10.5.0
+@starknet-io/types-js             0.7.10
+@starknet-io/starknet-types-09    0.9.2
+@starknet-io/starknet-types-0103  0.10.3
+grep -rl "shadow_account_invoke" node_modules/@starknet-io node_modules/starknet/dist  → no match
+```
+
+The definitions used while investigating this came from a **vendored shim** in the upstream
+privacy client, whose own comment marks them as not yet shipped in `@starknet-io/starknet-types`.
+`starknet` 10.6.x is published; this repository pins 10.5.0. So the wallet leg has two distinct
+unknowns — whether the dependency bump exposes the action, and whether the connected wallet
+answers it — and **neither has been tested from this project.** Do not record the wallet leg as
+refused; record it as untested. The check is cheap and needs a connected wallet, which this VPS
+does not have:
+
+```js
+// returns the partial commitment when the wallet implements it; throws otherwise.
+await wallet.request({ type: "wallet_strk20ShadowAccountCommitment",
+                       params: { dapp_name: "facet-mainnet-ekubo-v1" } });
+```
+
+Treat a `NOT_REGISTERED` error as support-with-no-registration, not as absence.
+
+**What the chain says about the consequence.** The official Mainnet shadow-account anonymizer
+`0x4f33230dc57855c6e7eabe66dfa0fde82c5458fd0e54827cdb7cb4c474888a7` has been live since block
+12,199,879 (23 July 2026). Full event scan to block 14,118,501 on 30 August 2026:
+
+| Measure | Value |
+|---|---|
+| Events since deploy | **20** |
+| Distinct transactions | **6** |
+| Last event | block **13,180,956** |
+| Blocks since last event | **937,545** |
+
+Six transactions, and nothing for the better part of a million blocks. Combined with §5's census —
+of 326 `privacy_invoke_with_computation` calls only 39 reached a shadow-account anonymizer, and
+all 39 targeted the STRK token contract — the defensible claim is unchanged and now stronger:
+**no shadow account has ever interacted with a DeFi protocol on Starknet Mainnet.** That is not
+because the idea is unattractive. It is because both roads to it are closed by third parties.
+
+**Why this matters for the product boundary.** A shared helper is not a weaker version of a
+shadow account; it is a different privacy shape. The helper gives every user of a route the same
+on-chain identity, which is an anonymity set that grows with usage. A per-application account
+gives a fresh identity that is unlinked but alone, and therefore still exposed to amount and
+timing correlation on a single interaction. The helper is the better shape for **flow-through**
+actions — swap, or stake-and-take-the-shares — where nothing is owned afterwards.
+
+It is the wrong shape for **persistent positions**, and §6.34 is the concrete case: a protocol
+that records a lasting owner needs something with an identity to be that owner. A shared helper
+cannot hold a position, a claim ticket, or a debt on behalf of one user among many. This is the
+boundary the account layer exists to cross, and it is the part of the architecture that remains
+unbuilt.
+
+### 6.34 Endur's exit is a queue, so the working exit is the secondary market — 30 August 2026
+
+The obvious exit from the §6.32 Endur position is `redeem` on the xSTRK vault. It does not
+return the asset. Verified against a real Mainnet redemption,
+`0x4419bf1d39a6af73b9a141a44a988dc6a74bc43ec2af1def48ff4c577c4d8a` (block 14,100,824,
+SUCCEEDED, 85,290 xSTRK):
+
+```
+xSTRK   Transfer   holder -> 0x0            85,290.00      shares burned
+0x518a…  Transfer   0x0 -> holder            (ERC-721)      withdrawal-queue ticket minted
+0x518a…  WithdrawQueue event
+xSTRK   Withdraw   100,360.26
+STRK    Transfer   holder -> fee token                      the fee, and nothing else
+```
+
+No STRK reaches the caller in that transaction. The queue contract
+`0x518a66e579f9eb1603f5ffaeff95d3f013788e9c37ee94995555026b9648b6` exposes
+`request_withdrawal(assets, shares, receiver)`, `claim_withdrawal(request_id)` and a full
+`ERC721ABI`; `get_queue_state` reported 10,456 outstanding requests on 30 August 2026. The vault
+holds **1.0 STRK liquid against 140,237,299 STRK of total assets** — deposits are forwarded to
+validators immediately — which is why redemption cannot settle synchronously. Note that
+`max_redeem` returns the holder's full share balance regardless, so the ERC-4626 views do not
+predict this.
+
+**The helper cannot express that exit, and this is the safe outcome.** `erc4626_anonymizer.cairo`
+computes `balance_after - balance_before` on the output token and asserts
+`output_amount.is_non_zero()`. On a queue redemption that difference is zero, the assert fires,
+and by §6.12 the panic propagates out of `apply_actions` and reverts the whole invoke including
+the `Withdraw`. Nothing strands. Had it not reverted the result would have been worse: the
+ERC-721 ticket would mint to the shared helper, which has no `claim_withdrawal` path and no way
+to attribute a ticket to one user. **A queue exit requires an owner with an identity.**
+
+**The exit that works is the secondary market.** Quoted live against the Mainnet router on
+30 August 2026. The `0.05% / 1000` key returns `NOT_INITIALIZED` for this pair; the initialised
+key is `0.01% / 200`:
+
+| Size | Output | vs. `preview_redeem` NAV (1.176055 STRK/xSTRK) |
+|---|---|---|
+| 0.084999208 xSTRK | 0.099588073 STRK | −0.38% |
+| 100 xSTRK | 117.163517 STRK | −0.38% |
+| 1,000 xSTRK | 1,171.633996 STRK | −0.38% |
+| 10,000 xSTRK | 11,716.222166 STRK | −0.38% |
+
+A flat 38 basis points out to 10,000 xSTRK: the discount is the spread, not depth. Paying 38 bps
+to settle in one transaction instead of joining a 10,456-deep queue is the trade a position
+holder would choose on the merits, so the exit route is the product answer and not a workaround.
+It is implemented as the `ekubo-exit` route and ships as `route-verified-unexecuted` until a
+receipt exists.
+
+
+### 6.35 The Ekubo adapter declares two settlements; the deployed helper settles one — 30 August 2026
+
+Found by routing the SDK adapters through the reference executor for the first time, which is the
+point of having one.
+
+`buildEkuboSwapPlan` returns **two** `settlements` — the input-token remainder and the output
+token — each with its own `diff` policy and reasoning. The deployed Ekubo helper's
+`IEkuboSwapAnonymizer::privacy_invoke(router_addr, token_amount, pool_key, minimum_received,
+skip_ahead, note_id)` takes **one** `note_id`. The live page has always sent one `OPEN` transfer
+and one placeholder, so the transaction that succeeded on Mainnet is correct; the *adapter's*
+declared settlement set has never been the thing that was submitted.
+
+Nothing was mis-settled, because the two representations never met. That is precisely the risk of
+two independent action constructions: the divergence is invisible until something consumes both.
+`buildWalletActions` now refuses the combination rather than truncating it, and
+`tests/executor.test.ts` pins the refusal.
+
+The open question is which side is right. Either the helper should accept a note per settled
+token, or the adapter should declare one settlement and document that the input remainder stays
+with the helper. This is a design decision, not a bug fix, and it is recorded here rather than
+guessed at.
+
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:
