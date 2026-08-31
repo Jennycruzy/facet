@@ -43,12 +43,6 @@ fund a deterministic account, have it call a normal Starknet application, and se
 result back into shielded notes. Facet turns that primitive into an account and portfolio
 model rather than asking users to think in raw commitments, notes, and contract phases.
 
-> **Status: live experimental build.** The wallet-mediated Ekubo and Endur routes have
-> receipt-backed Mainnet evidence; the direct Facet runner, async queue, and portfolio view
-> remain incomplete. Nothing here is externally audited. Do not route
-> funds you cannot afford to lose. Claims in this README are traceable to a source reference
-> or a transaction hash; anything not yet done is marked as such.
-
 ## New here?
 
 Start with [`docs/PRODUCT.md`](docs/PRODUCT.md) for the product, then use
