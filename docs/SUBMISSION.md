@@ -104,7 +104,7 @@ serves the release with the verified route cards;
 `/launch.html`, `/mainnet-ekubo.html`, and `/mainnet-defi.html` returned 200 and passed the
 VPS-side obvious-secret scan.
 The prior release is preserved at
-`/var/www/facet.backup-20260829T170732Z-release-hardening`.
+`/var/www/facet.backup-20260831T060227Z-4121433`.
 
 ```bash
 curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
