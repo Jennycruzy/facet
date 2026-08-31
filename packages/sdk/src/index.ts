@@ -59,3 +59,17 @@ export {
   normalizeWalletSignature,
   VIEWING_KEY_LABEL,
 } from "./wallet-identity.js";
+
+export {
+  buildWalletActions,
+  ekuboHelperBinding,
+  erc4626HelperBinding,
+  ExecutorPolicyError,
+  OPEN,
+  OPEN_NOTE_PLACEHOLDER,
+  WalletFacetExecutor,
+  type HelperBinding,
+  type Strk20Action,
+  type Strk20WalletLike,
+  type WalletExecutorOptions,
+} from "./executor.js";

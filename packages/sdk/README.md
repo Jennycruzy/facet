@@ -71,9 +71,29 @@ const result = await executeAppIntent({
 });
 ```
 
-That is the dapp-facing flow: **app intent → adapter plan → Facet execution**. Developers do not
-select notes, derive shadow accounts, or call a prover. Ekubo and Endur demonstrate the interface;
-they are not a claim that arbitrary apps are already supported.
+That is the dapp-facing flow: **app intent → adapter plan → Facet execution**. Ekubo and Endur
+demonstrate the interface; they are not a claim that arbitrary apps are already supported.
+
+`WalletFacetExecutor` is the reference `FacetExecutor` and ships with the package, so
+`executeAppIntent` runs end to end against a Wallet API wallet:
+
+```ts
+import { WalletFacetExecutor, erc4626HelperBinding } from "@facet/sdk";
+
+const facetExecutor = new WalletFacetExecutor({
+  wallet, owner: connectedWallet, linkedAddresses,
+  binding: erc4626HelperBinding({ helper: endurHelper, operation: "deposit" }),
+});
+```
+
+**What it does and does not do.** It builds the action list, enforces the settlement and recipient
+invariants, and hands the result to the wallet. The wallet owns the shielded state, the proof, the
+screening attestation and the submission — so on this path a developer does not select notes or
+run a prover, because the wallet does. It is the plain-invoke path through a protocol-bound
+helper, **not** a per-application shadow account; see `docs/FINDINGS.md` §6.33 for why that path
+is not reachable on Mainnet today. A developer wanting a different protocol supplies a
+`HelperBinding`; a developer wanting a different submission path implements `FacetExecutor`
+themselves, and then notes, keys and proving are theirs to handle.
 
 `src/adapters.ts` contains pure call builders for the two current Facet integrations:
 
