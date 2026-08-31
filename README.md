@@ -60,8 +60,8 @@ model rather than asking users to think in raw commitments, notes, and contract 
 | Lifecycle and recovery | **Model, classification, and a tested exit composition; no general on-chain actuator.** The Endur exit route is implemented to exchange xSTRK for STRK through Ekubo, because Endur's own redemption is a withdrawal queue (`FINDINGS.md` §6.34), but that exit still lacks its Mainnet receipt. The launcher records confirmed hashes and held positions, moves its local record through all five states, and refuses retirement while a position remains. |
 | Persistent facets | **Local activity record only.** The launcher stores app, version, lifecycle state, Mainnet transaction hashes and held positions in this browser. It does not derive, create, rotate, recover, or retire an actual on-chain account, and stores no signature, viewing key or recovery secret. |
 | Mainnet execution | **Live through Ready X.** Ready X owns shielded state, screening, proving, and submission. Facet supplies reviewed Ekubo/Endur route and helper bindings. |
-| Direct Facet Mainnet path | **Not live.** Prover/paymaster infrastructure exists, but new Mainnet deposits require an attestation from the pool's authorized screening service. Facet has no authorized screening endpoint or signing key. |
-| Mainnet evidence | **Verified.** Ekubo and Endur succeeded through Ready X. The third successful STRK20 transaction is the Ready X eligibility shield, not a third Facet app action. A direct launcher-to-protocol receipt remains missing. |
+| Direct Facet Mainnet path | **Built and proven on Sepolia; not yet successful on Mainnet.** A direct Facet transaction reached Mainnet and finalized, but reverted with `EMPTY_PROOF_FACTS`. A later compatible proof reached AVNU and stopped before broadcast with `SCREENING_REQUIRED`. The live pool requires an attestation from its authorized screening service; Facet has no production screening endpoint or signing key. StarkWare's merged [shadow-account derivation](https://github.com/starkware-libs/starknet-privacy/pull/954), [pool-policy client](https://github.com/starkware-libs/starknet-privacy/pull/955), and [deposit-address screening](https://github.com/starkware-libs/starknet-privacy/pull/957) changes document that infrastructure boundary. |
+| Mainnet evidence | **Verified.** Ekubo and Endur succeeded through Ready X. The third successful STRK20 transaction is the Ready X eligibility shield, not a third Facet app action. The direct Facet Mainnet attempt is independently visible on chain, but reverted and is not counted as a success. A successful direct launcher-to-protocol receipt remains missing. |
 
 ## New here?
 
@@ -294,9 +294,17 @@ verified in Mainnet transaction
 the receipt succeeded and emitted STRK20 pool and Ekubo core events, while the transaction data
 contains the deployed helper and router. The reviewed Wallet API Endur action also succeeded in
 `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`, block 14,052,044, with
-STRK20 pool, Endur helper, and Endur xSTRK events. The direct Facet runner remains a separate
-path blocked by AVNU screening. A retired Vesu experiment is preserved as historical failure
-analysis in [`docs/FINDINGS.md`](docs/FINDINGS.md), not presented as a supported route.
+STRK20 pool, Endur helper, and Endur xSTRK events.
+
+There is also a direct Facet Mainnet transaction:
+[`0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e`](https://voyager.online/tx/0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e).
+It was accepted and finalized on L1, but reverted with `EMPTY_PROOF_FACTS`; its approval and
+registration state changes were rolled back. It proves that Facet's direct transaction reached
+Mainnet, not that the action succeeded. The later proof-compatible route progressed further and
+was rejected before broadcast because it lacked the live pool's authorized screening attestation.
+That distinction, including the RPC receipt and AVNU response, is recorded in `docs/FINDINGS.md`
+§§6.22 and 6.27. A retired Vesu experiment is preserved there as historical failure analysis,
+not presented as a supported route.
 
 ## Documentation
 
