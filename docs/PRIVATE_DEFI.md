@@ -192,7 +192,7 @@ and its transaction data contains the deployed Facet helper and Ekubo router.
 
 The reviewed Wallet API Endur action
 `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` succeeded in block
-14,052,044 (`ACCEPTED_ON_L2`); its receipt contains STRK20 pool events, the deployed Endur helper,
+14,052,044 (`ACCEPTED_ON_L1`); its receipt contains STRK20 pool events, the deployed Endur helper,
 and Endur xSTRK events.
 
 The reviewed xSTRK exit action

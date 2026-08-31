@@ -974,7 +974,7 @@ transactions on Starknet Sepolia. Both were proved by the self-hosted transactio
 | Shadow account class | `0x0346e143e3b353473a0d6f681c31ffcf2866537898008027fb3b57335bad7b5f` |
 | Deploy + withdraw + collect | `0x05faace1d275d2a301b10dd1fb3f809cc65d3ba8799fbc68f0828eca4a1dedef`, block 14,018,840, 2026-08-25 09:49:52Z |
 | Withdraw + dapp call + collect | `0x0111b815a660ee41c17bf285bde7c6b43cbef5bc5d6fbf43d25e94e7f17f3693`, block 14,020,928, 2026-08-25 10:47:41Z |
-| Status | Both `SUCCEEDED`; the first `ACCEPTED_ON_L1` |
+| Status | Both `SUCCEEDED` and `ACCEPTED_ON_L1` |
 | Withdrawn per transaction | 0.5 STRK (`0x6f05b59d3b20000`) |
 | Fee, paid by the relayer | 2.786 STRK and 2.737 STRK |
 
@@ -1046,7 +1046,7 @@ dapp name and an unrelated recipient to test that the linkage is avoidable.
 | Predicted shadow account | `0x560b198338b9e7cef36d8c775725e10a8e4fb6a5acfb54fe868a7d07f89e2b8` |
 | Deposit transaction | `0x4cee84654535d0f98f7a8e0402fce4c47aab1ff62b6b132d725184e5eb30a07`, block 14,027,039 |
 | Private transaction | `0x68510769914a25f6dc9d90fa7f5672bd83908c4ddafc77b1fd6ff3782286b3a`, block 14,028,014 |
-| Status | Both accepted on L2; the dapp call delivered 1 wei to the unrelated recipient |
+| Status | Both `SUCCEEDED` and `ACCEPTED_ON_L1`; the dapp call delivered 1 wei to the unrelated recipient |
 | Proof wall time | 400 seconds |
 | Actual fees | 2.700103764871909120 STRK (deposit), 2.888034439422903072 STRK (private transaction) |
 
@@ -1139,7 +1139,7 @@ then accepted by the RPC but reverted on-chain as `EMPTY_PROOF_FACTS`:
 
 | Transaction | Execution | Actual fee | State change |
 |---|---|---:|---|
-| [`0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e`](https://voyager.online/tx/0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e) | `REVERTED`, accepted on L2 | `0.035290550669266304 STRK` | none; approval and registration rolled back |
+| [`0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e`](https://voyager.online/tx/0x54ae85094a3baaba9e27c39b52687f3149c6c2a9c532f84452f3d75e4e60b1e) | `REVERTED`, `ACCEPTED_ON_L1` | `0.035290550669266304 STRK` | none; approval and registration rolled back |
 
 Read-only retrieval of the submitted transaction showed `proof_facts: []`, while the local signed
 transaction had nine facts and the same signed object passed `starknet_simulateTransactions`.
@@ -1368,7 +1368,7 @@ The next controlled Ready X Wallet API action used the deployed Endur xSTRK help
 | Transaction | [`0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`](https://voyager.online/tx/0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5) |
 | Sender | `0x795a64eaa58c613e489872c8a774138f12cab9390c0c51192ce1c72e926d463` (Ready-managed shadow account) |
 | Block | 14,052,044 |
-| Finality | `ACCEPTED_ON_L2` |
+| Finality | `ACCEPTED_ON_L1` |
 | Execution | `SUCCEEDED` |
 | STRK20 pool event source | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
 | Endur helper event source | `0x292df14818896b5366a075581471b4dd9436f6590f696e6f9658a777c4a1240` |
