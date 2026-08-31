@@ -134,19 +134,23 @@ curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
 
 ## `demo_video`
 
-Empty. Target: under two minutes, real Mainnet evidence, hashes visible, and a screen recording
-with no hidden success claim. The recording may use the already-verified receipts if it says so;
-it must not imply that the direct Facet runner is instant or that an unverified route succeeded.
+Empty. Target: **three minutes** — the length the sprint asks for — with real Mainnet
+evidence, hashes visible, and a screen recording that makes no hidden success claim. The
+recording may use the already-verified receipts if it says so, and must not imply that an
+unverified route succeeded.
 
-**State the proving time honestly.** Proving takes roughly five to seven minutes on the
-current self-hosted development host; pre-generating
-proofs for the recording is fine, and saying so in the video description is what keeps it
-honest. A judge who discovers a demo was cut to hide a six-minute wait discounts everything
-else — and by this project's own stated standard, that is disqualifying.
+**The recording is the Ready X wallet path.** That is the path with receipts, so it is the
+path to film, and it proves on Ready X's infrastructure rather than ours. Record it live;
+there is nothing to pre-generate and therefore nothing to disclose.
 
-The verified Mainnet actions used Ready X's wallet-mediated STRK20 path rather than the
-VPS's direct Facet runner. Do not present the local prover measurement as the observed latency of
-those wallet actions, and do not present a wallet-mediated receipt as a direct `FacetAccount`
+**Do not narrate proving time.** The five-to-seven-minute figure belongs to the local Zen 2
+development prover on the direct path (`ADAPTERS.md` §"Proving starts early", `PRIVATE_DEFI.md` §"Timing and product expectations"), not to the
+wallet actions on screen. It is already written down for any judge who wants it, and repeating
+it over a Ready X recording would misattribute the direct path's latency to the product. State
+a duration only if it was measured on the take being shipped.
+
+The verified Mainnet actions used Ready X's wallet-mediated STRK20 path rather than the VPS's
+direct Facet runner. Do not present a wallet-mediated receipt as a direct `FacetAccount`
 signature.
 
 ## Product claims the submission may make
@@ -182,7 +186,8 @@ proof, receipt, expected pool event, protocol event, and post-action state have 
       STRK20 pool event; the strongest one or two demonstrate Facet's own protocol path
 - [x] `demo_url` serves the current checkout over HTTPS, including the clean route URLs
       `/launch`, `/ekubo`, `/endur` and `/proof` (the `.html` paths 301 to these)
-- [ ] `demo_video` is public, under two minutes, and states the real proving/queue behaviour
+- [ ] `demo_video` is public, three minutes or under, films the Ready X path, and claims no
+      duration that was not measured on the take being shipped
 - [x] No async queue is shipped in this release, so there are no queue records containing private
       keys, signatures, viewing keys, passwords, or proof blobs
 - [x] Any second application shown as live has a real network rehearsal and receipt; otherwise it
