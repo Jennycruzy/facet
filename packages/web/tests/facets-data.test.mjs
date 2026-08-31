@@ -33,21 +33,25 @@ test("only routes with a Mainnet receipt carry the verified status", () => {
   }
 });
 
-test("every route links to a page that exists in this checkout", () => {
+test("every route uses a clean public path that exists in this checkout", () => {
   // Relative, not site-absolute: a cloned checkout served from any directory must work.
   // nginx still redirects these filenames to the clean public URLs.
   assert.deepEqual(
     Object.fromEntries(data.apps.map((app) => [app.id, app.executionPage])),
     {
-      ekubo: "mainnet-ekubo.html",
-      endur: "mainnet-defi.html",
-      "ekubo-exit": "mainnet-ekubo-exit.html",
+      ekubo: "/ekubo",
+      endur: "/endur",
+      "ekubo-exit": "/ekubo-exit",
     },
   );
+  // Clean paths are canonical, and each must map to a page that exists in this checkout.
+  const served = { "/ekubo": "mainnet-ekubo.html", "/endur": "mainnet-defi.html",
+                   "/ekubo-exit": "mainnet-ekubo-exit.html" };
   for (const app of data.apps) {
-    assert.ok(!app.executionPage.startsWith("/"), `${app.id} must not use a site-absolute path`);
+    assert.ok(app.executionPage.startsWith("/"), `${app.id} must use a clean public path`);
+    assert.ok(!app.executionPage.endsWith(".html"), `${app.id} must not expose a filename`);
     assert.ok(
-      existsSync(new URL(`../${app.executionPage}`, import.meta.url)),
+      existsSync(new URL(`../${served[app.executionPage]}`, import.meta.url)),
       `${app.id} points at a missing page: ${app.executionPage}`,
     );
   }
@@ -105,7 +109,7 @@ test("Endur is bound to the reviewed Mainnet ERC-4626 route", () => {
   for (const id of ["endur"]) {
     const app = data.apps.find((candidate) => candidate.id === id);
     assert.ok(app);
-    assert.equal(app.executionPage, "mainnet-defi.html");
+    assert.equal(app.executionPage, "/endur");
     assert.match(app.contract, /^0x[0-9a-f]{60,}$/i);
     assert.match(app.outputToken, /^0x[0-9a-f]{60,}$/i);
     assert.match(app.helper, /^0x[0-9a-f]{60,}$/i);
