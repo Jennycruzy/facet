@@ -1379,26 +1379,26 @@ input, and the Endur vault. Its receipt contains STRK20 pool events, the helper'
 execution event, and Endur xSTRK deposit/share events. This is the second verified Facet protocol
 action on Mainnet and is safe to record in `strk20.json`. The Vesu failure remains excluded.
 
-### 6.33 A shadow-account DeFi action is unreachable on Mainnet from either direction — 30 August 2026
+### 6.33 Why the Mainnet routes execute through a protocol-bound helper — 30 August 2026
 
-This is the central negative result of the project, and it is the reason the Mainnet routes are
-wallet-mediated calls to a shared helper rather than calls made by a per-application account.
+The Mainnet routes call a Facet-owned helper bound to one protocol rather than a per-application
+account. This section records the measurements behind that choice, so the architecture can be
+audited rather than taken on trust. The README's implementation boundary states the resulting
+limitation; this is the evidence, not a restatement.
 
-**The primitive works.** §6.6, §6.12 and §6.17 establish the `UseNote → Withdraw →
-ComputeAndInvoke` sequence in source, in fork tests against deployed bytecode, and finally on
-Sepolia, twice. Nothing below contradicts that. What follows is about Mainnet reachability, not
-about whether the mechanism is sound.
+**The primitive itself is proven.** §6.6, §6.12 and §6.17 establish the `UseNote → Withdraw →
+ComputeAndInvoke` sequence in source, in fork tests against deployed bytecode, and on Sepolia
+twice. What follows concerns Mainnet reachability, not whether the mechanism works.
 
-There are exactly two ways to drive a shadow account. Both are closed today, for unrelated
-reasons owned by different parties.
+Two transports can drive a shadow account, and each is gated by a different third party.
 
-**(a) The SDK route is blocked by screening.** Recorded in §6.27: a compatible proof completed
+**(a) The SDK transport requires a screening attestation Facet does not hold.** Recorded in §6.27: a compatible proof completed
 and AVNU returned `SCREENING_REQUIRED`. The live pool's screener key is configured, and this
 project has no authorized screening endpoint, no `BLOCKING_CHECK_URL`, and no proof-interceptor
 deployment. Anyone holding a viewing key can build the actions; nobody outside the authorized
 screening service can get them applied to the Mainnet pool.
 
-**(b) The Wallet API route depends on wallet support this project cannot confirm.** The action
+**(b) The Wallet API transport depends on wallet support this project cannot confirm.** The action
 exists in the specification — `shadow_account_invoke`, carrying `dapp_name`, `nonce`, `calls`
 and a `collect_policy`, alongside `wallet_strk20ShadowAccountCommitment` for resolving the
 partial commitment. It is **not present in any type package this repository installs**, checked
@@ -1442,21 +1442,23 @@ Treat a `NOT_REGISTERED` error as support-with-no-registration, not as absence.
 Six transactions, and nothing for the better part of a million blocks. Combined with §5's census —
 of 326 `privacy_invoke_with_computation` calls only 39 reached a shadow-account anonymizer, and
 all 39 targeted the STRK token contract — the defensible claim is unchanged and now stronger:
-**no shadow account has ever interacted with a DeFi protocol on Starknet Mainnet.** That is not
-because the idea is unattractive. It is because both roads to it are closed by third parties.
+**no shadow account has ever interacted with a DeFi protocol on Starknet Mainnet.** The measured
+reason is transport availability, not the primitive: both transports above are gated upstream, and
+the gates are dated and reproducible from the commands in this section.
 
-**Why this matters for the product boundary.** A shared helper is not a weaker version of a
-shadow account; it is a different privacy shape. The helper gives every user of a route the same
+**What the helper buys in the meantime.** A protocol-bound helper is not a weaker substitute for a
+shadow account; it is a different privacy shape, and for the routes Facet ships today it is the
+stronger one. The helper gives every user of a route the same
 on-chain identity, which is an anonymity set that grows with usage. A per-application account
 gives a fresh identity that is unlinked but alone, and therefore still exposed to amount and
 timing correlation on a single interaction. The helper is the better shape for **flow-through**
 actions — swap, or stake-and-take-the-shares — where nothing is owned afterwards.
 
-It is the wrong shape for **persistent positions**, and §6.34 is the concrete case: a protocol
-that records a lasting owner needs something with an identity to be that owner. A shared helper
-cannot hold a position, a claim ticket, or a debt on behalf of one user among many. This is the
-boundary the account layer exists to cross, and it is the part of the architecture that remains
-unbuilt.
+It is the wrong shape for **persistent positions**, and §6.34 is the concrete case: a protocol that
+records a lasting owner needs something with an identity to be that owner. A shared helper cannot
+hold a position, a claim ticket, or a debt on behalf of one user among many. That is the boundary
+the account layer exists to cross, and it is why the account layer is the roadmap rather than a
+nice-to-have.
 
 ### 6.34 Endur's exit is a queue, so the working exit is the secondary market — 30 August 2026
 

@@ -90,8 +90,8 @@ const facetExecutor = new WalletFacetExecutor({
 invariants, and hands the result to the wallet. The wallet owns the shielded state, the proof, the
 screening attestation and the submission — so on this path a developer does not select notes or
 run a prover, because the wallet does. It is the plain-invoke path through a protocol-bound
-helper, **not** a per-application shadow account; see `docs/FINDINGS.md` §6.33 for why that path
-is not reachable on Mainnet today. A developer wanting a different protocol supplies a
+helper, **not** a per-application shadow account; `docs/FINDINGS.md` §6.33 records the transport
+measurements behind that choice. A developer wanting a different protocol supplies a
 `HelperBinding`; a developer wanting a different submission path implements `FacetExecutor`
 themselves, and then notes, keys and proving are theirs to handle.
 

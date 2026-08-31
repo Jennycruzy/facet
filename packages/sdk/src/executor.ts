@@ -9,8 +9,8 @@
  * re-derive the settlement invariants below.
  *
  * It is deliberately the *plain invoke* path: the pool withdraws to a Facet-owned helper bound to
- * one protocol, and invokes that helper. It is not a per-application shadow account — see
- * `docs/FINDINGS.md` §6.33 for why that path is not reachable on Mainnet today.
+ * one protocol, and invokes that helper. It is not a per-application shadow account;
+ * `docs/FINDINGS.md` §6.33 records the transport measurements behind that choice.
  */
 
 import type { AdapterPlan } from "./adapters.js";
