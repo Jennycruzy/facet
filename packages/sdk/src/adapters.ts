@@ -53,9 +53,17 @@ export interface AdapterSettlement {
   reason: string;
 }
 
+/** An address that a protocol call exposes publicly on Starknet. */
+export interface PublicRecipient {
+  field: string;
+  address: string;
+}
+
 export interface AdapterPlan {
   protocol: string;
   calls: PrivacyCall[];
+  /** Explicit recipient fields only; protocol contracts and shielded OPEN-note owners do not belong here. */
+  publicRecipients: PublicRecipient[];
   input: {
     token: string;
     amount: string;
@@ -203,17 +211,13 @@ export function buildEndurStakePlan(options: BuildEndurStakePlanOptions): Adapte
         calldata: [...amount.calldata, receiver],
       },
     ],
+    publicRecipients: [{ field: "Endur receiver", address: receiver }],
     input: { token, amount: amount.normalized },
     settlements: [
       {
-        token,
-        policy: { type: "diff" },
-        reason: "Return unused input-token balance without sweeping an earlier context balance.",
-      },
-      {
         token: endur,
         policy: { type: "diff" },
-        reason: "The stake produces xSTRK, so settle the output token independently from STRK.",
+        reason: "Settle the xSTRK produced by the exact-input deposit.",
       },
     ],
   };
@@ -293,12 +297,6 @@ export function buildEkuboQuoteCall(options: EkuboRouteOptions): PrivacyCall {
  * output token only when it meets the caller's quoted minimum.
  */
 export function buildEkuboSwapPlan(options: BuildEkuboSwapPlanOptions): AdapterPlan {
-  // Ekubo's reviewed route has no user-selected public receiver. Still validate every address
-  // named by the intent so adding a receiver later cannot silently bypass the shared guard.
-  for (const [field, value] of [["Ekubo router", options.router], ["Ekubo token0", options.token0],
-    ["Ekubo token1", options.token1]] as const) {
-    assertRecipientUnlinked(value, options.linkedAddresses, field);
-  }
   const route = ekuboRouteCalldata(options);
   const tokenOut = address(options.tokenOut, "Ekubo output token");
   if (tokenOut === route.tokenIn) throw new RangeError("Ekubo output token must differ from input token");
@@ -326,6 +324,9 @@ export function buildEkuboSwapPlan(options: BuildEkuboSwapPlanOptions): AdapterP
         calldata: [tokenOut, ...minimumAmountOut.calldata],
       },
     ],
+    // The reviewed helper route has no user-selected public receiver. Its OPEN-note recipient is
+    // shielded inside the pool and is deliberately not a public recipient.
+    publicRecipients: [],
     input: { token: route.tokenIn, amount: route.amountIn.normalized },
     // One settlement, because this route is an exact-input single hop: the whole input is
     // transferred to the router and consumed by the swap, so there is no input-token remainder to

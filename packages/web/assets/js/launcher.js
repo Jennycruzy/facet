@@ -2,6 +2,7 @@ import "./theme.js";
 import { createGem } from "./gem.js";
 import { applicationContext, contextLabel } from "./app-context.js";
 import { mapKey, readMap, recordActivity, retain, retireBlockedReason, move } from "./facet-map.js";
+import { detectReadyX } from "./route-runtime.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -41,18 +42,11 @@ function normalizeStarknetAddress(value) {
   try { return `0x${BigInt(value).toString(16)}`; } catch { return null; }
 }
 
-function detectReadyX(scope = window) {
-  const candidates = [scope.starknet_ready, scope.starknetReady, scope.starknet]
-    .filter((wallet, index, values) => wallet && typeof wallet.request === "function" && values.indexOf(wallet) === index);
-  return candidates.find((wallet) => /ready/i.test(`${wallet.id ?? ""} ${wallet.name ?? ""}`))
-    ?? (scope.starknet_ready && typeof scope.starknet_ready.request === "function" ? scope.starknet_ready : null);
-}
-
 const mark = createGem($("mark"), { segments: 6 });
 mark.setFacets(data.facets);
 mark.start();
 
-// The connected Ready X account is held only for this page session. The persistent map below stores
+// The connected Ready X account is held only for this page session. The local activity map stores
 // app/version metadata, never wallet signatures, private keys, or recovery secrets.
 const session = {
   provider: detectReadyX(),
@@ -77,7 +71,7 @@ function updateFacet(appId, action) {
     if (blocked) { setStatus("error", blocked); renderFacetMap(); return; }
     move(session.account, appId, "retire");
   } else {
-    // Rotating starts a fresh identity for the same app: retire the old record, then retain again.
+    // A new local version retires the old record, then retains the same app again.
     if (!retireBlockedReason(record)) move(session.account, appId, "retire");
     else { setStatus("error", retireBlockedReason(record)); renderFacetMap(); return; }
     retain(session.account, appId);
@@ -103,7 +97,7 @@ function renderFacetMap() {
   const rows = data.apps.map((app) => ({ app, record: records[key(app.id)] })).filter(({ record }) => record);
   target.replaceChildren();
   if (!rows.length) {
-    target.innerHTML = '<span class="muted">Choose an app to create its retained identity.</span>';
+    target.innerHTML = '<span class="muted">Choose an app to create its local activity record.</span>';
     return;
   }
   for (const { app, record } of rows) {
@@ -120,7 +114,7 @@ function renderFacetMap() {
     for (const action of ["rotate", "retire"]) {
       const button = document.createElement("button");
       button.type = "button";
-      button.textContent = action;
+      button.textContent = action === "rotate" ? "new local version" : "retire record";
       const blocked = retireBlockedReason(record);
       button.disabled = record.state === "retire" || Boolean(blocked);
       if (blocked) button.title = blocked;
@@ -151,8 +145,8 @@ function render() {
   $("connect").textContent = connected ? "Ready X connected" : "Connect Ready X";
   $("sign").hidden = true;
   $("binding-message").textContent = bound
-    ? "Identity map ready. Choose an app to retain or reopen its Facet identity."
-    : "Connect Ready X to open your local identity map.";
+    ? "Local activity ready. Choose an app to open its reviewed route."
+    : "Connect Ready X to open your local activity record.";
   $("copy-message").disabled = true;
   $("bound-pill").textContent = bound ? "session ready" : "not bound";
   $("bound-pill").className = `pill ${bound ? "pill-good" : ""}`;
@@ -178,10 +172,10 @@ function render() {
     $("context-nonce").textContent = String(context.nonce);
   }
   $("selection-note").textContent = selected
-    ? `${selected.name} selected. ${contextLabel(context)} is retained for this application; no transaction was prepared.`
+    ? `${selected.name} selected. Local ${contextLabel(context)} is retained for this app; no transaction was prepared.`
     : bound
-      ? "Choose an application context. Selection only previews the next step; no transaction is prepared."
-      : "Choose an identity to preview its route. Connect Ready X before approving an action.";
+      ? "Choose an application route. Selection only previews the next step; no transaction is prepared."
+      : "Choose an app to preview its route. Connect Ready X before approving an action.";
   renderFacetMap();
 }
 
@@ -219,7 +213,7 @@ function selectApp(id) {
   if (!app) return;
   session.selectedApp = app.id;
   if (session.account && session.state === "bound") retainFacet(app.id);
-  setStatus("selected", `${app.name} identity selected. Opening its Mainnet route…`);
+  setStatus("selected", `${app.name} selected. Opening its Mainnet route…`);
   render();
   if (app.executionPage) window.location.assign(app.executionPage);
 }

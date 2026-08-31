@@ -2,9 +2,9 @@
 
 An adapter is the small piece of Facet that knows how to build one protocol's calldata. It is
 not a copy of the protocol, not a wrapper, and not a mock. Facet builds the same calls the
-protocol's own frontend would build and runs them through a shadow account, so the protocol
-receives an ordinary interaction from an ordinary-looking address and never has to know Facet
-exists.
+protocol's own frontend would build. The direct Sepolia path runs them through a shadow account;
+the current Mainnet product runs reviewed helper-bound plans through Ready X. The adapter interface
+does not imply that those two execution identities are equivalent.
 
 The adapter boundary is also the safety boundary. An adapter may select a known route and
 construct known calldata; it must not accept arbitrary calls from a browser or a queue service.
@@ -57,8 +57,8 @@ the xSTRK lands in the facet's balance.
 
 Same two-call pattern: `approve` STRK to the xSTRK contract, then `deposit`.
 
-The pure SDK builder is `buildEndurStakePlan`. It returns separate `diff` settlement hints for
-the unused input token and the xSTRK output, because those are different balances.
+The pure SDK builder is `buildEndurStakePlan`. The deposit is exact-input, so it returns one `diff`
+settlement hint for the xSTRK output. That matches the deployed helper's single open-note slot.
 
 The browser route uses the shared Facet-owned ERC-4626 helper rather than arbitrary browser
 calldata. The helper is bound to the STRK20 pool, STRK, and the Endur xSTRK vault; it approves
@@ -83,8 +83,10 @@ TokenAmount  = token_in + i129(amount_in, positive)
 The transaction uses three calls in one shadow-account invocation: ERC-20 `transfer` of the
 input to the router, `swap`, and `clear_minimum` for the output token. `quote_swap` is exposed
 as a separate read-only call builder so the minimum can be read immediately before proving.
-The implementation is `buildEkuboQuoteCall` and `buildEkuboSwapPlan`; the latter returns
-independent `diff` settlement hints for the input remainder and output token.
+The implementation is `buildEkuboQuoteCall` and `buildEkuboSwapPlan`; the latter returns one
+`diff` settlement hint for the output token. This reviewed route is exact-input and its deployed
+helper has one open-note slot. A future exact-output or multi-hop route must define and test its own
+settlement shape.
 
 The mainnet route was checked against the live router on 26 August 2026. The earlier
 `0.01%` / `200` pool key returned `NOT_INITIALIZED`; the runner now uses the initialized
@@ -134,8 +136,8 @@ address because it was a smoke test, and that single receipt permanently connect
 identity to its owner on chain. The funding leg was shielded and did its job; the dapp call
 gave it away.
 
-Every adapter therefore checks its recipient and refuses, rather than warns, when the target
-is:
+Every adapter plan therefore declares each explicit public recipient field. The executor refuses,
+rather than warns, when a declared recipient is:
 
 - the connected wallet's address,
 - any address that has funded the shielded pool for this user,
@@ -143,6 +145,11 @@ is:
 
 The last one matters most and is the easiest to miss: paying one identity from another links
 the two, which is the exact property the product sells.
+
+This is a policy control, not a privacy guarantee. It depends on the adapter declaring every
+recipient-bearing field; it does not infer arbitrary recipients from unknown calldata. The current
+Ekubo and browser Endur helper routes expose no user-selected public recipient. The SDK Endur
+adapter declares and checks its ERC-4626 `receiver` explicitly.
 
 A refusal here is a success, not an error state. The interface should say which rule was hit
 and what to do instead, because a user who cannot see why will work around it.

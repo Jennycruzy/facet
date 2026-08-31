@@ -208,6 +208,8 @@ function planForProtocol() {
   return {
     protocol: app.id,
     calls: [{ contractAddress: OUTPUT_TOKEN, entrypoint: "deposit", calldata: [] }],
+    // The helper receives the vault shares and settles them into an OPEN shielded note.
+    publicRecipients: [],
     input: { token: TOKEN_IN, amount: hex(state.amountWei) },
     settlements: [{
       token: TOKEN_OUT,
@@ -220,7 +222,7 @@ function planForProtocol() {
 async function connect() {
   const candidates = candidateWallets();
   if (!candidates.length) {
-    state.errors = ["No injected Starknet wallet with the Wallet API was found in this tab."];
+    state.errors = ["Ready X was not found in this tab."];
     setStatus("error", "Ready X was not detected in this browser profile.");
     render();
     return;
@@ -315,7 +317,7 @@ async function execute() {
       throw new Error("The review changed while refreshing the protocol quote. Review it again.");
     }
     const transactionHash = await submitPlan(state.wallet, planForProtocol(), {
-      owner: state.account, binding: BINDING, policy: POLICY,
+      owner: state.account, linkedAddresses: [state.account], binding: BINDING, policy: POLICY,
     });
     state.transactionHash = transactionHash;
     setStatus("submitted", "Your wallet returned a transaction hash; waiting for Mainnet acceptance…");

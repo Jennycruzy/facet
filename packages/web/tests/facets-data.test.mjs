@@ -63,6 +63,8 @@ test("the Endur exit is pinned to the initialised xSTRK/STRK pool key", () => {
   assert.equal(exit.route.token0, exit.route.tokenIn);
   assert.equal(exit.route.token1, exit.route.tokenOut);
   assert.ok(BigInt(exit.route.token0) < BigInt(exit.route.token1), "pool key must be sorted");
+  assert.equal(exit.lifecycle.contextApp, "endur");
+  assert.deepEqual(exit.lifecycle.closesAssets.map(BigInt), [BigInt(endur.outputToken)]);
 });
 
 test("every Ekubo-shaped route carries the parameters the shared page reads", () => {

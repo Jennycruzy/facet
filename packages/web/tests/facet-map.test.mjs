@@ -1,6 +1,7 @@
 // The launcher's local record and the SDK's lifecycle model must not drift: the SDK owns the state
 // machine, the browser renders it, and a transition legal in one has to be legal in the other.
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const store = new Map();
@@ -11,6 +12,7 @@ globalThis.localStorage = {
 
 const map = await import("../assets/js/facet-map.js");
 const sdk = await import("../../sdk/dist/facets.js");
+const facetsData = JSON.parse(readFileSync(new URL("../data/facets.json", import.meta.url), "utf8"));
 
 const ACCOUNT = "0xabc";
 const XSTRK = "0x28d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a";
@@ -60,19 +62,24 @@ test("a facet holding a position cannot be retired, and says why", () => {
   assert.match(map.retireBlockedReason(held), /Exit the position before retiring/);
 });
 
-test("the exit clears the position and moves the facet to recover", () => {
+test("the configured Ekubo exit clears the real Endur position", () => {
   reset();
   map.retain(ACCOUNT, "endur");
   map.recordActivity(ACCOUNT, "endur", {
     hash: "0x1", asset: XSTRK, symbol: "xSTRK", kind: "exit-required", action: "stake",
   });
-  const exited = map.recordActivity(ACCOUNT, "endur", {
-    hash: "0x2", asset: XSTRK, symbol: "xSTRK", kind: "fungible", action: "exit",
+  const exitRoute = facetsData.apps.find((app) => app.id === "ekubo-exit");
+  assert.ok(exitRoute?.lifecycle, "exit route has no lifecycle metadata");
+  const exited = map.recordActivity(ACCOUNT, exitRoute.lifecycle.contextApp, {
+    hash: "0x2", asset: exitRoute.route.tokenOut, symbol: "STRK", kind: "fungible",
+    action: "exit", removeAssets: exitRoute.lifecycle.closesAssets,
   });
   assert.equal(exited.state, "recover");
   assert.deepEqual(exited.positions, []);
   assert.equal(exited.transactions.length, 2);
   assert.equal(map.retireBlockedReason(exited), null);
+  assert.equal(map.readMap()[map.mapKey(ACCOUNT, "ekubo-exit")], undefined,
+    "the exit route must not create a separate identity record");
 });
 
 test("a swap that settles a fungible asset leaves the facet in use", () => {

@@ -232,6 +232,12 @@
       "verified": "route quoted live against the mainnet router on 30 Aug 2026; the 0.05%/1000 xSTRK pool key returns NOT_INITIALIZED, the 0.01%/200 key quotes",
       "status": "route-verified-unexecuted",
       "executionPage": "/ekubo-exit",
+      "lifecycle": {
+        "contextApp": "endur",
+        "closesAssets": [
+          "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a"
+        ]
+      },
       "monogram": "Ex",
       "accent": "amber",
       "policy": {

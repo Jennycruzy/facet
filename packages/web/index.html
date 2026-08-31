@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Facet · one balance, a different face in every app</title>
-<meta name="description" content="A private Starknet app launcher. One shielded balance, a persistent unlinkable identity per compatible app or strategy.">
+<meta name="description" content="A private Starknet app launcher. One shielded balance and reviewed private routes for supported apps.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
       <div class="live" id="live" data-state="loading" role="status" aria-live="polite"><span class="dot"></span><span id="live-text">connecting</span></div>
       <div class="hero-micro"><span class="micro-mark" aria-hidden="true"></span><span>Your wallet · one app at a time · verified</span></div>
     </div>
-    <div class="stage" aria-label="Facet identity map">
+    <div class="stage" aria-label="Facet private app model">
       <div class="stage-orbit stage-orbit-a" aria-hidden="true"></div>
       <div class="stage-orbit stage-orbit-b" aria-hidden="true"></div>
       <div class="stage-label stage-label-top" aria-hidden="true"><span>PRIVATE ROOT</span><i></i></div>
@@ -106,8 +106,8 @@
       </div>
       <div>
         <h4>Common amounts leave fewer clues</h4>
-        <p>Facet uses a small set of shared amounts instead of any number you type. Unsupported
-        amounts are refused before an app action is built.</p>
+        <p>The SDK can enforce shared amounts when money enters the private pool. The current
+        Mainnet launcher does not provide that funding step; app spending remains user-selected.</p>
       </div>
       <div>
         <h4>Timing can give people a clue</h4>
@@ -117,8 +117,8 @@
       </div>
       <div>
         <h4>Facet stops the easiest connections</h4>
-        <p>A protected route refuses addresses already connected to your wallet, funding source,
-        or recovery account before an app action is built.</p>
+        <p>A protected route refuses public recipients that match addresses you supplied as linked.
+        The current Ekubo and Endur helper routes expose no user-selected public recipient.</p>
       </div>
       <div>
         <h4>You approve every live action</h4>

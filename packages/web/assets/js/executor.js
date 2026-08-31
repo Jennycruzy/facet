@@ -30,7 +30,7 @@ const felt = (value) => "0x" + BigInt(value).toString(16);
  *  2. the input amount is inside the route's declared bounds;
  *  3. every settled asset has a declared kind, and an `exit-required` asset is never collected
  *     with an `all` policy;
- *  4. no call in the plan targets an address linked to this user;
+ *  4. no explicit public recipient in the plan is linked to this user;
  *  5. one OPEN transfer exists per settlement, because the wallet fills open notes positionally;
  *  6. the helper calldata references exactly those open notes, in order.
  *
@@ -40,10 +40,16 @@ const felt = (value) => "0x" + BigInt(value).toString(16);
  */
 export function buildWalletActions(plan, options) {
   const helper = felt(options.binding.helper);
-  const linked = (options.linkedAddresses ?? []).map(felt);
+  if (!Array.isArray(options.linkedAddresses)) {
+    throw new ExecutorPolicyError(plan.protocol + ": linkedAddresses must be declared explicitly.");
+  }
+  const linked = options.linkedAddresses.map(felt);
   const policy = options.policy;
 
   const supported = new Set(policy.supportedAssets.map(felt));
+  const assetKinds = new Map(
+    Object.entries(policy.assetKinds).map(([asset, kind]) => [felt(asset), kind]),
+  );
   for (const token of [plan.input.token, ...plan.settlements.map((s) => s.token)]) {
     if (!supported.has(felt(token))) {
       throw new ExecutorPolicyError(
@@ -63,7 +69,7 @@ export function buildWalletActions(plan, options) {
 
   for (const settlement of plan.settlements) {
     const token = felt(settlement.token);
-    const kind = policy.assetKinds[token];
+    const kind = assetKinds.get(token);
     if (!kind) {
       throw new ExecutorPolicyError(
         plan.protocol + ": settled asset " + token + " has no declared kind. Classify it as "
@@ -81,10 +87,13 @@ export function buildWalletActions(plan, options) {
   if (plan.settlements.length === 0) {
     throw new ExecutorPolicyError(plan.protocol + ": a plan must settle at least one token.");
   }
-  for (const call of plan.calls) {
-    if (linked.includes(felt(call.contractAddress))) {
+  if (!Array.isArray(plan.publicRecipients)) {
+    throw new ExecutorPolicyError(plan.protocol + ": publicRecipients must be declared explicitly.");
+  }
+  for (const recipient of plan.publicRecipients) {
+    if (linked.includes(felt(recipient.address))) {
       throw new ExecutorPolicyError(
-        "Refusing " + plan.protocol + " call target: " + felt(call.contractAddress)
+        "Refusing " + recipient.field + ": " + felt(recipient.address)
         + " is linked to this user's portfolio.",
       );
     }

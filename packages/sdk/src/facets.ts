@@ -27,7 +27,7 @@ export interface FacetStore {
 }
 
 export interface FacetExecutor {
-  execute(plan: AdapterPlan, facet: FacetRecord): Promise<{ transactionHash: string }>;
+  execute(plan: AdapterPlan): Promise<{ transactionHash: string }>;
 }
 
 export const facetKey = (wallet: string, app: string, strategy = "default") =>
@@ -70,8 +70,7 @@ export async function executeAppIntent<TIntent extends import("./adapters.js").A
   adapter: import("./adapters.js").ProtocolAdapter<TIntent>;
   intent: TIntent;
   context: import("./adapters.js").AdapterContext;
-  facet: FacetRecord;
   executor: FacetExecutor;
 }) {
-  return options.executor.execute(options.adapter.plan(options.intent, options.context), options.facet);
+  return options.executor.execute(options.adapter.plan(options.intent, options.context));
 }

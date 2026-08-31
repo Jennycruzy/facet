@@ -1,10 +1,9 @@
 # `@facet/sdk`
 
-This package is the Facet-specific action builder over
-`@starkware-libs/starknet-privacy-sdk`. Facet is the integration layer for a private Starknet
-app launcher:
-the SDK turns a shielded note into a context-specific shadow-account call and settles
-the result back into private notes.
+This package contains Facet's adapter, policy, lifecycle, and private-transaction primitives.
+Its reference executor turns a reviewed protocol plan into a Ready X Wallet API action and settles
+the result into the wallet's shielded balance. A lower-level builder separately supports the direct
+shadow-account path used in the Sepolia rehearsals.
 
 Use Node 22.23.0 from the repository's `.nvmrc`; the pinned `starknet` dependency declares
 Node 22 or newer.
@@ -55,36 +54,41 @@ Apps use one public `ProtocolAdapter` contract. They provide a normal app intent
 private-account machinery behind the executor:
 
 ```ts
-import { ekuboAdapter, executeAppIntent } from "@facet/sdk";
+import {
+  WalletFacetExecutor,
+  endurAdapter,
+  erc4626HelperBinding,
+  executeAppIntent,
+} from "@facet/sdk";
+
+const linkedAddresses = [connectedWallet, fundingWallet, recoveryWallet];
+const executor = new WalletFacetExecutor({
+  wallet,
+  owner: connectedWallet,
+  linkedAddresses,
+  binding: erc4626HelperBinding({ helper: endurHelper, operation: "deposit" }),
+  policy: {
+    supportedAssets: [strk, xstrk],
+    amountBounds: { min: 1n, max: 1_000n * 10n ** 18n },
+    assetKinds: { [xstrk]: "exit-required" },
+  },
+});
 
 const result = await executeAppIntent({
-  adapter: ekuboAdapter,
-  intent: { action: "swap", parameters: {
-    router, token0, token1, tokenIn: strk, tokenOut: eth,
-    routeFee, tickSpacing, amountIn: 5n * 10n ** 18n, minimumAmountOut,
-  } },
-  context: {
-    linkedAddresses: [connectedWallet, fundingWallet, recoveryWallet],
+  adapter: endurAdapter,
+  intent: {
+    action: "stake",
+    parameters: { token: strk, endur: xstrk, receiver: endurHelper, amount },
   },
-  facet: ekuboFacet,
-  executor: facetExecutor,
+  context: { linkedAddresses },
+  executor,
 });
 ```
 
-That is the dapp-facing flow: **app intent → adapter plan → Facet execution**. Ekubo and Endur
-demonstrate the interface; they are not a claim that arbitrary apps are already supported.
-
-`WalletFacetExecutor` is the reference `FacetExecutor` and ships with the package, so
-`executeAppIntent` runs end to end against a Wallet API wallet:
-
-```ts
-import { WalletFacetExecutor, erc4626HelperBinding } from "@facet/sdk";
-
-const facetExecutor = new WalletFacetExecutor({
-  wallet, owner: connectedWallet, linkedAddresses,
-  binding: erc4626HelperBinding({ helper: endurHelper, operation: "deposit" }),
-});
-```
+That is the complete dapp-facing flow: **app intent → adapter plan → Facet execution**. The app
+supplies an intent and reviewed route configuration; it does not select notes, construct Wallet API
+actions, handle screening attestations, or run a prover. Ekubo and Endur demonstrate the one public
+`ProtocolAdapter` interface; they are not a claim that arbitrary apps are already supported.
 
 **What it does and does not do.** It builds the action list, enforces the settlement and recipient
 invariants, and hands the result to the wallet. The wallet owns the shielded state, the proof, the
@@ -102,14 +106,16 @@ themselves, and then notes, keys and proving are theirs to handle.
   the transfer, swap, and minimum-output clear calls.
 
 Pool funding and app spending are separate boundaries. Use `assertFundingDenomination` when adding
-money to the private pool; users may choose any valid app spend up to their private balance. Each
-adapter enforces the shared linked-address guard before it returns a plan. Each plan returns
-canonical `PrivacyCall`s, the input token and amount, and independent
-settlement policies for every token whose balance can change. Endur requires a list of addresses
-already linked to the user and refuses a matching protocol recipient with a typed
-`LinkedRecipientError`; this is a hard privacy guard, not a warning. The builders do not quote,
-prove, or broadcast. Quote Ekubo immediately before starting a proof because its minimum output
-can decay during the proving window.
+money to the private pool; users may choose any valid app spend up to their private balance. Every
+plan must declare its explicit public recipient fields, including an empty list when its fixed
+helper route exposes no user-selected recipient. The executor checks those declarations against
+the required linked-address set before submission. Endur also performs the same check while
+building its receiver calldata and throws a typed `LinkedRecipientError`. This guard covers
+declared recipient fields; it is not a general calldata decompiler or a guarantee against every
+form of correlation. Each plan returns canonical `PrivacyCall`s, the input token and amount, and
+settlement policies for each output its bound helper can actually settle. The builders do not
+quote, prove, or broadcast. Quote Ekubo immediately before starting a proof because its minimum
+output can decay during the proving window.
 
 ## Facet lifecycle and recovery
 
@@ -125,8 +131,9 @@ exit path and are never silently swept or described as recovered.
 These are library primitives, not an end-to-end recovery product. `createOrRetainFacet` retains a
 record whose address is supplied by the caller; it does not deploy or derive that account.
 `recoveryPlan` classifies positions but does not execute transfers, redemptions, debt repayment, or
-protocol exits. The browser launcher uses a smaller local metadata map and is not wired to this SDK
-state machine.
+protocol exits. The browser launcher mirrors the five states in a smaller local activity map and
+records the Endur exit against the Endur context. That record still does not control an on-chain
+account or execute a general recovery sweep.
 
 ## Wallet-derived viewing key
 

@@ -96,21 +96,24 @@ export function escapeHtml(value) {
   })[character]);
 }
 
-export function candidateWallets() {
-  const names = ["starknet_ready", "starknet_argentX", "starknet", "starknet_braavos"];
+export function candidateWallets(scope = globalThis) {
+  const names = ["starknet_ready", "starknetReady", "starknet"];
   const seen = new Set();
   const found = [];
   for (const name of names) {
-    const wallet = window[name];
+    const wallet = scope[name];
     if (!wallet || typeof wallet.request !== "function" || seen.has(wallet)) continue;
+    const explicitReadyInjection = name === "starknet_ready" || name === "starknetReady";
+    const identity = `${wallet.id ?? ""} ${wallet.name ?? ""}`;
+    const identifiesAsReady = /(^|[^a-z])ready(?:[\s_-]*x)?([^a-z]|$)/i.test(identity);
+    if (!explicitReadyInjection && !identifiesAsReady) continue;
     seen.add(wallet);
     found.push({ name, wallet });
   }
-  return found.sort((left, right) => {
-    const score = (candidate) => /ready/i.test(`${candidate.name} ${candidate.wallet.name ?? ""} ${candidate.wallet.id ?? ""}`) ? 0 : 1;
-    return score(left) - score(right);
-  });
+  return found;
 }
+
+export const detectReadyX = (scope = globalThis) => candidateWallets(scope)[0]?.wallet ?? null;
 
 export async function request(wallet, message) {
   return wallet.request(message);

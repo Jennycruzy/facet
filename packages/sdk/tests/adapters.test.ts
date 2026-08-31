@@ -35,9 +35,9 @@ describe("protocol adapter builders", () => {
       },
     ]);
     expect(plan.settlements.map(({ token, policy }) => ({ token, policy }))).toEqual([
-      { token: "0x200", policy: { type: "diff" } },
       { token: "0x500", policy: { type: "diff" } },
     ]);
+    expect(plan.publicRecipients).toEqual([{ field: "Endur receiver", address: "0x400" }]);
   });
 
   it("builds the tested Ekubo quote and swap route", () => {
@@ -61,6 +61,7 @@ describe("protocol adapter builders", () => {
 
     const plan = buildEkuboSwapPlan({ ...route, tokenOut: "0x300", minimumAmountOut: 4n,
       linkedAddresses: linked });
+    expect(plan.publicRecipients).toEqual([]);
     expect(plan.calls).toEqual([
       {
         contractAddress: "0x200",
@@ -121,11 +122,12 @@ describe("adapter recipient guard", () => {
     } }, { linkedAddresses: linked }).input.amount).toBe("0x3");
   });
 
-  it("applies the linked-address guard to Ekubo route addresses", () => {
-    expect(() => buildEkuboSwapPlan({
+  it("does not misclassify an Ekubo protocol contract as a public recipient", () => {
+    const plan = buildEkuboSwapPlan({
       router: "0xabc", token0: "0x200", token1: "0x300", routeFee: 7n,
       tickSpacing: 50n, tokenIn: "0x200", amountIn: 10n, tokenOut: "0x300",
       minimumAmountOut: 4n, linkedAddresses: linked,
-    })).toThrowError(LinkedRecipientError);
+    });
+    expect(plan.publicRecipients).toEqual([]);
   });
 });

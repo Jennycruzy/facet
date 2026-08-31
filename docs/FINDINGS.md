@@ -1547,6 +1547,38 @@ unchanged. `buildWalletActions` still refuses any plan whose settlement count ex
 helper can settle, so the class of error stays caught even though this instance is gone.
 
 
+### 6.36 Production compositions now match their tests — 31 August 2026
+
+A clean-room audit found that passing unit tests did not reproduce several browser compositions.
+The correction is deliberately narrow:
+
+- The real `endurAdapter → WalletFacetExecutor` path now produces the helper's supported shape:
+  one xSTRK settlement and one open-note reference. Its test calls `executeAppIntent` with the real
+  adapter instead of a hand-built substitute.
+- The configured Ekubo exit records its result against the Endur context and explicitly closes the
+  xSTRK asset. Starknet addresses are canonicalized before comparison, so zero padding cannot leave
+  a position falsely marked as held.
+- `AdapterPlan.publicRecipients` is required. Endur declares its ERC-4626 receiver, and both SDK and
+  browser executors compare every declared recipient with the required linked-address set. Fixed
+  helper routes declare an empty list because they expose no user-selected public recipient. This
+  control depends on complete adapter declarations; it does not decode arbitrary unknown calldata
+  and is not described as a correlation guarantee.
+- `executeAppIntent` and `FacetExecutor.execute` no longer accept a facet record that the Ready X
+  executor cannot use. The browser calls its storage a device-local activity record and states that
+  it does not choose Ready X's execution account.
+- Mainnet wallet discovery accepts only the explicit Ready X injections or a generic Starknet
+  injection whose identity clearly names Ready X. Argent, Braavos, and unidentified providers are
+  not selected for these routes.
+- Web publishing now defaults to the checkout containing the script, rejects a dirty checkout and
+  broad destinations, validates the source tree, stages the complete release, and retains the prior
+  deployment for rollback. A test publishes twice into a temporary destination and checks both the
+  live tree and backup.
+
+The remaining product boundaries are unchanged: the local map does not control persistent on-chain
+app accounts; general automatic recovery is not implemented; Facet has no Mainnet shielding UI;
+randomized timing is not implemented; and the xSTRK exit still needs its Mainnet receipt.
+
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:

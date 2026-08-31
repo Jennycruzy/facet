@@ -6,6 +6,7 @@ import test from "node:test";
 
 import * as web from "../assets/js/executor.js";
 import * as sdk from "../../sdk/dist/executor.js";
+import { endurAdapter } from "../../sdk/dist/adapters.js";
 
 const STRK = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 const ETH = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
@@ -26,18 +27,18 @@ const policy = {
 const swap = {
   protocol: "ekubo",
   calls: [{ contractAddress: ROUTER, entrypoint: "swap", calldata: ["0x0", "0xea", "0x0"] }],
+  publicRecipients: [],
   input: { token: STRK, amount: AMOUNT },
   settlements: [{ token: ETH, policy: { type: "diff" }, reason: "swap output" }],
 };
-const stake = {
-  protocol: "endur",
-  calls: [{ contractAddress: XSTRK, entrypoint: "deposit", calldata: [] }],
-  input: { token: STRK, amount: AMOUNT },
-  settlements: [{ token: XSTRK, policy: { type: "diff" }, reason: "vault shares" }],
-};
+const stake = endurAdapter.plan({
+  action: "stake",
+  parameters: { token: STRK, endur: XSTRK, receiver: ENDUR_HELPER, amount: AMOUNT },
+}, { linkedAddresses: [OWNER] });
 const exit = {
   protocol: "ekubo-exit",
   calls: [{ contractAddress: ROUTER, entrypoint: "swap", calldata: ["0x0", "0xb1", "0x0"] }],
+  publicRecipients: [],
   input: { token: XSTRK, amount: "0x12dccd2e9b3fdec" },
   settlements: [{ token: STRK, policy: { type: "diff" }, reason: "recovered underlying" }],
 };
@@ -59,7 +60,9 @@ const cases = [
 
 for (const [name, plan, binding] of cases) {
   test(`web and SDK executors agree on ${name}`, () => {
-    const build = (m) => m.buildWalletActions(plan, { owner: OWNER, policy, binding: binding(m) });
+    const build = (m) => m.buildWalletActions(plan, {
+      owner: OWNER, linkedAddresses: [OWNER], policy, binding: binding(m),
+    });
     assert.deepEqual(build(web), build(sdk));
   });
 }
@@ -92,15 +95,27 @@ test("web and SDK executors reject the same plans for the same reason", () => {
     ["out of bounds", { ...swap, input: { token: STRK, amount: "0xde0b6b3a7640001" } }, policy],
     ["undeclared kind", swap, { ...policy, assetKinds: { [STRK]: "fungible" } }],
     ["sweeping a position", { ...stake, settlements: [{ token: XSTRK, policy: { type: "all" }, reason: "x" }] }, policy],
+    ["linked recipient", { ...swap,
+      publicRecipients: [{ field: "beneficiary", address: OWNER }] }, policy],
   ];
   for (const [label, plan, used] of rejections) {
     const errors = [web, sdk].map((m) => {
       try {
-        m.buildWalletActions(plan, { owner: OWNER, policy: used, binding: ekuboBinding(m) });
+        m.buildWalletActions(plan, {
+          owner: OWNER, linkedAddresses: [OWNER], policy: used, binding: ekuboBinding(m),
+        });
         return null;
       } catch (error) { return error.message; }
     });
     assert.ok(errors[0], `${label}: web executor accepted a plan it should refuse`);
     assert.equal(errors[0], errors[1], `${label}: the two executors disagree`);
+  }
+});
+
+test("web and SDK executors both require an explicit linked-address set", () => {
+  for (const implementation of [web, sdk]) {
+    assert.throws(() => implementation.buildWalletActions(swap, {
+      owner: OWNER, policy, binding: ekuboBinding(implementation),
+    }), /linkedAddresses/);
   }
 });

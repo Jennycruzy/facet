@@ -30,6 +30,12 @@ function writeMap(records) {
 export const mapKey = (account, appId, strategy = "default") =>
   [account ?? "", appId, strategy].map((part) => String(part).toLowerCase()).join(":");
 
+function assetKey(value) {
+  const lowered = String(value).toLowerCase();
+  if (!/^0x[0-9a-f]+$/.test(lowered)) return lowered;
+  return `0x${lowered.slice(2).replace(/^0+/, "") || "0"}`;
+}
+
 export function canMove(from, to) {
   return Boolean(TRANSITIONS[from]?.includes(to));
 }
@@ -71,13 +77,20 @@ export function move(account, appId, to) {
  * now owned that no automatic sweep can recover — see docs/FINDINGS.md 6.34. An exit route moves
  * it to `recover`.
  */
-export function recordActivity(account, appId, { hash, asset, symbol, kind, action }) {
+export function recordActivity(account, appId, {
+  hash, asset, symbol, kind, action, removeAssets = [],
+}) {
   const records = readMap();
   const key = mapKey(account, appId);
   if (!records[key]) retain(account, appId);
   const fresh = readMap();
   const current = fresh[key];
-  const positions = current.positions.filter((position) => position.asset !== asset);
+  const removed = new Set(removeAssets.map(assetKey));
+  // Re-settling the same asset replaces its position entry; explicit exits may close a different
+  // input asset while receiving an ordinary fungible output asset.
+  removed.add(assetKey(asset));
+  const positions = current.positions.filter((position) =>
+    !removed.has(assetKey(position.asset)));
   if (kind === "exit-required") positions.push({ asset, symbol, kind });
   const transactions = [...current.transactions, { hash, action, at: new Date().toISOString() }];
 

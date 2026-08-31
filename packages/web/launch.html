@@ -27,10 +27,10 @@
   </header>
 
   <section class="launch-hero">
-    <div class="eyebrow">Persistent private identities</div>
-    <h1>One private balance.<br>A different identity<br>for every app.</h1>
-    <p class="launch-lede">Facet gives each app or strategy its own retained identity. Ekubo and
-    Endur are the first two Mainnet adapters; they do not receive your funding-wallet identity.</p>
+    <div class="eyebrow">Private app identities</div>
+    <h1>One private balance.<br>A separate identity<br>for every app.</h1>
+    <p class="launch-lede">Facet organizes each supported app as its own lasting context. Ready X
+    runs the reviewed Mainnet action, while this device remembers that app's activity and positions.</p>
     <div class="launch-status" id="wallet-status" data-state="idle" role="status" aria-live="polite">
       <span class="dot"></span><span id="wallet-status-text">checking for a compatible wallet…</span>
     </div>
@@ -43,11 +43,11 @@
 
   <div data-network-panel="mainnet">
 
-  <section class="identity-flow" aria-label="How Facet identities work">
+  <section class="identity-flow" aria-label="Facet app routes">
     <div class="identity-root"><span>PRIVATE ROOT</span><strong>One balance</strong><small>managed through Ready X</small></div>
     <div class="identity-line" aria-hidden="true"></div>
-    <div class="identity-branch accent-amber"><span>FACET 01</span><strong>Ekubo identity</strong><small>retained for swaps</small></div>
-    <div class="identity-branch accent-violet"><span>FACET 02</span><strong>Endur identity</strong><small>retained for staking</small></div>
+    <a class="identity-branch accent-amber" href="/ekubo"><span>APP 01</span><strong>Ekubo identity</strong><small>open private swap</small></a>
+    <a class="identity-branch accent-violet" href="/endur"><span>APP 02</span><strong>Endur identity</strong><small>open private staking</small></a>
   </section>
 
   <section class="launch-layout">
@@ -80,13 +80,13 @@
         <div class="launch-card-head">
           <div>
             <div class="mono-badge">02</div>
-          <h2>Your Facet identity map</h2>
+          <h2>Your app identity record</h2>
           </div>
-          <span class="pill">one per app</span>
+          <span class="pill">stored on this device</span>
         </div>
-        <p class="launch-copy">Facet retains one versioned identity per app and strategy on this
-        device. Reopening Ekubo returns to the Ekubo identity; it does not create a random account.</p>
-        <div class="identity-status" id="binding-message">Connect Ready X to open your local identity map.</div>
+        <p class="launch-copy">This device keeps one versioned activity record per app and strategy.
+        It does not select or control the execution account used by Ready X.</p>
+        <div class="identity-status" id="binding-message">Connect Ready X to open your local activity record.</div>
         <div id="facet-map" class="facet-map"><span class="muted">Connect Ready X to view this device&#39;s activity record.</span></div>
         <div class="message-actions">
           <button class="text-button" id="copy-message" type="button" disabled hidden>Copy message</button>
@@ -105,23 +105,23 @@
       <div class="launch-step" data-launch-step="verify"><span>06</span><div><strong>Check the result</strong><small>Follow the receipt after the action completes.</small></div></div>
     </div>
     <div class="launch-selection" id="selection-note" role="status" aria-live="polite">
-      Choose an identity to preview its route. Ready X is required before an action can be approved.
+      Choose an app to preview its route. Ready X is required before an action can be approved.
     </div>
     <div class="launch-context" id="context-detail" hidden>
       <span>chosen app</span>
       <code id="context-dapp">—</code>
-      <span>identity version</span>
+      <span>local version</span>
       <code id="context-nonce">—</code>
     </div>
     <div class="launch-integrations" aria-label="Application contexts">
-      <button class="launch-app" data-launch-action data-app-id="ekubo" type="button" aria-pressed="false"><span>01</span><strong>Ekubo identity</strong><small>retained swap context · Mainnet</small></button>
-      <button class="launch-app" data-launch-action data-app-id="endur" type="button" aria-pressed="false"><span>02</span><strong>Endur identity</strong><small>retained staking context · Mainnet</small></button>
+      <button class="launch-app" data-launch-action data-app-id="ekubo" type="button" aria-pressed="false"><span>01</span><strong>Ekubo route</strong><small>private swap review · Mainnet</small></button>
+      <button class="launch-app" data-launch-action data-app-id="endur" type="button" aria-pressed="false"><span>02</span><strong>Endur route</strong><small>private staking review · Mainnet</small></button>
     </div>
   </section>
 
   <section class="block launch-mainnet-route">
     <div class="head"><h2>Mainnet routes</h2><div class="aside">your approval required</div></div>
-    <p class="note">Facet turns your intent into an app-specific plan for the selected identity.
+    <p class="note">Facet turns your intent into a reviewed plan for the selected app.
     Ready X handles proving and submission, and shows the final action before anything is approved.</p>
     <div class="launch-actions">
       <a class="btn" href="/ekubo">Open Ekubo review</a>
@@ -131,8 +131,9 @@
 
   <section class="block launch-boundary">
     <div class="head"><h2>What is protected</h2><div class="aside">Clear limits</div></div>
-    <p class="note">Facet separates the account an app sees from your funding wallet. App activity,
-    balances, and timing are still public. Connecting Ready X does not move money.
+    <p class="note">Ready X supplies the private Mainnet execution path; Facet does not yet control
+    a separate on-chain identity for each app. App activity, balances, and timing are still public.
+    Connecting Ready X does not move money.
     Facet does not promise random timing; that feature is not implemented.</p>
   </section>
   </div>

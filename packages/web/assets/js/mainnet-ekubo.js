@@ -212,6 +212,8 @@ function planForQuote(quote) {
       entrypoint: "swap",
       calldata: [TOKEN_IN, hex(state.amountWei), "0x0", ...u256(quote.minimumWei)],
     }],
+    // This helper route returns into an OPEN shielded note and exposes no user-selected recipient.
+    publicRecipients: [],
     input: { token: TOKEN_IN, amount: hex(state.amountWei) },
     settlements: [{
       token: TOKEN_OUT,
@@ -225,7 +227,7 @@ function planForQuote(quote) {
 async function connect() {
   const candidates = candidateWallets();
   if (!candidates.length) {
-    state.errors = ["No injected Starknet wallet with the Wallet API was found in this tab."];
+    state.errors = ["Ready X was not found in this tab."];
     setStatus("error", "Ready X was not detected in this browser profile.");
     render();
     return;
@@ -305,7 +307,7 @@ async function execute() {
       throw new Error("The review changed while refreshing the quote. Review it again.");
     }
     const transactionHash = await submitPlan(state.wallet, planForQuote(quote), {
-      owner: state.account, binding: BINDING, policy: POLICY,
+      owner: state.account, linkedAddresses: [state.account], binding: BINDING, policy: POLICY,
     });
     state.transactionHash = transactionHash;
     setStatus("submitted", "Your wallet returned a transaction hash; waiting for Mainnet acceptance…");
@@ -313,9 +315,11 @@ async function execute() {
     const receipt = await waitForReceipt(rpc, transactionHash);
     if (receipt) {
       // Local activity record only: this notes what this browser did, and controls nothing on chain.
-      recordActivity(state.account, ROUTE_ID, {
+      const lifecycle = ekubo.lifecycle ?? {};
+      recordActivity(state.account, lifecycle.contextApp ?? ROUTE_ID, {
         hash: transactionHash, asset: felt(TOKEN_OUT), symbol: OUT_SYMBOL,
         kind: POLICY.assetKinds[felt(TOKEN_OUT)] ?? "fungible", action: ROUTE_ID === "ekubo-exit" ? "exit" : "swap",
+        removeAssets: lifecycle.closesAssets ?? [],
       });
     }
   } catch (error) {

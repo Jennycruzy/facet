@@ -33,6 +33,7 @@ export {
   type EkuboSwapIntent,
   type AdapterPlan,
   type AdapterSettlement,
+  type PublicRecipient,
   type BuildEndurStakePlanOptions,
   type BuildEkuboSwapPlanOptions,
   type EkuboRouteOptions,

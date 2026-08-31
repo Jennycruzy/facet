@@ -15,7 +15,7 @@
 
 import type { AdapterPlan } from "./adapters.js";
 import { assertRecipientUnlinked } from "./adapters.js";
-import type { FacetExecutor, FacetRecord } from "./facets.js";
+import type { FacetExecutor } from "./facets.js";
 import { toHexFelt, type CollectPolicy, type FeltLike } from "./gate-a.js";
 
 /** The open-note placeholder the wallet substitutes at assembly time. */
@@ -77,8 +77,8 @@ export interface WalletExecutorOptions {
   /** The connected account whose shielded balance receives the settled notes. */
   owner: string;
   binding: HelperBinding;
-  /** Addresses already linked to this user; every public recipient is checked against them. */
-  linkedAddresses?: readonly FeltLike[];
+  /** Addresses known to be linked to this user; every explicit public recipient is checked. */
+  linkedAddresses: readonly FeltLike[];
   policy: RoutePolicy;
 }
 
@@ -90,7 +90,7 @@ export interface WalletExecutorOptions {
  * 2. one `OPEN` transfer exists per settlement, because the wallet fills open notes positionally
  *    and a mismatch silently misassigns the proceeds;
  * 3. the helper calldata references exactly those open notes, in order;
- * 4. no public call in the plan names an address linked to this user;
+ * 4. no explicit public recipient in the plan names an address linked to this user;
  * 5. every token the plan names is one the route declared it supports;
  * 6. the input amount is inside the route's declared bounds;
  * 7. every settled asset has a declared kind, and an `exit-required` asset is never collected with
@@ -106,10 +106,16 @@ export function buildWalletActions(
   options: Omit<WalletExecutorOptions, "wallet">,
 ): Strk20Action[] {
   const helper = toHexFelt(options.binding.helper);
-  const linked = options.linkedAddresses ?? [];
+  if (!Array.isArray(options.linkedAddresses)) {
+    throw new ExecutorPolicyError(`${plan.protocol}: linkedAddresses must be declared explicitly.`);
+  }
+  const linked = options.linkedAddresses;
   const policy = options.policy;
 
   const supported = new Set(policy.supportedAssets.map((asset) => toHexFelt(asset)));
+  const assetKinds = new Map(
+    Object.entries(policy.assetKinds).map(([asset, kind]) => [toHexFelt(asset), kind]),
+  );
   const named = [plan.input.token, ...plan.settlements.map((settlement) => settlement.token)];
   for (const token of named) {
     if (!supported.has(toHexFelt(token))) {
@@ -130,7 +136,7 @@ export function buildWalletActions(
 
   for (const settlement of plan.settlements) {
     const token = toHexFelt(settlement.token);
-    const kind = policy.assetKinds[token];
+    const kind = assetKinds.get(token);
     if (!kind) {
       throw new ExecutorPolicyError(
         `${plan.protocol}: settled asset ${token} has no declared kind. Classify it as "fungible" ` +
@@ -148,8 +154,11 @@ export function buildWalletActions(
   if (plan.settlements.length === 0) {
     throw new ExecutorPolicyError(`${plan.protocol}: a plan must settle at least one token.`);
   }
-  for (const call of plan.calls) {
-    assertRecipientUnlinked(call.contractAddress, linked, `${plan.protocol} call target`);
+  if (!Array.isArray(plan.publicRecipients)) {
+    throw new ExecutorPolicyError(`${plan.protocol}: publicRecipients must be declared explicitly.`);
+  }
+  for (const recipient of plan.publicRecipients) {
+    assertRecipientUnlinked(recipient.address, linked, recipient.field);
   }
 
   const calldata = options.binding.calldata(plan).map((value) =>
@@ -193,7 +202,7 @@ export class WalletFacetExecutor implements FacetExecutor {
     });
   }
 
-  async execute(plan: AdapterPlan, _facet: FacetRecord): Promise<{ transactionHash: string }> {
+  async execute(plan: AdapterPlan): Promise<{ transactionHash: string }> {
     const result = await this.options.wallet.request({
       type: "wallet_strk20InvokeTransaction",
       params: { actions: this.actions(plan) },

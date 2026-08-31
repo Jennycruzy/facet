@@ -40,9 +40,10 @@ page reads Starknet RPC from the visitor's browser. Nothing else on the host is 
 the site.
 
 The launcher at `/launch` connects Ready X on Starknet Mainnet and opens the selected Ekubo or
-Endur review route. It stores only wallet/app/strategy/version/status metadata in browser local
-storage. That map does not create or control an on-chain facet, store recovery secrets, or implement
-the SDK lifecycle. The reviewed Mainnet pages use Ready X's native STRK20 proving/screening API;
+Endur review route. It stores app/version/lifecycle state, confirmed transaction hashes, and held
+position labels in browser local storage. Its transitions mirror the SDK lifecycle and the Ekubo
+exit clears the Endur xSTRK position in that local record. The map does not create or control an
+on-chain facet, store recovery secrets, or execute recovery. The reviewed Mainnet pages use Ready X's native STRK20 proving/screening API;
 they request a transaction only after the user checks the exact route and user-selected amount.
 
 The current reviewed execution path is connect Ready X → choose an app → exact route review → Ready X
@@ -71,7 +72,7 @@ Facet's shadow-account action to the wallet-managed proving path.
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
 | `assets/js/chain.js` | Homepage chain reader with a `sessionStorage` cache and five-minute TTL; reviewed route modules use their own guarded RPC reads |
 | `assets/js/app-ui.js` | The app: live strip, identity cards, app tiles, and dated RPC fallbacks |
-| `assets/js/launcher.js` | Ready X connection, local metadata map, route selection, and in-memory session state |
+| `assets/js/launcher.js` | Ready X connection, local activity map, route selection, and in-memory session state |
 | `assets/js/ready-probe.js` | Read-only Ready X account, chain, STRK20 balance, and API capability check |
 | `assets/js/wallet-binding.js` | Canonical binding message, EIP-1193 account handling, and signature validation |
 | `assets/js/wallet-derivation.js` | Dependency-free Keccak and bridge-compatible viewing-key derivation |
