@@ -1,6 +1,12 @@
 import "./theme.js";
+import { recordActivity } from "./facet-map.js";
 import { parseTokenAmount } from "./amount.js";
-const $ = (id) => document.getElementById(id);
+import {
+  $, candidateWallets, chainLabel, checkHelper, copyToClipboard, createRpc, errorText, escapeHtml,
+  felt, formatUnits, hasNativeStrk20, hex, isMainnet, readWalletState, request, sameAddress,
+  setStatus, short, u256, u256FromResult, waitForReceipt,
+} from "./route-runtime.js";
+import { erc4626HelperBinding, submitPlan } from "./executor.js";
 
 const DEFAULT_AMOUNT = 100000000000000000n;
 const ASSET_SELECTOR = "0x3d4060688a1800ae986e4840aebc924bb40b5bf44de4583df2257220b54b77c";
@@ -27,6 +33,17 @@ const OUTPUT_TOKEN = app.outputToken;
 const OUTPUT_SYMBOL = app.outputSymbol;
 const EXECUTION_ENABLED = app.executionEnabled !== false;
 const BLOCK_REASON = app.blockReason ?? "This protocol route is paused.";
+const TOKEN_IN = STRK;
+const TOKEN_OUT = OUTPUT_TOKEN;
+const rpc = createRpc(MAINNET_RPC);
+const POLICY = {
+  supportedAssets: app.policy.supportedAssets,
+  amountBounds: app.policy.amountBounds,
+  assetKinds: Object.fromEntries(
+    Object.entries(app.policy.assetKinds).map(([token, kind]) => [felt(token), kind]),
+  ),
+};
+const BINDING = erc4626HelperBinding({ helper: HELPER, operation: "deposit" });
 
 const state = {
   wallet: null,
@@ -45,126 +62,6 @@ const state = {
   amountWei: DEFAULT_AMOUNT,
   amountError: "",
 };
-
-function setStatus(kind, message) {
-  $("ready-status").dataset.state = kind;
-  $("ready-status-text").textContent = message;
-}
-
-function normalizeAddress(value) {
-  if (typeof value !== "string" || !/^0x[0-9a-f]+$/i.test(value)) return null;
-  try { return "0x" + BigInt(value).toString(16); } catch { return null; }
-}
-
-function sameAddress(left, right) {
-  const a = normalizeAddress(left);
-  const b = normalizeAddress(right);
-  return Boolean(a && b && a === b);
-}
-
-function short(value, start = 10, end = 8) {
-  if (!value) return "—";
-  return value.slice(0, start) + "…" + value.slice(-end);
-}
-
-function hex(value) {
-  return "0x" + BigInt(value).toString(16);
-}
-
-function felt(value) {
-  return hex(value);
-}
-
-function u256(value) {
-  return [hex(value & ((1n << 128n) - 1n)), hex(value >> 128n)];
-}
-
-function u256FromResult(result) {
-  if (!Array.isArray(result) || result.length < 2) throw new Error("Protocol returned an incomplete u256.");
-  return BigInt(result[0]) + (BigInt(result[1]) << 128n);
-}
-
-function formatUnits(value, decimals = 18, maxFraction = 8) {
-  if (value === null || value === undefined) return "—";
-  try {
-    const raw = BigInt(value);
-    const base = 10n ** BigInt(decimals);
-    const whole = raw / base;
-    let fraction = (raw % base).toString().padStart(decimals, "0").slice(0, maxFraction);
-    fraction = fraction.replace(/0+$/, "");
-    return fraction ? whole.toString() + "." + fraction : whole.toString();
-  } catch { return String(value); }
-}
-
-function chainLabel(value) {
-  if (typeof value !== "string") return "unknown";
-  const upper = value.toUpperCase();
-  if (MAINNET_CHAIN_IDS.has(upper)) return "Starknet Mainnet";
-  if (upper === "SN_SEPOLIA" || upper === "0X534E5F5345504F4C4941") return "Starknet Sepolia";
-  return value;
-}
-
-function isMainnet(value) {
-  return MAINNET_CHAIN_IDS.has(typeof value === "string" ? value.toUpperCase() : "");
-}
-
-function errorDetail(value, depth = 0, seen = new Set()) {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") {
-    return value.length > 3000 ? value.slice(0, 3000) + "… [truncated]" : value;
-  }
-  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
-    return String(value);
-  }
-  if (depth > 4 || typeof value !== "object") return "[nested error truncated]";
-  if (seen.has(value)) return "[circular error]";
-  seen.add(value);
-  const keys = ["code", "message", "reason", "details", "data", "error", "execution_error", "cause"];
-  const entries = keys
-    .filter((key) => key in value && value[key] !== undefined && value[key] !== null)
-    .map((key) => `${key}=${errorDetail(value[key], depth + 1, seen)}`);
-  seen.delete(value);
-  return entries.length ? `{ ${entries.join("; ")} }` : "";
-}
-
-function errorText(error) {
-  const detail = errorDetail(error);
-  return detail || "The wallet or RPC returned an unknown error.";
-}
-
-function candidateWallets() {
-  const names = ["starknet_ready", "starknet_argentX", "starknet", "starknet_braavos"];
-  const seen = new Set();
-  const found = [];
-  for (const name of names) {
-    const wallet = window[name];
-    if (!wallet || typeof wallet.request !== "function" || seen.has(wallet)) continue;
-    seen.add(wallet);
-    found.push({ name, wallet });
-  }
-  return found.sort((left, right) => {
-    const score = (candidate) => /ready/i.test(
-      candidate.name + " " + (candidate.wallet.name ?? "") + " " + (candidate.wallet.id ?? ""),
-    ) ? 0 : 1;
-    return score(left) - score(right);
-  });
-}
-
-async function request(wallet, message) {
-  return wallet.request(message);
-}
-
-async function rpc(method, params) {
-  const response = await fetch(MAINNET_RPC, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
-  });
-  if (!response.ok) throw new Error(method + ": HTTP " + response.status);
-  const body = await response.json();
-  if (body.error) throw new Error(method + ": " + (body.error.message ?? JSON.stringify(body.error)));
-  return body.result;
-}
 
 async function readProtocolState() {
   const classHash = await rpc("starknet_getClassHashAt", ["latest", app.contract]);
@@ -196,86 +93,12 @@ async function readProtocolState() {
   return state.quote;
 }
 
-async function readWalletState(wallet, silent = false) {
-  const errors = [];
-  let accounts = [];
-  try {
-    accounts = await request(wallet, { type: "wallet_requestAccounts", params: { silent_mode: silent } });
-  } catch (error) {
-    errors.push("Account request: " + errorText(error));
-  }
-  const account = Array.isArray(accounts) ? normalizeAddress(accounts[0]) : null;
-  if (!account) return { account, chainId: null, versions: [], balanceWei: null, errors };
-
-  let chainId = null;
-  try { chainId = await request(wallet, { type: "wallet_requestChainId" }); }
-  catch (error) { errors.push("Chain request: " + errorText(error)); }
-
-  let versionsResult = null;
-  try { versionsResult = await request(wallet, { type: "wallet_supportedWalletApi" }); }
-  catch (error) { errors.push("Wallet API versions: " + errorText(error)); }
-
-  let balancesResult = null;
-  try {
-    balancesResult = await request(wallet, {
-      type: "wallet_strk20Balances",
-      params: { tokens: [STRK] },
-    });
-  } catch (error) {
-    errors.push("Shielded balance: " + errorText(error));
-  }
-
-  const entry = Array.isArray(balancesResult)
-    ? balancesResult.find((item) => sameAddress(item?.token, STRK))
-    : null;
-  let balanceWei = null;
-  if (entry) {
-    try { balanceWei = BigInt(entry.balance ?? "0"); }
-    catch { errors.push("Shielded balance was not an integer."); }
-  } else if (Array.isArray(balancesResult)) {
-    balanceWei = 0n;
-  }
-
-  return {
-    account,
-    chainId,
-    versions: Array.isArray(versionsResult)
-      ? versionsResult.filter((version) => typeof version === "string")
-      : [],
-    balanceWei,
-    errors,
-  };
-}
-
-async function checkHelper() {
-  try {
-    const classHash = await rpc("starknet_getClassHashAt", ["latest", HELPER]);
-    state.helperDeployed = sameAddress(classHash, HELPER_CLASS_HASH);
-    if (!state.helperDeployed) {
-      state.errors.push("Helper address has class " + classHash + ", not the expected Facet allowlisted helper class.");
-    }
-  } catch {
-    state.helperDeployed = false;
-  }
-}
-
-function versionAtLeast(version, major, minor, patch = 0) {
-  const parts = String(version).split(".").map((part) => Number.parseInt(part, 10));
-  if (parts.some(Number.isNaN)) return false;
-  const [a = 0, b = 0, c = 0] = parts;
-  return a > major || (a === major && (b > minor || (b === minor && c >= patch)));
-}
-
-function hasNativeStrk20() {
-  return state.apiVersions.some((version) => versionAtLeast(version, 0, 10, 3));
-}
-
 function canExecute() {
   return Boolean(
     state.connected
       && state.account
       && isMainnet(state.chainId)
-      && hasNativeStrk20()
+      && hasNativeStrk20(state.apiVersions)
       && state.helperDeployed
       && state.protocolDeployed
       && state.balanceWei !== null
@@ -340,7 +163,7 @@ function render() {
   const reviewLines = [];
   if (!EXECUTION_ENABLED) reviewLines.push("PAUSED: " + BLOCK_REASON);
   if (connected && !isMainnet(state.chainId)) reviewLines.push("STOP: switch Ready X to Starknet Mainnet.");
-  if (connected && !hasNativeStrk20()) {
+  if (connected && !hasNativeStrk20(state.apiVersions)) {
     reviewLines.push("STOP: this wallet does not support the private action required by this route.");
   }
   if (state.protocolDeployed === false) {
@@ -370,7 +193,7 @@ function render() {
     : "<p>Connect Ready X to begin.</p>";
 
   const reviewReady = EXECUTION_ENABLED
-    && connected && isMainnet(state.chainId) && hasNativeStrk20()
+    && connected && isMainnet(state.chainId) && hasNativeStrk20(state.apiVersions)
     && state.helperDeployed && state.protocolDeployed && state.quote
     && !state.amountError && state.balanceWei !== null && state.balanceWei >= state.amountWei;
   $("confirm").disabled = !reviewReady || state.executing;
@@ -380,28 +203,18 @@ function render() {
   $("copy-diagnostics").disabled = !connected;
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-  })[character]);
-}
-
-function actionsForProtocol() {
-  return [
-    { type: "withdraw", token: STRK, amount: hex(state.amountWei), recipient: HELPER },
-    { type: "transfer", token: OUTPUT_TOKEN, amount: "OPEN", recipient: state.account },
-    {
-      type: "invoke",
-      contract: HELPER,
-      calldata: [
-        "0x0",
-        felt(STRK),
-        felt(OUTPUT_TOKEN),
-        ...u256(state.amountWei),
-        "$" + "{openNoteIds[0]}",
-      ],
-    },
-  ];
+// Same executor, same policy gate, different helper binding. The action list is not written here.
+function planForProtocol() {
+  return {
+    protocol: app.id,
+    calls: [{ contractAddress: OUTPUT_TOKEN, entrypoint: "deposit", calldata: [] }],
+    input: { token: TOKEN_IN, amount: hex(state.amountWei) },
+    settlements: [{
+      token: TOKEN_OUT,
+      policy: { type: "diff" },
+      reason: `Settle only the ${OUTPUT_SYMBOL} this interaction produced.`,
+    }],
+  };
 }
 
 async function connect() {
@@ -421,7 +234,7 @@ async function connect() {
     + (selected.wallet.name || selected.name) + "…");
   render();
   try {
-    const result = await readWalletState(selected.wallet);
+    const result = await readWalletState(selected.wallet, TOKEN_IN);
     state.account = result.account;
     state.chainId = result.chainId;
     state.apiVersions = result.versions;
@@ -429,7 +242,9 @@ async function connect() {
     state.errors = result.errors;
     state.connected = Boolean(state.account);
     if (state.connected) {
-      await checkHelper();
+      const helperState = await checkHelper(rpc, HELPER, HELPER_CLASS_HASH);
+      state.helperDeployed = helperState.deployed;
+      if (helperState.error) state.errors.push(helperState.error);
       if (isMainnet(state.chainId)) {
         try { await readProtocolState(); } catch (error) {
           state.protocolDeployed = false;
@@ -456,13 +271,15 @@ async function refresh() {
   setStatus("signing", "Refreshing wallet, helper, and " + app.name + " state…");
   render();
   try {
-    const result = await readWalletState(state.wallet, true);
+    const result = await readWalletState(state.wallet, TOKEN_IN, true);
     state.account = result.account ?? state.account;
     state.chainId = result.chainId;
     state.apiVersions = result.versions;
     state.balanceWei = result.balanceWei;
     state.errors = result.errors;
-    await checkHelper();
+    const helperState = await checkHelper(rpc, HELPER, HELPER_CLASS_HASH);
+      state.helperDeployed = helperState.deployed;
+      if (helperState.error) state.errors.push(helperState.error);
     if (isMainnet(state.chainId)) {
       try { await readProtocolState(); } catch (error) {
         state.protocolDeployed = false;
@@ -484,30 +301,6 @@ async function refresh() {
   render();
 }
 
-async function waitForReceipt(transactionHash) {
-  for (let attempt = 0; attempt < 72; attempt += 1) {
-    try {
-      const receipt = await rpc("starknet_getTransactionReceipt", [transactionHash]);
-      const execution = String(receipt.execution_status ?? "").toUpperCase();
-      const finality = String(receipt.finality_status ?? receipt.status ?? "").toUpperCase();
-      if (execution.includes("REVERT") || finality.includes("REVERT")) {
-        throw new Error("Mainnet transaction reverted: " + transactionHash);
-      }
-      if (execution.includes("SUCC") || finality.includes("ACCEPTED")) {
-        setStatus("bound", "Mainnet transaction accepted.");
-        $("result-panel").innerHTML = "<p>Success: <a href=\""
-          + network.explorer + "/tx/" + encodeURIComponent(transactionHash)
-          + "\" target=\"_blank\" rel=\"noreferrer\">" + escapeHtml(transactionHash) + "</a></p>";
-        return;
-      }
-    } catch (error) {
-      if (String(errorText(error)).includes("reverted")) throw error;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-  }
-  setStatus("submitted", "Transaction submitted; confirmation is still pending.");
-}
-
 async function execute() {
   if (!state.wallet || !canExecute()) return;
   state.executing = true;
@@ -516,25 +309,27 @@ async function execute() {
   render();
   try {
     await readProtocolState();
-    if (!state.connected || !state.account || !isMainnet(state.chainId) || !hasNativeStrk20()
+    if (!state.connected || !state.account || !isMainnet(state.chainId) || !hasNativeStrk20(state.apiVersions)
       || !state.helperDeployed || !state.protocolDeployed || state.balanceWei === null
       || state.balanceWei < state.amountWei || !state.quote || !$("confirm").checked) {
       throw new Error("The review changed while refreshing the protocol quote. Review it again.");
     }
-    const result = await request(state.wallet, {
-      type: "wallet_strk20InvokeTransaction",
-      params: { actions: actionsForProtocol() },
+    const transactionHash = await submitPlan(state.wallet, planForProtocol(), {
+      owner: state.account, binding: BINDING, policy: POLICY,
     });
-    const transactionHash = result?.transaction_hash;
-    if (typeof transactionHash !== "string" || !transactionHash) {
-      throw new Error("Ready returned no transaction hash.");
-    }
     state.transactionHash = transactionHash;
     setStatus("submitted", "Your wallet returned a transaction hash; waiting for Mainnet acceptance…");
     $("result-panel").innerHTML = "<p>Submitted: <a href=\""
       + network.explorer + "/tx/" + encodeURIComponent(transactionHash)
       + "\" target=\"_blank\" rel=\"noreferrer\">" + escapeHtml(transactionHash) + "</a></p>";
-    await waitForReceipt(transactionHash);
+    const receipt = await waitForReceipt(rpc, transactionHash);
+    if (receipt) {
+      // Local activity record only: this notes what this browser did, and controls nothing on chain.
+      recordActivity(state.account, app.id, {
+        hash: transactionHash, asset: felt(TOKEN_OUT), symbol: OUTPUT_SYMBOL,
+        kind: POLICY.assetKinds[felt(TOKEN_OUT)] ?? "fungible", action: "stake",
+      });
+    }
   } catch (error) {
     state.errors = [errorText(error)];
     setStatus("error", "Ready did not complete the reviewed " + app.name + " action.");
@@ -545,9 +340,8 @@ async function execute() {
   }
 }
 
-async function copyDiagnostics() {
-  try {
-    await navigator.clipboard.writeText(JSON.stringify({
+function safeDiagnostics() {
+  return JSON.stringify({
       wallet: state.wallet
         ? { id: state.wallet.id, name: state.wallet.name, version: state.wallet.version }
         : null,
@@ -574,11 +368,7 @@ async function copyDiagnostics() {
       last_error: state.errors.at(-1) ?? null,
       transaction_hash: state.transactionHash,
       proof_generated_by_page: false,
-    }, null, 2));
-    $("copy-status").textContent = "copied";
-  } catch {
-    $("copy-status").textContent = "Clipboard unavailable";
-  }
+    }, null, 2);
 }
 
 function configurePage() {
@@ -603,7 +393,7 @@ $("connect").onclick = connect;
 $("refresh").onclick = refresh;
 $("execute").onclick = execute;
 $("confirm").onchange = render;
-$("copy-diagnostics").onclick = copyDiagnostics;
+$("copy-diagnostics").onclick = () => copyToClipboard(safeDiagnostics());
 $("amount-input").oninput = () => {
   try {
     state.amountWei = parseTokenAmount($("amount-input").value, 18, "STRK");

@@ -138,7 +138,20 @@
       "mainnetBlock": 14052044,
       "executionPage": "/endur",
       "monogram": "En",
-      "accent": "violet"
+      "accent": "violet",
+      "policy": {
+        "supportedAssets": [
+          "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+          "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a"
+        ],
+        "amountBounds": {
+          "min": "1",
+          "max": "40000000000000000000"
+        },
+        "assetKinds": {
+          "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a": "exit-required"
+        }
+      }
     },
     {
       "id": "ekubo",
@@ -173,6 +186,20 @@
         "tokenOutSymbol": "ETH",
         "defaultAmount": "100000000000000000",
         "slippageBps": 1000
+      },
+      "policy": {
+        "supportedAssets": [
+          "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+          "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+        ],
+        "amountBounds": {
+          "min": "1",
+          "max": "40000000000000000000"
+        },
+        "assetKinds": {
+          "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": "fungible",
+          "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": "fungible"
+        }
       }
     },
     {
@@ -206,7 +233,20 @@
       "status": "route-verified-unexecuted",
       "executionPage": "/ekubo-exit",
       "monogram": "Ex",
-      "accent": "amber"
+      "accent": "amber",
+      "policy": {
+        "supportedAssets": [
+          "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
+          "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"
+        ],
+        "amountBounds": {
+          "min": "1",
+          "max": "40000000000000000000"
+        },
+        "assetKinds": {
+          "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": "fungible"
+        }
+      }
     }
   ],
   "denominations": {

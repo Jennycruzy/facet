@@ -18,6 +18,12 @@ const FEE = "0x20c49ba5e353f80000000000000000";
 const AMOUNT = "0x16345785d8a0000"; // 0.1e18
 const facet = { address: EKUBO_HELPER } as unknown as FacetRecord;
 
+const policy = {
+  supportedAssets: [STRK, ETH, XSTRK],
+  amountBounds: { min: "0x1", max: "0xde0b6b3a7640000" }, // 1 wei .. 1e18
+  assetKinds: { [STRK]: "fungible", [ETH]: "fungible", [XSTRK]: "exit-required" },
+} as const;
+
 /** One settlement, matching what the deployed Ekubo helper can actually settle. */
 const ekuboPlan: AdapterPlan = {
   protocol: "ekubo",
@@ -30,6 +36,7 @@ describe("the reference wallet executor", () => {
   it("reproduces the action list of the verified Mainnet Ekubo transaction", () => {
     const actions = buildWalletActions(ekuboPlan, {
       owner: OWNER,
+      policy,
       binding: ekuboHelperBinding({
         helper: EKUBO_HELPER, router: ROUTER, token0: STRK, token1: ETH,
         fee: FEE, tickSpacing: 1000,
@@ -59,6 +66,7 @@ describe("the reference wallet executor", () => {
     };
     const actions = buildWalletActions(plan, {
       owner: OWNER,
+      policy,
       binding: erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "deposit" }),
     });
     expect(actions[2]).toEqual({ type: "invoke", contract: ENDUR_HELPER, calldata: [
@@ -75,6 +83,7 @@ describe("the reference wallet executor", () => {
     };
     const actions = buildWalletActions(plan, {
       owner: OWNER,
+      policy,
       binding: erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "withdraw" }),
     });
     expect((actions[2] as { calldata: string[] }).calldata[0]).toBe("0x1");
@@ -92,6 +101,7 @@ describe("the reference wallet executor", () => {
     expect(plan.settlements).toHaveLength(2);
     expect(() => buildWalletActions(plan, {
       owner: OWNER,
+      policy,
       binding: ekuboHelperBinding({
         helper: EKUBO_HELPER, router: ROUTER, token0: STRK, token1: ETH,
         fee: FEE, tickSpacing: 1000,
@@ -99,9 +109,51 @@ describe("the reference wallet executor", () => {
     })).toThrow(ExecutorPolicyError);
   });
 
+  it("refuses a token the route did not declare", () => {
+    const stray = "0xdead";
+    expect(() => buildWalletActions({ ...ekuboPlan, input: { token: stray, amount: AMOUNT } }, {
+      owner: OWNER, policy,
+      binding: ekuboHelperBinding({ helper: EKUBO_HELPER, router: ROUTER, token0: STRK,
+        token1: ETH, fee: FEE, tickSpacing: 1000 }),
+    })).toThrow(/not a supported asset/);
+  });
+
+  it("refuses an input outside the route's declared bounds", () => {
+    expect(() => buildWalletActions({ ...ekuboPlan, input: { token: STRK, amount: "0xde0b6b3a7640001" } }, {
+      owner: OWNER, policy,
+      binding: ekuboHelperBinding({ helper: EKUBO_HELPER, router: ROUTER, token0: STRK,
+        token1: ETH, fee: FEE, tickSpacing: 1000 }),
+    })).toThrow(/outside the route's bounds/);
+  });
+
+  it("refuses a settled asset with no declared kind", () => {
+    expect(() => buildWalletActions(ekuboPlan, {
+      owner: OWNER,
+      policy: { ...policy, assetKinds: { [STRK]: "fungible" } },
+      binding: ekuboHelperBinding({ helper: EKUBO_HELPER, router: ROUTER, token0: STRK,
+        token1: ETH, fee: FEE, tickSpacing: 1000 }),
+    })).toThrow(/no declared kind/);
+  });
+
+  it("refuses to sweep a persistent position with an all policy", () => {
+    // xSTRK is a vault share: FINDINGS 6.34 shows its protocol exit is a queue, so it is not
+    // automatically recoverable and must never be collected with `all`.
+    const plan: AdapterPlan = {
+      protocol: "endur",
+      calls: [{ contractAddress: XSTRK, entrypoint: "deposit", calldata: [] }],
+      input: { token: STRK, amount: AMOUNT },
+      settlements: [{ token: XSTRK, policy: { type: "all" }, reason: "shares" }],
+    };
+    expect(() => buildWalletActions(plan, {
+      owner: OWNER, policy,
+      binding: erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "deposit" }),
+    })).toThrow(/persistent position/);
+  });
+
   it("refuses a call that targets an address linked to the user", () => {
     expect(() => buildWalletActions(ekuboPlan, {
       owner: OWNER,
+      policy,
       linkedAddresses: [ROUTER],
       binding: ekuboHelperBinding({
         helper: EKUBO_HELPER, router: ROUTER, token0: STRK, token1: ETH,
@@ -113,6 +165,7 @@ describe("the reference wallet executor", () => {
   it("settles into the owner's shielded balance without treating the owner as a linked leak", () => {
     const actions = buildWalletActions(ekuboPlan, {
       owner: OWNER,
+      policy,
       linkedAddresses: [OWNER],
       binding: ekuboHelperBinding({
         helper: EKUBO_HELPER, router: ROUTER, token0: STRK, token1: ETH,
@@ -125,7 +178,7 @@ describe("the reference wallet executor", () => {
   it("submits through the wallet and returns the hash", async () => {
     const request = vi.fn().mockResolvedValue({ transaction_hash: "0xabc" });
     const executor = new WalletFacetExecutor({
-      wallet: { request }, owner: OWNER,
+      wallet: { request }, owner: OWNER, policy,
       binding: erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "withdraw" }),
     });
     const plan: AdapterPlan = {
@@ -142,7 +195,7 @@ describe("the reference wallet executor", () => {
 
   it("rejects a wallet response with no transaction hash", async () => {
     const executor = new WalletFacetExecutor({
-      wallet: { request: async () => ({}) }, owner: OWNER,
+      wallet: { request: async () => ({}) }, owner: OWNER, policy,
       binding: erc4626HelperBinding({ helper: ENDUR_HELPER, operation: "deposit" }),
     });
     await expect(executor.execute({

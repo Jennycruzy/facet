@@ -1,6 +1,7 @@
 import "./theme.js";
 import { createGem } from "./gem.js";
 import { applicationContext, contextLabel } from "./app-context.js";
+import { mapKey, readMap, recordActivity, retain, retireBlockedReason, move } from "./facet-map.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -60,47 +61,71 @@ const session = {
   state: "idle",
 };
 
-const FACET_MAP_KEY = "facet-wallet-map-v1";
-function readFacetMap() {
-  try { return JSON.parse(localStorage.getItem(FACET_MAP_KEY) ?? "{}"); } catch { return {}; }
-}
-function mapKey(appId) { return `${session.account?.toLowerCase()}:${appId}:default`; }
+const key = (appId) => mapKey(session.account, appId);
+
 function retainFacet(appId) {
-  const records = readFacetMap();
-  const key = mapKey(appId);
-  if (!records[key] || records[key].state === "retired") {
-    records[key] = { app: appId, strategy: "default", version: (records[key]?.version ?? 0) + 1,
-      state: "active", updatedAt: new Date().toISOString() };
-    localStorage.setItem(FACET_MAP_KEY, JSON.stringify(records));
+  retain(session.account, appId);
+  renderFacetMap();
+}
+
+function updateFacet(appId, action) {
+  const records = readMap();
+  const record = records[key(appId)];
+  if (!record) return;
+  if (action === "retire") {
+    const blocked = retireBlockedReason(record);
+    if (blocked) { setStatus("error", blocked); renderFacetMap(); return; }
+    move(session.account, appId, "retire");
+  } else {
+    // Rotating starts a fresh identity for the same app: retire the old record, then retain again.
+    if (!retireBlockedReason(record)) move(session.account, appId, "retire");
+    else { setStatus("error", retireBlockedReason(record)); renderFacetMap(); return; }
+    retain(session.account, appId);
   }
   renderFacetMap();
 }
-function updateFacet(appId, action) {
-  const records = readFacetMap();
-  const key = mapKey(appId);
-  const current = records[key];
-  if (!current) return;
-  records[key] = action === "rotate"
-    ? { ...current, version: current.version + 1, state: "active", updatedAt: new Date().toISOString() }
-    : { ...current, state: "retired", updatedAt: new Date().toISOString() };
-  localStorage.setItem(FACET_MAP_KEY, JSON.stringify(records));
-  renderFacetMap();
-}
+
+const STATE_COPY = {
+  launch: "launched · no Mainnet action yet",
+  use: "in use · settled back to shielded notes",
+  hold: "holding a position that needs an explicit exit",
+  recover: "recovered · position exited into shielded notes",
+  retire: "retired",
+};
+
 function renderFacetMap() {
   const target = $("facet-map");
-  if (!session.account) { target.innerHTML = '<span class="muted">Connect a wallet to view this device\'s map.</span>'; return; }
-  const records = readFacetMap();
-  const rows = data.apps.map((app) => ({ app, record: records[mapKey(app.id)] })).filter(({ record }) => record);
+  if (!session.account) {
+    target.innerHTML = '<span class="muted">Connect a wallet to view this device\'s activity record.</span>';
+    return;
+  }
+  const records = readMap();
+  const rows = data.apps.map((app) => ({ app, record: records[key(app.id)] })).filter(({ record }) => record);
   target.replaceChildren();
-  if (!rows.length) { target.innerHTML = '<span class="muted">Choose an app to create its retained identity.</span>'; return; }
+  if (!rows.length) {
+    target.innerHTML = '<span class="muted">Choose an app to create its retained identity.</span>';
+    return;
+  }
   for (const { app, record } of rows) {
     const row = document.createElement("div");
     row.className = "facet-map-row";
-    row.innerHTML = `<strong>${app.name}</strong><span>version ${record.version} · ${record.state}</span>`;
+    const held = record.positions.map((position) => position.symbol ?? position.asset).join(", ");
+    const hashes = record.transactions.slice(-3).map((entry) =>
+      `<a href="https://voyager.online/tx/${encodeURIComponent(entry.hash)}" target="_blank" rel="noreferrer">${entry.action} ${entry.hash.slice(0, 10)}…</a>`,
+    ).join(" ");
+    row.innerHTML = `<strong>${app.name}</strong>`
+      + `<span>version ${record.version} · <em>${record.state}</em> — ${STATE_COPY[record.state] ?? ""}</span>`
+      + (held ? `<span class="muted">holds ${held}</span>` : "")
+      + (hashes ? `<span class="muted">${hashes}</span>` : "");
     for (const action of ["rotate", "retire"]) {
       const button = document.createElement("button");
-      button.type = "button"; button.textContent = action; button.disabled = record.state === "retired";
-      button.onclick = () => updateFacet(app.id, action); row.append(button);
+      button.type = "button";
+      button.textContent = action;
+      const blocked = retireBlockedReason(record);
+      button.disabled = record.state === "retire" || Boolean(blocked);
+      if (blocked) button.title = blocked;
+      button.onclick = () => updateFacet(app.id, action);
+      row.append(button);
     }
     target.append(row);
   }

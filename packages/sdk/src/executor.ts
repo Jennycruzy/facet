@@ -54,6 +54,24 @@ export class ExecutorPolicyError extends Error {
   }
 }
 
+/**
+ * The policy every route must satisfy. It is declared per route rather than per adapter so that a
+ * new adapter cannot reach Mainnet without someone stating, explicitly, which assets it may touch,
+ * how much it may move, and whether what it receives can be swept back into shielded notes.
+ */
+export interface RoutePolicy {
+  /** Every token the plan names — input and settlements — must appear here. */
+  supportedAssets: readonly FeltLike[];
+  /** Inclusive bounds on the input amount. */
+  amountBounds: { min: FeltLike; max: FeltLike };
+  /**
+   * How each settled asset behaves on the way out. `fungible` may be settled back into shielded
+   * notes; `exit-required` names a persistent protocol position — vault shares, LP, debt, an NFT,
+   * a queue ticket — which is received but is *not* automatically recoverable. See FINDINGS 6.34.
+   */
+  assetKinds: Readonly<Record<string, "fungible" | "exit-required">>;
+}
+
 export interface WalletExecutorOptions {
   wallet: Strk20WalletLike;
   /** The connected account whose shielded balance receives the settled notes. */
@@ -61,6 +79,7 @@ export interface WalletExecutorOptions {
   binding: HelperBinding;
   /** Addresses already linked to this user; every public recipient is checked against them. */
   linkedAddresses?: readonly FeltLike[];
+  policy: RoutePolicy;
 }
 
 /**
@@ -71,7 +90,12 @@ export interface WalletExecutorOptions {
  * 2. one `OPEN` transfer exists per settlement, because the wallet fills open notes positionally
  *    and a mismatch silently misassigns the proceeds;
  * 3. the helper calldata references exactly those open notes, in order;
- * 4. no public call in the plan names an address linked to this user.
+ * 4. no public call in the plan names an address linked to this user;
+ * 5. every token the plan names is one the route declared it supports;
+ * 6. the input amount is inside the route's declared bounds;
+ * 7. every settled asset has a declared kind, and an `exit-required` asset is never collected with
+ *    an `all` policy — `all` on an account still holding a position sweeps balances the interaction
+ *    did not produce.
  *
  * Settlement recipients are *not* checked against the linked set: an `OPEN` transfer credits the
  * user's own shielded balance inside the pool, so naming the owner there is correct and reveals
@@ -83,6 +107,43 @@ export function buildWalletActions(
 ): Strk20Action[] {
   const helper = toHexFelt(options.binding.helper);
   const linked = options.linkedAddresses ?? [];
+  const policy = options.policy;
+
+  const supported = new Set(policy.supportedAssets.map((asset) => toHexFelt(asset)));
+  const named = [plan.input.token, ...plan.settlements.map((settlement) => settlement.token)];
+  for (const token of named) {
+    if (!supported.has(toHexFelt(token))) {
+      throw new ExecutorPolicyError(
+        `${plan.protocol}: token ${toHexFelt(token)} is not a supported asset for this route.`,
+      );
+    }
+  }
+
+  const amount = BigInt(toHexFelt(plan.input.amount));
+  const min = BigInt(toHexFelt(policy.amountBounds.min));
+  const max = BigInt(toHexFelt(policy.amountBounds.max));
+  if (amount < min || amount > max) {
+    throw new ExecutorPolicyError(
+      `${plan.protocol}: input ${amount} is outside the route's bounds [${min}, ${max}].`,
+    );
+  }
+
+  for (const settlement of plan.settlements) {
+    const token = toHexFelt(settlement.token);
+    const kind = policy.assetKinds[token];
+    if (!kind) {
+      throw new ExecutorPolicyError(
+        `${plan.protocol}: settled asset ${token} has no declared kind. Classify it as "fungible" ` +
+        `or "exit-required" before this route can run.`,
+      );
+    }
+    if (kind === "exit-required" && settlement.policy.type === "all") {
+      throw new ExecutorPolicyError(
+        `${plan.protocol}: ${token} is a persistent position and cannot be collected with an "all" ` +
+        `policy; "all" sweeps balances this interaction did not produce.`,
+      );
+    }
+  }
 
   if (plan.settlements.length === 0) {
     throw new ExecutorPolicyError(`${plan.protocol}: a plan must settle at least one token.`);
