@@ -20,6 +20,15 @@ No build step, no dependencies, no bundler.
 python3 -m http.server 8899 --bind 127.0.0.1   # from this directory
 ```
 
+**Serve it — do not open `index.html` from the file system.** The pages use ES modules and
+`fetch` for `data/facets.json`, and browsers block both over `file://`, so a double-clicked
+copy renders the static text with none of the route cards or live values. That is a browser
+restriction, not a fault in the page.
+
+Every internal link is a relative filename (`mainnet-defi.html`), so a checkout served from any
+directory works. The deployed host maps those filenames to the clean public URLs (`/endur`) with
+a redirect, so both forms resolve.
+
 ## Deploying
 
 The page is static, so it is served directly from the project's own host on its own domain —

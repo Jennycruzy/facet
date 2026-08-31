@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import test from "node:test";
 
 const data = JSON.parse(await readFile(new URL("../data/facets.json", import.meta.url), "utf8"));
@@ -32,11 +33,24 @@ test("only routes with a Mainnet receipt carry the verified status", () => {
   }
 });
 
-test("every route uses a clean public path", () => {
+test("every route links to a page that exists in this checkout", () => {
+  // Relative, not site-absolute: a cloned checkout served from any directory must work.
+  // nginx still redirects these filenames to the clean public URLs.
   assert.deepEqual(
     Object.fromEntries(data.apps.map((app) => [app.id, app.executionPage])),
-    { ekubo: "/ekubo", endur: "/endur", "ekubo-exit": "/ekubo-exit" },
+    {
+      ekubo: "mainnet-ekubo.html",
+      endur: "mainnet-defi.html",
+      "ekubo-exit": "mainnet-ekubo-exit.html",
+    },
   );
+  for (const app of data.apps) {
+    assert.ok(!app.executionPage.startsWith("/"), `${app.id} must not use a site-absolute path`);
+    assert.ok(
+      existsSync(new URL(`../${app.executionPage}`, import.meta.url)),
+      `${app.id} points at a missing page: ${app.executionPage}`,
+    );
+  }
 });
 
 test("a route may only claim a Mainnet transaction if it has the verified status", () => {
@@ -91,7 +105,7 @@ test("Endur is bound to the reviewed Mainnet ERC-4626 route", () => {
   for (const id of ["endur"]) {
     const app = data.apps.find((candidate) => candidate.id === id);
     assert.ok(app);
-    assert.equal(app.executionPage, "/endur");
+    assert.equal(app.executionPage, "mainnet-defi.html");
     assert.match(app.contract, /^0x[0-9a-f]{60,}$/i);
     assert.match(app.outputToken, /^0x[0-9a-f]{60,}$/i);
     assert.match(app.helper, /^0x[0-9a-f]{60,}$/i);
