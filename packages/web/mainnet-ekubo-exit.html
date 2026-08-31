@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Facet · Mainnet Ekubo</title>
-<meta name="description" content="Private Mainnet Ekubo swap route through Facet.">
+<title>Facet · Mainnet Endur exit</title>
+<meta name="description" content="Private Mainnet exit from an Endur xSTRK position through Facet.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
-<body>
+<body data-route="ekubo-exit">
 
 <div class="wrap app-route">
   <header class="appbar">
@@ -28,7 +28,7 @@
 
   <section class="launch-hero ready-hero">
     <div class="eyebrow">Facet Mainnet · Ekubo</div>
-    <h1>Use the working Mainnet route.</h1>
+    <h1>Leave the position, privately.</h1>
     <p class="launch-lede">Your private balance supplies the swap. Facet provides the fixed route,
     and your wallet shows the final approval.</p>
     <div class="launch-status" id="ready-status" data-state="idle" role="status" aria-live="polite">
@@ -41,7 +41,7 @@
     <div>
       <strong>No transaction is requested until you approve the review.</strong>
       <p>This page never receives your private key. It asks for a transaction only after you check
-      the details and approve the action in your wallet. You choose the STRK input.</p>
+      the details and approve the action in your wallet. You choose the xSTRK input.</p>
     </div>
   </section>
 
@@ -69,12 +69,14 @@
           <div><div class="mono-badge">02</div><h2>Private input</h2></div>
           <span class="pill" id="balance-pill">not checked</span>
         </div>
-        <p class="launch-copy">Choose how much STRK to use from the private balance in your
-        wallet, not from your public wallet address. The ETH result returns to that private balance.</p>
-        <div class="ready-balance" id="balance-value"><span id="balance-amount">—</span> <small>STRK</small></div>
-        <label class="amount-field" for="amount-input"><span>Swap amount</span><div><input id="amount-input" type="number" min="0" step="any" value="0.1" inputmode="decimal"><strong>STRK</strong></div><small id="amount-error"></small></label>
+        <p class="launch-copy">Choose how much xSTRK to redeem from the private balance in your
+        wallet, not from your public wallet address. The STRK result returns to that private balance.
+        Endur's own <code>redeem</code> mints an ERC-721 queue ticket and returns no STRK in the same
+        transaction, so this route exits on Ekubo's secondary market instead.</p>
+        <div class="ready-balance" id="balance-value"><span id="balance-amount">—</span> <small>xSTRK</small></div>
+        <label class="amount-field" for="amount-input"><span>Exit amount</span><div><input id="amount-input" type="number" min="0" step="any" value="0.08499920838900478" inputmode="decimal"><strong>xSTRK</strong></div><small id="amount-error"></small></label>
         <div class="ready-kv compact">
-          <span>input</span><strong id="input-summary">0.1 STRK</strong>
+          <span>input</span><strong id="input-summary">0.08499920838900478 xSTRK</strong>
           <span>source</span><strong>wallet_strk20Balances</strong>
         </div>
       </div>
@@ -101,11 +103,11 @@
   <section class="block ready-details">
     <div class="head"><h2>Transaction review</h2><div class="aside">price checked again</div></div>
     <div class="ready-result" id="review-panel">
-      <p>Connect Ready X. The page will verify Mainnet, the deployed helper, the shielded STRK balance, and a
+      <p>Connect Ready X. The page will verify Mainnet, the deployed helper, the shielded xSTRK balance, and a
       fresh Ekubo quote before enabling the review.</p>
     </div>
     <div class="ready-kv compact review-kv">
-      <span>route</span><strong>STRK → ETH · 0.05% / 1000 tick</strong>
+      <span>route</span><strong>xSTRK → STRK · 0.01% / 200 tick</strong>
       <span>quoted output</span><strong id="quoted-output">—</strong>
       <span>minimum output</span><strong id="minimum-output">—</strong>
       <span>recipient</span><strong id="output-recipient">—</strong>

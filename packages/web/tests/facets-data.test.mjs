@@ -18,9 +18,11 @@ test("facet cards have stable identities, recorded fallbacks, and transaction bl
   }
 });
 
-test("launcher contexts are the two receipt-backed routes documented by the product", () => {
+const VERIFIED = "wallet-mediated-verified";
+
+test("only routes with a Mainnet receipt carry the verified status", () => {
   assert.deepEqual(
-    data.apps.map((app) => app.id).sort(),
+    data.apps.filter((app) => app.status === VERIFIED).map((app) => app.id).sort(),
     ["ekubo", "endur"],
   );
   for (const app of data.apps) {
@@ -30,11 +32,48 @@ test("launcher contexts are the two receipt-backed routes documented by the prod
   }
 });
 
-test("receipt-backed routes use clean public paths", () => {
+test("every route uses a clean public path", () => {
   assert.deepEqual(
     Object.fromEntries(data.apps.map((app) => [app.id, app.executionPage])),
-    { ekubo: "/ekubo", endur: "/endur" },
+    { ekubo: "/ekubo", endur: "/endur", "ekubo-exit": "/ekubo-exit" },
   );
+});
+
+test("a route may only claim a Mainnet transaction if it has the verified status", () => {
+  for (const app of data.apps) {
+    if (app.status === VERIFIED) {
+      assert.match(app.mainnetTransaction, /^0x[0-9a-f]{60,}$/i,
+        `${app.id} claims verification without a transaction hash`);
+    } else {
+      assert.equal(app.mainnetTransaction, undefined,
+        `${app.id} is unexecuted and must not carry a transaction hash`);
+    }
+  }
+});
+
+test("the Endur exit is pinned to the initialised xSTRK/STRK pool key", () => {
+  const exit = data.apps.find((app) => app.id === "ekubo-exit");
+  const endur = data.apps.find((app) => app.id === "endur");
+  // Endur's redeem returns a queue ticket, not STRK, so the exit is a secondary-market swap of
+  // the xSTRK the stake route produced. The 0.05% / 1000 key returns NOT_INITIALIZED for this pair.
+  assert.equal(exit.route.tokenIn, endur.outputToken);
+  assert.equal(exit.route.tokenOut, data.strk);
+  assert.equal(exit.route.fee, "0x68db8bac710cb4000000000000000");
+  assert.equal(exit.route.tickSpacing, 200);
+  assert.equal(exit.route.token0, exit.route.tokenIn);
+  assert.equal(exit.route.token1, exit.route.tokenOut);
+  assert.ok(BigInt(exit.route.token0) < BigInt(exit.route.token1), "pool key must be sorted");
+});
+
+test("every Ekubo-shaped route carries the parameters the shared page reads", () => {
+  for (const app of data.apps.filter((candidate) => candidate.route)) {
+    for (const key of ["token0","token1","fee","tickSpacing","tokenIn","tokenInSymbol",
+                       "tokenOut","tokenOutSymbol","defaultAmount","slippageBps"]) {
+      assert.ok(app.route[key] !== undefined, `${app.id} route is missing ${key}`);
+    }
+    assert.notEqual(app.route.tokenIn, app.route.tokenOut);
+    assert.match(app.route.defaultAmount, /^\d+$/);
+  }
 });
 
 test("Endur is bound to the reviewed Mainnet ERC-4626 route", () => {

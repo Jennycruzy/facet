@@ -96,7 +96,7 @@
           "block": 14028014,
           "timestamp": "2026-08-25T14:05:10Z",
           "role": "invoke",
-          "summary": "The shadow account sends 1 wei to an unrelated 0x…dead recipient; the remainder returns to the shield."
+          "summary": "The shadow account sends 1 wei to an unrelated 0x\u2026dead recipient; the remainder returns to the shield."
         }
       ],
       "app": null,
@@ -161,6 +161,51 @@
       "mainnetBlock": 14004049,
       "executionPage": "/ekubo",
       "monogram": "Ek",
+      "accent": "amber",
+      "route": {
+        "token0": "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+        "token1": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "fee": "0x20c49ba5e353f80000000000000000",
+        "tickSpacing": 1000,
+        "tokenIn": "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+        "tokenInSymbol": "STRK",
+        "tokenOut": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "tokenOutSymbol": "ETH",
+        "defaultAmount": "100000000000000000",
+        "slippageBps": 1000
+      }
+    },
+    {
+      "id": "ekubo-exit",
+      "name": "Ekubo exit",
+      "dappName": "facet-mainnet-ekubo-exit-v1",
+      "nonce": 0,
+      "kind": "trading",
+      "action": "Exit",
+      "tolerates_delay": false,
+      "note": "Endur's own redemption is a withdrawal queue: redeem burns xSTRK and mints an ERC-721 claim ticket, returning no STRK in the same transaction. This route exits the position on Ekubo's secondary market instead, which settles in one transaction.",
+      "contract": "0x0199741822c2dc722f6f605204f35e56dbc23bceed54818168c4c49e4fb8737e",
+      "contractLabel": "Ekubo \u00b7 Router",
+      "entrypoint": "swap",
+      "helper": "0x2bd92991a0c90757caeb5d0908892637d4288ff4e2013877e0a2707a3788537",
+      "helperClassHash": "0x2a4ac595283d4d64b9952f5ef5c0da1775bfdb7c9d92237524a21dd8d19ebd7",
+      "router": "0x0199741822c2dc722f6f605204f35e56dbc23bceed54818168c4c49e4fb8737e",
+      "route": {
+        "token0": "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
+        "token1": "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+        "fee": "0x68db8bac710cb4000000000000000",
+        "tickSpacing": 200,
+        "tokenIn": "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
+        "tokenInSymbol": "xSTRK",
+        "tokenOut": "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+        "tokenOutSymbol": "STRK",
+        "defaultAmount": "84999208389004780",
+        "slippageBps": 1000
+      },
+      "verified": "route quoted live against the mainnet router on 30 Aug 2026; the 0.05%/1000 xSTRK pool key returns NOT_INITIALIZED, the 0.01%/200 key quotes",
+      "status": "route-verified-unexecuted",
+      "executionPage": "/ekubo-exit",
+      "monogram": "Ex",
       "accent": "amber"
     }
   ],

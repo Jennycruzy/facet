@@ -2,10 +2,6 @@ import "./theme.js";
 import { parseTokenAmount } from "./amount.js";
 const $ = (id) => document.getElementById(id);
 
-const ROUTE_FEE = 170141183460469235273462165868118016n;
-const TICK_SPACING = 1000n;
-const DEFAULT_SWAP_AMOUNT = 100000000000000000n;
-const SLIPPAGE_BPS = 1000n;
 const QUOTE_SWAP_SELECTOR = "0x2904b7c28f3fd4556d8aa4f93483ea2077dd95e61c54db86c2ea5fc1f3ffd54";
 
 const data = await fetch("data/facets.json").then((response) => {
@@ -13,13 +9,27 @@ const data = await fetch("data/facets.json").then((response) => {
   return response.json();
 });
 const mainnet = data.networks.mainnet;
-const ekubo = data.apps.find((app) => app.id === "ekubo");
-if (!ekubo) throw new Error("Ekubo route is missing from Facet configuration.");
+// One page script serves every Ekubo-shaped route. The page names which one it is; the route's
+// tokens, pool key and default size come from facets.json so a second route cannot drift from
+// the first by being copied.
+const ROUTE_ID = document.body.dataset.route || "ekubo";
+const ekubo = data.apps.find((app) => app.id === ROUTE_ID);
+if (!ekubo) throw new Error(`Ekubo route "${ROUTE_ID}" is missing from Facet configuration.`);
+const route = ekubo.route;
+if (!route) throw new Error(`Ekubo route "${ROUTE_ID}" has no route parameters.`);
 const MAINNET_CHAIN_IDS = new Set(["SN_MAIN", "0X534E5F4D41494E"]);
 const MAINNET_RPC = mainnet.rpc;
-const STRK = data.strk;
-const ETH = mainnet.eth;
 const POOL = mainnet.pool;
+const TOKEN0 = route.token0;
+const TOKEN1 = route.token1;
+const TOKEN_IN = route.tokenIn;
+const TOKEN_OUT = route.tokenOut;
+const IN_SYMBOL = route.tokenInSymbol;
+const OUT_SYMBOL = route.tokenOutSymbol;
+const ROUTE_FEE = BigInt(route.fee);
+const TICK_SPACING = BigInt(route.tickSpacing);
+const DEFAULT_SWAP_AMOUNT = BigInt(route.defaultAmount);
+const SLIPPAGE_BPS = BigInt(route.slippageBps ?? 1000);
 const ROUTER = ekubo.router;
 const HELPER = ekubo.helper;
 const HELPER_CLASS_HASH = ekubo.helperClassHash;
@@ -160,9 +170,9 @@ async function rpc(method, params) {
 
 function routeCalldata() {
   return [
-    STRK, ETH, hex(ROUTE_FEE), hex(TICK_SPACING), "0x0",
+    TOKEN0, TOKEN1, hex(ROUTE_FEE), hex(TICK_SPACING), "0x0",
     "0x0", "0x0", "0x0",
-    STRK, hex(state.amountWei), "0x0",
+    TOKEN_IN, hex(state.amountWei), "0x0",
   ];
 }
 
@@ -205,11 +215,11 @@ async function readWalletState(wallet, silent = false) {
   catch (error) { errors.push(`Wallet API versions: ${errorText(error)}`); }
 
   let balancesResult = null;
-  try { balancesResult = await request(wallet, { type: "wallet_strk20Balances", params: { tokens: [STRK] } }); }
+  try { balancesResult = await request(wallet, { type: "wallet_strk20Balances", params: { tokens: [TOKEN_IN] } }); }
   catch (error) { errors.push(`Shielded balance: ${errorText(error)}`); }
 
   const entry = Array.isArray(balancesResult)
-    ? balancesResult.find((item) => sameAddress(item?.token, STRK))
+    ? balancesResult.find((item) => sameAddress(item?.token, TOKEN_IN))
     : null;
   let balanceWei = null;
   if (entry) {
@@ -285,9 +295,9 @@ function render() {
     $("balance-pill").textContent = enough ? "enough for input" : "too small";
     $("balance-pill").className = `pill ${enough ? "pill-good" : ""}`;
   }
-  $("input-summary").textContent = `${formatUnits(state.amountWei, 18, 18)} STRK`;
+  $("input-summary").textContent = `${formatUnits(state.amountWei, 18, 18)} ${IN_SYMBOL}`;
   $("amount-error").textContent = state.amountError;
-  $("confirm-copy").textContent = `I reviewed the route. It will use ${formatUnits(state.amountWei, 18, 18)} STRK from my private balance and show the final approval in my wallet.`;
+  $("confirm-copy").textContent = `I reviewed the route. It will use ${formatUnits(state.amountWei, 18, 18)} ${IN_SYMBOL} from my private balance and show the final approval in my wallet.`;
 
   $("helper-address").textContent = short(HELPER);
   $("helper-address").title = HELPER;
@@ -298,8 +308,8 @@ function render() {
   $("helper-pill").textContent = state.helperDeployed === null ? "checking" : state.helperDeployed ? "deployed" : "deploy first";
   $("helper-pill").className = `pill ${state.helperDeployed ? "pill-good" : ""}`;
 
-  $("quoted-output").textContent = state.quote ? `${formatUnits(state.quote.quotedWei)} ETH (${state.quote.quotedWei} wei)` : "—";
-  $("minimum-output").textContent = state.quote ? `${formatUnits(state.quote.minimumWei)} ETH (${state.quote.minimumWei} wei)` : "—";
+  $("quoted-output").textContent = state.quote ? `${formatUnits(state.quote.quotedWei)} ${OUT_SYMBOL} (${state.quote.quotedWei} wei)` : "—";
+  $("minimum-output").textContent = state.quote ? `${formatUnits(state.quote.minimumWei)} ${OUT_SYMBOL} (${state.quote.minimumWei} wei)` : "—";
   $("output-recipient").textContent = state.account ? short(state.account) : "—";
   $("output-recipient").title = state.account ?? "";
 
@@ -308,11 +318,11 @@ function render() {
   if (connected && !hasNativeStrk20()) reviewLines.push("STOP: this wallet does not support the private action required by this route.");
   if (state.helperDeployed === false) reviewLines.push("The official helper class is declared, but its reserved Mainnet address is not deployed yet.");
   if (state.amountError) reviewLines.push(state.amountError);
-  if (state.balanceWei !== null && !state.amountError && state.balanceWei < state.amountWei) reviewLines.push("The shielded STRK balance is below the selected input.");
+  if (state.balanceWei !== null && !state.amountError && state.balanceWei < state.amountWei) reviewLines.push(`The shielded ${IN_SYMBOL} balance is below the selected input.`);
   if (state.errors.length) reviewLines.push(...state.errors);
   if (!reviewLines.length && connected) {
     reviewLines.push(state.quote ? "Mainnet, route, balance, and live price checks passed." : "Mainnet checks passed; fetching a live Ekubo price…");
-    reviewLines.push(`The action will use ${formatUnits(state.amountWei, 18, 18)} STRK from your private balance, swap on Ekubo, and return ETH to that private balance.`);
+    reviewLines.push(`The action will use ${formatUnits(state.amountWei, 18, 18)} ${IN_SYMBOL} from your private balance, swap on Ekubo, and return ${OUT_SYMBOL} to that private balance.`);
   }
   $("review-panel").innerHTML = reviewLines.length
     ? reviewLines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")
@@ -357,15 +367,15 @@ function safeDiagnostics() {
 
 function actionsForQuote(quote) {
   return [
-    { type: "withdraw", token: STRK, amount: hex(state.amountWei), recipient: HELPER },
-    { type: "transfer", token: ETH, amount: "OPEN", recipient: state.account },
+    { type: "withdraw", token: TOKEN_IN, amount: hex(state.amountWei), recipient: HELPER },
+    { type: "transfer", token: TOKEN_OUT, amount: "OPEN", recipient: state.account },
     {
       type: "invoke",
       contract: HELPER,
       calldata: [
         felt(ROUTER),
-        felt(STRK), hex(state.amountWei), "0x0",
-        felt(STRK), felt(ETH), hex(ROUTE_FEE), hex(TICK_SPACING), "0x0",
+        felt(TOKEN_IN), hex(state.amountWei), "0x0",
+        felt(TOKEN0), felt(TOKEN1), hex(ROUTE_FEE), hex(TICK_SPACING), "0x0",
         ...u256(quote.minimumWei),
         "0x0",
         "${openNoteIds[0]}",
@@ -511,10 +521,10 @@ $("confirm").onchange = render;
 $("copy-diagnostics").onclick = copyDiagnostics;
 $("amount-input").oninput = () => {
   try {
-    state.amountWei = parseTokenAmount($("amount-input").value, 18, "STRK");
+    state.amountWei = parseTokenAmount($("amount-input").value, 18, IN_SYMBOL);
     state.amountError = "";
   } catch (error) {
-    state.amountError = error instanceof Error ? error.message : "Enter a valid STRK amount.";
+    state.amountError = error instanceof Error ? error.message : `Enter a valid ${IN_SYMBOL} amount.`;
   }
   state.quote = null;
   $("confirm").checked = false;
