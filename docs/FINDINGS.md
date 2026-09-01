@@ -1603,6 +1603,39 @@ The pool and protocol events are present alongside those token transfers, and th
 addresses are visible in the transfer path, so this is the receipt-backed Mainnet execution of the
 exit route—not only a quote or simulation.
 
+### 6.38 The launcher now reconciles the portfolio from wallet and chain reads — 1 September 2026
+
+The extension closes the browser-side portfolio gap without adding a backend or pretending that
+localStorage is an on-chain registry:
+
+- `packages/web/assets/js/portfolio.js` requests all route assets through
+  `wallet_strk20Balances`. That response is the source of truth for the connected user's shielded
+  balances; missing assets are displayed as zero and malformed responses fail closed.
+- When a wallet implements the optional `wallet_strk20ShadowAccountCommitment` request, the
+  launcher keeps the returned partial commitment in memory, calls the Mainnet anonymizer's
+  `get_shadow_accounts` view for the configured app and nonce, and reads each discovered account's
+  public token balances with `starknet_call`.
+- `packages/web/assets/js/chain.js` decodes the returned `Span<ShadowAccountInfo>` and enforces a
+  one-nonce view. Discovery bypasses the generic `sessionStorage` RPC cache so the partial
+  commitment is not present in a cache key. `facet-map.js` can cache the resulting address,
+  deployment flag, balances and observation time, but it never stores the commitment and the UI
+  labels cached observations as stale.
+- A wallet that lacks the optional request is not treated as an error: the launcher still shows
+  the live private balance and the reviewed Wallet API routes, while stating that direct account
+  discovery is unavailable. A `NOT_REGISTERED` response is reported as a registration state, not
+  as proof that the wallet lacks the capability.
+
+The pure decoder, wallet-response parser, cache reconciliation and end-to-end test-double path are
+covered in `packages/web/tests/chain.test.mjs` and `packages/web/tests/portfolio.test.mjs`. No
+connected-wallet capability result is claimed here until a Ready X session answers the optional
+request.
+
+The static site also now consumes the SDK's actual executor: deployment builds
+`packages/sdk/src/index.ts` into `packages/web/assets/js/facet-sdk.js`, and the route-facing
+`executor.js` re-exports that artifact. This removes the former hand-maintained browser mirror;
+the build output remains dependency-free at runtime. The direct Mainnet identity write is still
+blocked by the external screening attestation described in §§6.27 and 6.33.
+
 
 ## 7. Toolchain
 

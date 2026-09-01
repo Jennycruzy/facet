@@ -5,10 +5,11 @@ application-specific identities that use it. This is not a guarantee against cor
 invisibility layer for downstream protocol activity.
 
 The target product is a launcher that funds and retains an app-specific account from a shielded
-balance. The current Mainnet browser product instead supplies reviewed Ekubo and Endur plans to
-Ready X and keeps only local app/version metadata; it does not yet control that persistent account
-lifecycle. The private portfolio is the recovery model, not a claim that a portfolio indexer or
-recovery actuator already exists.
+balance. The Mainnet browser product now reads the private portfolio from Ready X and reconciles
+deterministic app accounts from the anonymizer when the wallet exposes its optional commitment
+view. It still supplies the reviewed Ekubo and Endur plans through Ready X's wallet-mediated
+helper path when that capability is unavailable. The private portfolio is now a live read model,
+not a server-side index; protocol exits remain explicit and asset-specific.
 
 The simplest way to understand it is **Hide My Email for your money**: one person can
 keep a unified private portfolio while presenting a separate account to every app,
@@ -131,7 +132,7 @@ Facet combines the following layers:
 | Shadow account / `FacetAccount` | Acts as the public Starknet caller for the selected application context. |
 | Application adapter | Encodes a protocol-specific call, quote, slippage policy, and output-note policy. |
 | Relayer or paymaster | Submits the proof-bearing transaction and pays network execution costs where supported. |
-| Portfolio view | Planned client-side or encrypted-local state reconstructs the user's private view; no server should be the only copy of the user-to-facet map. |
+| Portfolio view | Ready X supplies live private balances; the launcher optionally resolves each deterministic app account and reads its public positions from Mainnet. LocalStorage is a replaceable activity cache, never the authority for existence or balances. |
 
 The identity commitment is scoped in two steps:
 
@@ -148,8 +149,9 @@ user's portfolio or the relationship between the user's other commitments.
 ## The account lifecycle
 
 This is the target direct-Facet lifecycle. The Sepolia runner has exercised the core proved
-sequence, but the current Mainnet browser launcher delegates execution to Ready X and does not
-implement these lifecycle controls end to end.
+sequence. The Mainnet browser launcher now reconciles the read side — private balances, optional
+deterministic account discovery, public balances, and local lifecycle history — while execution
+and lifecycle-changing writes remain wallet-mediated.
 
 1. The wallet authorizes a session and the client derives the private identity in memory.
 2. The client selects a shielded note and a context (`app`, chain, policy, nonce).

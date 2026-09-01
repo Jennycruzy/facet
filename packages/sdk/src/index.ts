@@ -69,6 +69,7 @@ export {
   OPEN,
   QUEUED_REDEMPTION_VAULTS,
   OPEN_NOTE_PLACEHOLDER,
+  submitPlan,
   WalletFacetExecutor,
   type HelperBinding,
   type RoutePolicy,

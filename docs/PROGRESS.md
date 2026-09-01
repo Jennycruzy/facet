@@ -3,8 +3,9 @@
 Chronological record. Every tick carries evidence: a transaction hash, a block height, a
 file path, or command output. A missing prerequisite blocks the dependent work.
 
-Sprint window: 14–31 August 2026. Submissions close 31 August, 23:59 UTC. The final
-working sprint is being treated as a compressed four-day window ending at that deadline.
+Original sprint window: 14–31 August 2026. The extension window is **1–7 September 2026**;
+submissions freeze on **7 September, 23:59 UTC**. The dated entries below preserve the original
+31 August state; extension work is recorded as new evidence rather than rewriting history.
 
 ## Current sprint truth — 31 August 2026
 
@@ -81,6 +82,26 @@ after the faucet top-up; Mainnet funds cannot be used as Sepolia funds.
 **Security status:** the original account is retired from signing after a local
 secret-handling incident; no secret is recorded in the repository. Private transactions now use the
 new account above, which has completed two independently verified Sepolia facets.
+
+---
+
+## Extension update — 1 September 2026
+
+The extension work is now deployed from the Jennycruzy checkout and keeps the original evidence
+separate from the new product work:
+
+| Extension item | State | Evidence |
+|---|---|---|
+| Unified portfolio read model | **Done** | `packages/web/assets/js/portfolio.js` reads the connected private asset set from Ready X and optionally reconciles each app context against the Mainnet anonymizer and token contracts. |
+| Persistent context discovery | **Done where wallet-supported** | `packages/web/assets/js/chain.js` decodes `get_shadow_accounts` for one explicit nonce; unsupported and unregistered wallet capabilities remain visible states. |
+| Local persistence boundary | **Done** | `facet-map.js` stores only activity and public observations; discovery bypasses the `sessionStorage` RPC cache, so the partial commitment is not persisted by the launcher. |
+| SDK as browser engine | **Done** | `packages/sdk/src/index.ts` is bundled at deploy time into `assets/js/facet-sdk.js`; `executor.js` re-exports that generated artifact. |
+| Regression coverage | **Done** | SDK build plus 40 SDK tests and 52 web tests pass on Jennycruzy. |
+| Live deployment | **Done** | `https://usefacet.xyz` serves the new launcher, bundle, and portfolio reader; all public routes returned HTTP 200 and the headless launcher smoke test completed without module errors. |
+
+No new transaction was requested in this implementation pass. The direct Mainnet identity write still
+requires the external screening attestation documented in `FINDINGS.md` §6.33; the app does not
+claim a receipt it did not produce.
 
 ---
 

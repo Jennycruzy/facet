@@ -1,10 +1,10 @@
-// The device-local activity record.
+// The device-local activity cache.
 //
-// This is NOT an on-chain facet registry. It records what this browser did, per (wallet, app), so
-// the launcher can show a portfolio instead of a list of buttons. It stores app metadata,
-// Mainnet transaction hashes and the asset kinds a route settled — never signatures, private
-// keys, viewing keys or recovery secrets. Until Facet controls on-chain identities, every surface
-// that renders this must call it a local activity record.
+// This is NOT an on-chain facet registry and it is not authoritative for balances or existence. It
+// records what this browser did, per (wallet, app), so the launcher can preserve history between
+// visits. It stores app metadata, Mainnet transaction hashes, asset kinds and the latest public
+// chain observation — never signatures, private keys, viewing keys, commitments or recovery
+// secrets. The launcher must reconcile chain observations separately and label stale local data.
 //
 // The five states and their legal transitions mirror packages/sdk/src/facets.ts exactly;
 // tests/facet-map.test.mjs pins them to each other.
@@ -18,6 +18,8 @@ export const TRANSITIONS = {
 };
 
 const KEY = "facet-wallet-map-v1";
+
+export const ACTIVITY_CACHE_VERSION = 1;
 
 export function readMap() {
   try { return JSON.parse(localStorage.getItem(KEY) ?? "{}"); } catch { return {}; }
@@ -48,12 +50,49 @@ export function retain(account, appId) {
   if (!current || current.state === "retire") {
     const now = new Date().toISOString();
     records[key] = {
-      app: appId, strategy: "default", version: (current?.version ?? 0) + 1,
+      app: appId, strategy: "default", wallet: account ?? null, version: (current?.version ?? 0) + 1,
       state: "launch", positions: [], transactions: [], createdAt: now, updatedAt: now,
     };
     writeMap(records);
   }
   return records[key];
+}
+
+/**
+ * Cache a read-only chain observation without making the local record the source of truth.
+ *
+ * The observation is deliberately replaceable and timestamped. A refresh may prove that an
+ * account is undeployed, empty, or unavailable; callers should render the returned chain object
+ * first and use this cache only when the chain is unreachable later.
+ */
+export function reconcile(account, appId, observation) {
+  if (!observation || typeof observation !== "object") {
+    throw new TypeError("A chain observation is required.");
+  }
+  const records = readMap();
+  const key = mapKey(account, appId);
+  const current = records[key] ?? retain(account, appId);
+  const fresh = readMap();
+  const observedAt = observation.observedAt ?? new Date().toISOString();
+  fresh[key] = {
+    ...current,
+    wallet: current.wallet ?? account ?? null,
+    chain: {
+      address: observation.address,
+      isDeployed: Boolean(observation.isDeployed),
+      balances: { ...(observation.balances ?? {}) },
+      positions: Array.isArray(observation.positions)
+        ? observation.positions.map((position) => ({
+          ...position,
+          amount: typeof position.amount === "bigint" ? position.amount.toString() : position.amount,
+        }))
+        : [],
+      observedAt,
+    },
+    updatedAt: new Date().toISOString(),
+  };
+  writeMap(fresh);
+  return fresh[key];
 }
 
 export function move(account, appId, to) {

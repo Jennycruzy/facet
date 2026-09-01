@@ -215,6 +215,16 @@ export class WalletFacetExecutor implements FacetExecutor {
   }
 }
 
+/** Execute one reviewed plan through the same SDK executor used by browser routes. */
+export async function submitPlan(
+  wallet: Strk20WalletLike,
+  plan: AdapterPlan,
+  options: Omit<WalletExecutorOptions, "wallet">,
+): Promise<string> {
+  const result = await new WalletFacetExecutor({ wallet, ...options }).execute(plan);
+  return result.transactionHash;
+}
+
 /** Helper binding for the deployed Ekubo swap helper (`IEkuboSwapAnonymizer::privacy_invoke`). */
 export function ekuboHelperBinding(options: {
   helper: string; router: string; token0: FeltLike; token1: FeltLike;

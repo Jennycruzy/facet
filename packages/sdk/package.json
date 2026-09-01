@@ -11,9 +11,12 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:browser": "npm run build && node scripts/build-browser-bundle.mjs",
     "test": "vitest run",
     "check": "npm run build && npm test",
     "gate-a:preflight": "node scripts/gate-a-avnu-preflight.mjs",
@@ -55,6 +58,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.28.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15"
   }

@@ -14,7 +14,9 @@ labeled as test accounts. A Mainnet receipt is not silently presented as a direc
 
 ## Running it
 
-No build step, no dependencies, no bundler.
+The runtime remains dependency-free static output. Deployment builds the SDK source into one
+browser ESM bundle at `assets/js/facet-sdk.js`; the route-facing `executor.js` only re-exports that
+bundle, so the browser and SDK no longer maintain separate executor implementations.
 
 ```bash
 python3 -m http.server 8899 --bind 127.0.0.1   # from this directory
@@ -35,8 +37,8 @@ The page is static, so it is served directly from the project's own host on its 
 `demo_url` in the sprint registry should be that domain, not a platform subdomain.
 
 ```bash
-# from the repository root, with DEPLOY_HOST set to the deployment host
-rsync -az --delete packages/web/ "$DEPLOY_HOST:/var/www/facet/"
+# from the repository root on the deployment host
+FACET_WEB_DEST=/var/www/facet ./infra/deploy-web.sh
 ln -s /etc/nginx/sites-available/facet /etc/nginx/sites-enabled/facet
 certbot --nginx -d <domain>    # certificate and the HTTPS redirect
 ```
@@ -44,9 +46,9 @@ certbot --nginx -d <domain>    # certificate and the HTTPS redirect
 The public pages use clean URLs: `/launch`, `/ekubo`, `/endur`, and `/proof`. Nginx maps those
 paths to their static HTML files and redirects the old `.html` paths to the clean addresses.
 
-There is no build step, no runtime dependency, and no upstream: nginx serves the files, and the
-page reads Starknet RPC from the visitor's browser. Nothing else on the host is reachable through
-the site.
+There is no runtime dependency and no upstream: nginx serves the files, and the page reads
+Starknet RPC from the visitor's browser. Deployment performs the one local SDK build needed to
+emit `assets/js/facet-sdk.js`; nothing else on the host is reachable through the site.
 
 The launcher at `/launch` connects Ready X on Starknet Mainnet and opens the selected Ekubo or
 Endur review route. It stores app/version/lifecycle state, confirmed transaction hashes, and held
@@ -64,8 +66,8 @@ requirements.
 The internal Ready X capability check is available at `ready-probe.html` but is intentionally not
 linked from the public product navigation. It uses the injected Starknet Wallet
 API to read the connected account, chain, advertised Wallet API versions, and shielded STRK
-balance. It never requests a private key, proof, signature, or transaction. Use it before wiring
-Facet's shadow-account action to the wallet-managed proving path.
+balance. It never requests a private key, proof, signature, or transaction. Use it to verify the
+wallet's read and action capabilities before relying on optional shadow-account discovery.
 
 ## Structure
 
@@ -81,7 +83,9 @@ Facet's shadow-account action to the wallet-managed proving path.
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
 | `assets/js/chain.js` | Homepage chain reader with a `sessionStorage` cache and five-minute TTL; reviewed route modules use their own guarded RPC reads |
 | `assets/js/app-ui.js` | The app: live strip, identity cards, app tiles, and dated RPC fallbacks |
-| `assets/js/launcher.js` | Ready X connection, local activity map, route selection, and in-memory session state |
+| `assets/js/launcher.js` | Ready X connection, chain-backed portfolio reconciliation, local activity cache, route selection, and in-memory session state |
+| `assets/js/portfolio.js` | Private balance reads, optional shadow-account discovery, public position reads, and cache reconciliation |
+| `assets/js/chain.js` | Cached Starknet RPC reads, shadow-account view decoding, receipts, and token balances |
 | `assets/js/ready-probe.js` | Read-only Ready X account, chain, STRK20 balance, and API capability check |
 | `assets/js/wallet-binding.js` | Canonical binding message, EIP-1193 account handling, and signature validation |
 | `assets/js/wallet-derivation.js` | Dependency-free Keccak and bridge-compatible viewing-key derivation |
@@ -111,7 +115,8 @@ Facet's shadow-account action to the wallet-managed proving path.
 
 ## Testing
 
-The static page has no build step. The browser-boundary helpers have dependency-free Node tests:
+The runtime is static; the browser-boundary helpers have Node tests and the test command builds the
+SDK browser artifact first:
 
 ```bash
 npm test

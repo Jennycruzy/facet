@@ -469,12 +469,35 @@ pre .c { color: var(--text-3); }
 .launch-app:disabled { opacity: .72; cursor: not-allowed; }
 .launch-boundary { padding-bottom: 30px; }
 .launch-boundary .note { max-width: 70ch; }
+.launch-portfolio { padding-top: 70px !important; }
+.portfolio-status { margin-top: 20px; padding: 12px 15px; border: 1px solid var(--rule);
+  color: var(--text-2); background: rgba(13,26,55,.38); font-family: var(--mono); font-size: .72rem; }
+.portfolio-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+.portfolio-root { grid-column: 1 / -1; padding: 17px 18px; border: 1px solid rgba(58,217,166,.34);
+  background: rgba(58,217,166,.05); }
+.portfolio-root-head, .portfolio-facet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.portfolio-root-head strong, .portfolio-facet-head strong { font-size: .92rem; }
+.portfolio-balances { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.portfolio-balances span { padding: 6px 9px; border: 1px solid rgba(58,217,166,.26); color: var(--verified);
+  font-family: var(--mono); font-size: .72rem; }
+.portfolio-warning { display: block; margin-top: 10px; color: var(--amber); font-size: .72rem; }
+.portfolio-facet { padding: 17px 18px; border: 1px solid rgba(var(--a-rgb),.4); border-left: 3px solid var(--accent);
+  background: rgba(13,26,55,.45); }
+.portfolio-kv { display: grid; grid-template-columns: max-content 1fr; gap: 8px 13px; margin-top: 14px;
+  padding-top: 13px; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: .69rem; }
+.portfolio-kv span { color: var(--text-3); text-transform: uppercase; letter-spacing: .07em; }
+.portfolio-kv strong { min-width: 0; overflow: hidden; color: var(--text-2); text-overflow: ellipsis; white-space: nowrap; font-weight: 400; }
+.portfolio-live { color: var(--verified) !important; }
+.portfolio-stale { color: var(--amber) !important; }
+.portfolio-link { display: inline-block; margin-top: 14px; color: var(--sapphire-2); font-family: var(--mono); font-size: .72rem; }
+.portfolio-link:hover { color: var(--cyan); }
 .noscript { margin: 24px auto; padding: 14px 16px; border: 1px solid var(--amber); color: var(--amber); }
 code { color: var(--sapphire-2); font-family: var(--mono); font-size: .9em; }
 
 @media (max-width: 940px) {
   .launch-layout, .launch-steps { grid-template-columns: 1fr; }
   .launch-integrations { grid-template-columns: 1fr; }
+  .portfolio-list { grid-template-columns: 1fr; }
   .launch-context { grid-template-columns: max-content 1fr; }
   .identity-flow { grid-template-columns: 1fr 1fr; }
   .identity-line { display: none; }

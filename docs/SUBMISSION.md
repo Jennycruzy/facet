@@ -4,7 +4,7 @@
 docs, the page — is only reachable through it. This file records exactly what each field
 needs, what is in it now, and how to verify a value before it is added.
 
-The sprint closes on **31 August 2026 at 23:59 UTC**. The judging-critical evidence is a
+The extension sprint closes on **7 September 2026 at 23:59 UTC**. The judging-critical evidence is a
 working Mainnet product, integration, and a short reproducible demo. A queued proof is a UX
 feature, not a Mainnet hash: only a successful receipt with the required STRK20 pool event
 counts as transaction evidence.

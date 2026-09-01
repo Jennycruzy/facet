@@ -22,8 +22,11 @@ app-specific identities. It is not a guarantee against correlation. It does not 
 calls, balances, timing, and user-chosen recipients are public or inferable once it reaches
 Starknet.
 
-The persistent per-app account and unified recovery portfolio are the product model demonstrated by
-the direct Sepolia path, not a completed promise of the current Mainnet wallet-mediated routes.
+The launcher now reads the unified private portfolio from Ready X and can reconcile deterministic
+per-app accounts from the Mainnet anonymizer when the connected wallet exposes the optional
+shadow-account commitment request. The current Mainnet routes still fall back honestly to the
+wallet-mediated helper path when that capability is absent; the direct write path remains gated by
+the pool's external screening attestation.
 
 Read [`docs/PRODUCT.md`](docs/PRODUCT.md) for the product model, privacy boundary,
 account lifecycle, and architecture. This README keeps the implementation evidence and
@@ -42,9 +45,11 @@ That is not an abstract problem:
   preference.
 
 Facet is designed to give you one persistent identity per application or strategy instead of one
-identity forever. The current Mainnet launcher does not yet control those accounts. Where the
-direct identity path is used, its private funding does not name you, but public behaviour, repeated
-amounts, timing, recipients, or transfers between facets can still create a link.
+identity forever. The Mainnet launcher can now reconcile those deterministic accounts when the
+wallet exposes the required read capability; funding and direct account execution still depend on
+the wallet and pool transport. Where the direct identity path is used, its private funding does
+not name you, but public behaviour, repeated amounts, timing, recipients, or transfers between
+facets can still create a link.
 
 Built on STRK20 **shadow accounts** — a primitive that lets a proved private transaction
 fund a deterministic account, have it call a normal Starknet application, and settle the
@@ -260,7 +265,7 @@ What is not built is listed as plainly as what is.
 | Prover tooling | `docs/PROVER.md`, `infra/prover/` — diagnosed, fixed, documented, reusable by anyone |
 | SDK | `packages/sdk` — adapter, lifecycle, recovery-classification, and private-transaction primitives plus the operational Sepolia runner; build clean, 40 tests passing |
 | Private transaction | **executed on Sepolia, 25 August 2026** — see below |
-| Product layer | **working wallet-mediated demo** — Facet's reviewed Ekubo/Endur routes, the tested xSTRK exit composition, one shared reference executor, and a local activity map exist; actual persistent-facet execution control, automatic on-chain recovery, the async service, and a unified portfolio view remain to be built |
+| Product layer | **working wallet-mediated demo with chain-backed portfolio reads** — Facet's reviewed Ekubo/Endur routes, tested xSTRK exit composition, shared SDK executor, private-balance reader, optional deterministic account reconciliation, recoverability view, local activity cache, and generated browser SDK bundle are shipped; direct shadow-account writes, automatic protocol exits, and the async service remain gated or future work |
 | Mainnet contracts | **deployed** — immutable anonymizer, `FacetAccount`, Ekubo helper, and Endur helper are deployed; the current protocol routes have receipt-backed evidence |
 | Mainnet interaction | **verified across Ekubo and Endur** — the 7 STRK eligibility shield plus reviewed Facet/Ekubo, Facet/Endur, and xSTRK exit actions are confirmed on Mainnet |
 
@@ -325,7 +330,7 @@ not presented as a supported route.
 | Funding and spend policy | **Separated and tested.** Facet defines fixed public pool-funding denominations while allowing a user-selected app spend within each route's bounds. `assertFundingDenomination` and the route policies are covered by tests; the current Mainnet shielding surface remains a wallet integration boundary rather than a Facet UI feature. |
 | Recipient and route safeguards | **Implemented for declared route inputs.** Every plan declares its public recipients, and the SDK/browser executors reject linked recipients, unsupported assets, invalid amount bounds, undeclared asset kinds, unsafe collection policies, and settlement/open-note mismatches. This is a strong adapter policy boundary, not an arbitrary-calldata decoder or a promise that downstream activity cannot correlate. |
 | Lifecycle and recovery | **Implemented model plus tested protocol composition.** The launcher and SDK use `launch → use → hold → recover → retire`, classify fungible deltas separately from persistent positions, and include the Endur xSTRK → STRK exit through Ekubo. Fungible balances can be recovered where the route declares them safe; xSTRK, LP positions, debt, NFTs, and receipts still require explicit protocol exits. The configured xSTRK exit now has a receipt-backed Mainnet execution. |
-| Persistent facets | **Deterministic model and local controls shipped.** The SDK and browser map retain one context per wallet/app/strategy, record confirmed activity and positions, and enforce lifecycle transitions; the Sepolia direct path proves deterministic account derivation, materialization, use, and settlement. Connecting that map to a persistent Mainnet account signer and encrypted recovery record remains an account-layer integration. |
+| Persistent facets | **Deterministic discovery and portfolio reconciliation shipped where supported.** The launcher reads Ready X's private balances and, when the wallet exposes `wallet_strk20ShadowAccountCommitment`, resolves each app context through the Mainnet anonymizer and reads public token balances. The local map caches only confirmed activity and the latest public observation; it never stores the commitment or claims authority over chain state. Direct Mainnet shadow-account execution still needs a wallet transport plus the pool's screening attestation. |
 | Mainnet execution | **Facet-owned routes are live.** Facet owns the intent, adapter plan, helper contracts, route allowlist, calldata, amount/recipient policy, settlement rules, and lifecycle record behind the verified Ekubo, Endur, and xSTRK exit actions. The current Wallet API is the transport adapter for wallet-side signing, proof handling, and submission; it does not define Facet's product or route policy. |
 | Direct Facet Mainnet path | **Direct transport evidence exists.** The direct Facet transaction reached and finalized on Mainnet before reverting with `EMPTY_PROOF_FACTS`; a later compatible proof reached AVNU and stopped before broadcast with `SCREENING_REQUIRED`. The complete direct identity sequence is proven on Sepolia. A production screening-attestation source is the remaining Mainnet infrastructure dependency, documented with StarkWare's [shadow-account derivation](https://github.com/starkware-libs/starknet-privacy/pull/954), [pool-policy client](https://github.com/starkware-libs/starknet-privacy/pull/955), and [deposit-address screening](https://github.com/starkware-libs/starknet-privacy/pull/957) work. |
 | Mainnet evidence | **Receipt-backed and deployed.** Facet/Ekubo succeeded in [`0x2d3c…36ab`](https://voyager.online/tx/0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab), Facet/Endur succeeded in [`0x240d…163f5`](https://voyager.online/tx/0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5), and the xSTRK exit succeeded in [`0xf5ac…90b0`](https://voyager.online/tx/0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0), with pool/protocol events and configured helper calls. The 7 STRK eligibility shield is separate evidence; the reverted direct attempt is recorded but not counted as a successful action. |

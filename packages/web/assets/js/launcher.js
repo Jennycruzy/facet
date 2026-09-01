@@ -2,7 +2,9 @@ import "./theme.js";
 import { createGem } from "./gem.js";
 import { applicationContext, contextLabel } from "./app-context.js";
 import { mapKey, readMap, recordActivity, retain, retireBlockedReason, move } from "./facet-map.js";
-import { detectReadyX } from "./route-runtime.js";
+import { createChain } from "./chain.js";
+import { detectReadyX, errorText, formatUnits } from "./route-runtime.js";
+import { loadPortfolio } from "./portfolio.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -18,7 +20,7 @@ function selectNetwork(network) {
   document.querySelectorAll("[data-network-panel]").forEach((panel) => {
     panel.hidden = panel.dataset.networkPanel !== network;
   });
-  localStorage.setItem("facet-launch-network", network);
+  try { localStorage.setItem("facet-launch-network", network); } catch { /* private mode */ }
 }
 document.querySelectorAll("[data-network-tab]").forEach((tab) => {
   tab.onclick = () => selectNetwork(tab.dataset.networkTab);
@@ -36,6 +38,8 @@ for (const facet of data.facets) {
 
 const networkName = "SN_MAIN";
 const mainnetPool = data.networks.mainnet.pool;
+const mainnetAnonymizer = data.networks.mainnet.anonymizer;
+const chain = createChain(data.networks);
 
 function normalizeStarknetAddress(value) {
   if (typeof value !== "string" || !/^0x[0-9a-f]+$/i.test(value)) return null;
@@ -47,11 +51,13 @@ mark.setFacets(data.facets);
 mark.start();
 
 // The connected Ready X account is held only for this page session. The local activity map stores
-// app/version metadata, never wallet signatures, private keys, or recovery secrets.
+// app/version metadata and confirmed activity, never wallet signatures, commitments, private keys,
+// viewing keys or recovery secrets. The portfolio reader below obtains live values independently.
 const session = {
   provider: detectReadyX(),
   account: null,
   selectedApp: null,
+  portfolio: null,
   state: "idle",
 };
 
@@ -60,6 +66,7 @@ const key = (appId) => mapKey(session.account, appId);
 function retainFacet(appId) {
   retain(session.account, appId);
   renderFacetMap();
+  renderPortfolio();
 }
 
 function updateFacet(appId, action) {
@@ -68,15 +75,150 @@ function updateFacet(appId, action) {
   if (!record) return;
   if (action === "retire") {
     const blocked = retireBlockedReason(record);
-    if (blocked) { setStatus("error", blocked); renderFacetMap(); return; }
+    if (blocked) { setStatus("error", blocked); renderFacetMap(); renderPortfolio(); return; }
     move(session.account, appId, "retire");
   } else {
     // A new local version retires the old record, then retains the same app again.
     if (!retireBlockedReason(record)) move(session.account, appId, "retire");
-    else { setStatus("error", retireBlockedReason(record)); renderFacetMap(); return; }
+    else { setStatus("error", retireBlockedReason(record)); renderFacetMap(); renderPortfolio(); return; }
     retain(session.account, appId);
   }
   renderFacetMap();
+  renderPortfolio();
+}
+
+function amountText(value, symbol) {
+  try { return `${formatUnits(BigInt(value), 18, 8)} ${symbol}`; }
+  catch { return `— ${symbol}`; }
+}
+
+function appendKv(container, label, value, className = "") {
+  const key = document.createElement("span");
+  key.textContent = label;
+  const content = document.createElement("strong");
+  content.textContent = value;
+  if (className) content.className = className;
+  container.append(key, content);
+}
+
+function portfolioPositionText(entry, app) {
+  const positions = entry.chain?.positions ?? [];
+  if (positions.length) return positions.map((position) => amountText(position.amount, position.symbol)).join(", ");
+  const cached = entry.cached?.chain?.positions ?? entry.cached?.positions ?? [];
+  if (cached.length) return `${cached.map((position) => position.symbol ?? position.asset).join(", ")} (cached)`;
+  if (entry.chain && !entry.chain.isDeployed) return "No public balance · account not deployed";
+  if (entry.chain) return "No public position observed";
+  if (app.id === "endur") return "xSTRK position not discovered";
+  return "No direct facet account discovered";
+}
+
+function portfolioRecoveryText(entry) {
+  const positions = entry.chain?.positions ?? entry.cached?.chain?.positions ?? entry.cached?.positions ?? [];
+  const hasPersistent = positions.some((position) =>
+    position.kind === "exit-required" || position.symbol === "xSTRK",
+  );
+  if (hasPersistent) return "Exit required · Ekubo exit route";
+  if (entry.chain) return "Fungible balances can settle back to shielded notes";
+  if (entry.capability?.status === "not-registered") return "Register the private identity before discovery";
+  if (entry.capability?.status === "available") return "Direct account available; chain read needs refresh";
+  return "Wallet-mediated route · direct account discovery unavailable";
+}
+
+function renderPortfolio() {
+  const target = $("portfolio-list");
+  const status = $("portfolio-status");
+  if (!target || !status) return;
+  if (!session.account) {
+    status.textContent = "Connect Ready X to read the private portfolio.";
+    target.innerHTML = '<span class="muted">No wallet-connected portfolio is loaded.</span>';
+    return;
+  }
+  if (!session.portfolio) {
+    status.textContent = "Waiting for the first chain-backed refresh…";
+    target.innerHTML = '<span class="muted">The launcher will read private balances and app contexts after connection.</span>';
+    return;
+  }
+
+  const portfolio = session.portfolio;
+  const parts = [];
+  const root = document.createElement("div");
+  root.className = "portfolio-root";
+  const rootHead = document.createElement("div");
+  rootHead.className = "portfolio-root-head";
+  const rootTitle = document.createElement("strong");
+  rootTitle.textContent = "Private balance";
+  const rootPill = document.createElement("span");
+  rootPill.className = `pill ${portfolio.privateBalanceError ? "" : "pill-good"}`;
+  rootPill.textContent = portfolio.privateBalanceError ? "read needs attention" : "live wallet read";
+  rootHead.append(rootTitle, rootPill);
+  root.append(rootHead);
+  const balances = document.createElement("div");
+  balances.className = "portfolio-balances";
+  const nonZero = portfolio.assets.filter(({ token }) => BigInt(portfolio.privateBalances[token] ?? "0") > 0n);
+  if (nonZero.length) {
+    for (const asset of nonZero) {
+      const item = document.createElement("span");
+      item.textContent = amountText(portfolio.privateBalances[asset.token], asset.symbol);
+      balances.append(item);
+    }
+  } else {
+    const empty = document.createElement("span");
+    empty.textContent = "No non-zero private balance returned";
+    balances.append(empty);
+  }
+  root.append(balances);
+  if (portfolio.privateBalanceError) {
+    const warning = document.createElement("small");
+    warning.className = "portfolio-warning";
+    warning.textContent = portfolio.privateBalanceError;
+    root.append(warning);
+  }
+  parts.push(root);
+
+  for (const entry of portfolio.facets) {
+    const app = data.apps.find((candidate) => candidate.id === entry.appId);
+    if (!app) continue;
+    const card = document.createElement("article");
+    card.className = `portfolio-facet accent-${app.accent ?? "sapphire"}`;
+    const head = document.createElement("div");
+    head.className = "portfolio-facet-head";
+    const title = document.createElement("strong");
+    title.textContent = app.name;
+    const state = document.createElement("span");
+    state.className = "pill";
+    state.textContent = entry.cached?.state ?? "not started";
+    head.append(title, state);
+    card.append(head);
+    const details = document.createElement("div");
+    details.className = "portfolio-kv";
+    appendKv(details, "context", `${entry.context.dappName} · nonce ${entry.context.nonce}`);
+    if (entry.chain) {
+      appendKv(details, "account", entry.chain.address, entry.chain.isDeployed ? "portfolio-live" : "");
+      appendKv(details, "public balances", portfolioPositionText(entry, app));
+      appendKv(details, "observation", entry.chain.isDeployed ? "chain · deployed" : "chain · deterministic / undeployed");
+    } else if (entry.cached?.chain?.address) {
+      appendKv(details, "account", `${entry.cached.chain.address} · cached`, "portfolio-stale");
+      appendKv(details, "public balances", portfolioPositionText(entry, app), "portfolio-stale");
+      appendKv(details, "observation", "cached · refresh unavailable", "portfolio-stale");
+    } else {
+      appendKv(details, "account", entry.capability?.status === "available" ? "discovery available" : "wallet-managed route");
+      appendKv(details, "public balances", portfolioPositionText(entry, app));
+      appendKv(details, "observation", entry.capability?.reason ?? "No direct account observation");
+    }
+    appendKv(details, "recoverability", portfolioRecoveryText(entry));
+    card.append(details);
+    if (app.id === "endur") {
+      const exit = document.createElement("a");
+      exit.className = "portfolio-link";
+      exit.href = "/ekubo-exit";
+      exit.textContent = "Open exit route →";
+      card.append(exit);
+    }
+    parts.push(card);
+  }
+  target.replaceChildren(...parts);
+  const chainCount = portfolio.facets.filter((entry) => entry.chain).length;
+  status.textContent = `${chainCount}/${portfolio.facets.length} app contexts reconciled from chain · refreshed ${new Date(portfolio.refreshedAt).toLocaleTimeString()}`;
 }
 
 const STATE_COPY = {
@@ -123,6 +265,34 @@ function renderFacetMap() {
     }
     target.append(row);
   }
+}
+
+async function refreshPortfolio() {
+  if (!session.account || !session.provider) return;
+  setStatus("signing", "Reading private balances and reconciling app contexts…");
+  render();
+  try {
+    session.portfolio = await loadPortfolio({
+      wallet: session.provider,
+      chain,
+      anonymizer: mainnetAnonymizer,
+      apps: data.apps,
+      strk: data.strk,
+      account: session.account,
+    });
+    const chainCount = session.portfolio.facets.filter((entry) => entry.chain).length;
+    const privateReadOk = !session.portfolio.privateBalanceError;
+    setStatus(
+      privateReadOk ? "bound" : "error",
+      privateReadOk
+        ? `Portfolio refreshed: ${chainCount} app context${chainCount === 1 ? "" : "s"} reconciled from Mainnet.`
+        : "Portfolio refreshed, but the private balance read needs attention.",
+    );
+  } catch (error) {
+    session.portfolio = null;
+    setStatus("error", `Portfolio refresh failed: ${errorText(error)}`);
+  }
+  render();
 }
 
 function setStatus(state, text) {
@@ -177,11 +347,13 @@ function render() {
       ? "Choose an application route. Selection only previews the next step; no transaction is prepared."
       : "Choose an app to preview its route. Connect Ready X before approving an action.";
   renderFacetMap();
+  renderPortfolio();
 }
 
 function clearSession(text = "Wallet disconnected from this launcher.") {
   session.account = null;
   session.selectedApp = null;
+  session.portfolio = null;
   $("copy-message-status").textContent = "";
   setStatus("idle", text);
   render();
@@ -203,6 +375,7 @@ async function connect() {
     session.account = account;
     setStatus("bound", "Ready X connected on Starknet Mainnet. Choose an app.");
     render();
+    await refreshPortfolio();
   } catch (error) {
     setStatus("error", error instanceof Error ? error.message : "Wallet connection failed.");
   }
@@ -220,6 +393,7 @@ function selectApp(id) {
 
 $("connect").onclick = connect;
 $("reset").onclick = () => clearSession();
+if ($("refresh-portfolio")) $("refresh-portfolio").onclick = () => { void refreshPortfolio(); };
 document.querySelectorAll("[data-launch-action]").forEach((button) => {
   button.onclick = () => selectApp(button.dataset.appId);
 });
@@ -254,8 +428,10 @@ if (!session.provider) {
         if (!account) throw new Error("Ready X returned an invalid Starknet account.");
         if (account !== session.account) clearSession("Ready X account changed. Connect again.");
         session.account = account;
+        session.portfolio = null;
         setStatus("bound", "Ready X connected on Starknet Mainnet. Choose an app.");
         render();
+        void refreshPortfolio();
       } catch (error) {
         clearSession(error instanceof Error ? error.message : "The wallet account changed.");
       }
@@ -265,5 +441,8 @@ if (!session.provider) {
 
 $("network").textContent = networkName;
 $("pool").textContent = mainnetPool;
-selectNetwork(localStorage.getItem("facet-launch-network") === "testnet" ? "testnet" : "mainnet");
+let storedNetwork = "mainnet";
+try { storedNetwork = localStorage.getItem("facet-launch-network") === "testnet" ? "testnet" : "mainnet"; } catch { /* private mode */ }
+selectNetwork(storedNetwork);
 render();
+if (session.account) await refreshPortfolio();

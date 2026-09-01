@@ -88,9 +88,9 @@
           </div>
           <span class="pill">stored on this device</span>
         </div>
-        <p class="launch-copy">This device keeps one versioned activity record per app and strategy.
-        It does not select or control the execution account used by Ready X.</p>
-        <div class="identity-status" id="binding-message">Connect Ready X to open your local activity record.</div>
+        <p class="launch-copy">This device keeps one versioned activity cache per app and strategy.
+        The live portfolio below is read from Ready X and Mainnet independently.</p>
+        <div class="identity-status" id="binding-message">Connect Ready X to open your chain-backed portfolio.</div>
         <div id="facet-map" class="facet-map"><span class="muted">Connect Ready X to view this device&#39;s activity record.</span></div>
         <div class="message-actions">
           <button class="text-button" id="copy-message" type="button" disabled hidden>Copy message</button>
@@ -98,6 +98,19 @@
         </div>
       </div>
     </div>
+  </section>
+
+  <section class="block launch-portfolio">
+    <div class="head">
+      <h2>Portfolio reconciliation</h2>
+      <div class="aside">chain first · cache second</div>
+    </div>
+    <p class="note">The private balance comes from Ready X. If the wallet exposes the optional shadow-account
+    commitment, Facet also resolves each app context from the Mainnet anonymizer and reads its public positions.
+    LocalStorage keeps history only; it never invents an account or balance.</p>
+    <div class="portfolio-status" id="portfolio-status" role="status" aria-live="polite">Connect Ready X to read the private portfolio.</div>
+    <div class="portfolio-list" id="portfolio-list"><span class="muted">No wallet-connected portfolio is loaded.</span></div>
+    <button class="text-button" id="refresh-portfolio" type="button">Refresh portfolio</button>
   </section>
 
   <section class="block launch-next">
@@ -135,10 +148,10 @@
 
   <section class="block launch-boundary">
     <div class="head"><h2>What is protected</h2><div class="aside">Clear limits</div></div>
-    <p class="note">Ready X supplies the private Mainnet execution path; Facet does not yet control
-    a separate on-chain identity for each app. App activity, balances, and timing are still public.
-    Connecting Ready X does not move money.
-    Facet does not promise random timing; that feature is not implemented.</p>
+    <p class="note">Ready X still supplies the wallet-mediated Mainnet execution path. Direct app-account
+    discovery is capability-gated by the wallet; unsupported wallets remain fully usable for the private
+    balance and reviewed helper routes. App activity, balances, and timing are public once they reach
+    Starknet. Connecting or refreshing this page does not move money.</p>
   </section>
   </div>
 
