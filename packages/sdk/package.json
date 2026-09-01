@@ -11,14 +11,13 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist", "examples"],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "build:browser": "npm run build && node scripts/build-browser-bundle.mjs",
     "test": "vitest run",
-    "check": "npm run build && npm test",
+    "check": "npm run build && npm run check:examples && npm test",
+    "check:examples": "tsc --noEmit -p examples/tsconfig.json",
     "gate-a:preflight": "node scripts/gate-a-avnu-preflight.mjs",
     "gate-a:run": "node scripts/gate-a-sepolia.mjs",
     "gate-a:selfhost:preflight": "node scripts/gate-a-selfhost.mjs preflight",

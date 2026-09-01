@@ -90,6 +90,15 @@ supplies an intent and reviewed route configuration; it does not select notes, c
 actions, handle screening attestations, or run a prover. Ekubo and Endur demonstrate the one public
 `ProtocolAdapter` interface; they are not a claim that arbitrary apps are already supported.
 
+### Copy-paste compatible-app example
+
+[`examples/compatible-app.ts`](examples/compatible-app.ts) is the smallest tested integration:
+it accepts a wallet-shaped object and reviewed Endur route configuration, creates the public
+`WalletFacetExecutor`, and calls `executeAppIntent`. The matching test in
+[`tests/compatible-app.test.ts`](tests/compatible-app.test.ts) asserts the exact withdraw,
+settlement, and helper-invoke actions. It deliberately leaves signing, screening, proving, and
+broadcast to the wallet.
+
 **What it does and does not do.** It builds the action list, enforces the settlement and recipient
 invariants, and hands the result to the wallet. The wallet owns the shielded state, the proof, the
 screening attestation and the submission — so on this path a developer does not select notes or
@@ -128,12 +137,18 @@ store, so recovery metadata can remain local or be encrypted before persistence.
 positions, debt, NFTs, and receipts are persistent positions: they require the protocol's explicit
 exit path and are never silently swept or described as recovered.
 
+`beginFacetRecovery` and `retireFacet` are the guarded lifecycle entry points. They enforce the
+state transitions and refuse recovery or retirement while a persistent position remains. A route
+must record its confirmed protocol exit, or otherwise settle the automatic fungible delta, before
+the facet can be considered ready to retire.
+
 These are library primitives, not an end-to-end recovery product. `createOrRetainFacet` retains a
 record whose address is supplied by the caller; it does not deploy or derive that account.
 `recoveryPlan` classifies positions but does not execute transfers, redemptions, debt repayment, or
-protocol exits. The browser launcher mirrors the five states in a smaller local activity map and
-records the Endur exit against the Endur context. That record still does not control an on-chain
-account or execute a general recovery sweep.
+protocol exits. The browser launcher mirrors the five states in a smaller local activity map,
+offers the same guarded recovery/retirement controls, and records the Endur exit against the Endur
+context. That record still does not control an on-chain account or execute a general recovery
+sweep.
 
 ## Wallet-derived viewing key
 

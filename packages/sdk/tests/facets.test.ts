@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { createOrRetainFacet, moveFacet, recoveryPlan, type FacetRecord } from "../src/index.js";
+import {
+  beginFacetRecovery,
+  createOrRetainFacet,
+  moveFacet,
+  recoveryPlan,
+  retireFacet,
+  type FacetRecord,
+} from "../src/index.js";
 
 class MemoryStore {
   records = new Map<string, FacetRecord>();
@@ -34,5 +41,32 @@ describe("persistent facet lifecycle", () => {
     ]);
     expect(plan.automatic.map((position) => position.asset)).toEqual(["STRK"]);
     expect(plan.exitRequired.map((position) => position.asset)).toEqual(["xSTRK", "position-1"]);
+  });
+
+  it("requires persistent positions to exit before recovery or retirement", () => {
+    const store = new MemoryStore();
+    let facet = createOrRetainFacet(store, { wallet: "0x3", app: "endur", strategy: "stake",
+      address: "0x4", recovery: { encryptedMetadata: "ciphertext", positions: [
+        { asset: "xSTRK", kind: "xstrk" },
+      ] } });
+    facet = moveFacet(store, facet, "use");
+    facet = moveFacet(store, facet, "hold");
+
+    expect(() => beginFacetRecovery(store, facet)).toThrow(/exit xSTRK through its protocol/);
+    const recovering = { ...facet, state: "recover" as const };
+    store.set(recovering);
+    expect(() => retireFacet(store, recovering)).toThrow(/recover xSTRK first/);
+    expect(store.get(facet.key)?.state).toBe("recover");
+  });
+
+  it("supports a clean recovery and retirement through the public helpers", () => {
+    const store = new MemoryStore();
+    let facet = createOrRetainFacet(store, { wallet: "0x5", app: "swap", strategy: "default",
+      address: "0x6", recovery: { encryptedMetadata: "ciphertext", positions: [] } });
+    facet = moveFacet(store, facet, "use");
+    facet = beginFacetRecovery(store, facet);
+    expect(facet.state).toBe("recover");
+    facet = retireFacet(store, facet);
+    expect(facet.state).toBe("retire");
   });
 });

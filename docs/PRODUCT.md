@@ -214,23 +214,25 @@ into the proving path, so the current prover must remain authenticated infrastru
 
 ## Current implementation status
 
-The repository contains working protocol integrations and SDK foundations, not the complete
-product lifecycle:
+The repository contains working protocol integrations, tested SDK integration primitives, and a
+complete local lifecycle for the supported route scope. It is not a generic on-chain recovery
+product:
 
 - the private funding and settlement sequence has succeeded twice on Sepolia;
 - a second clean context sent its smoke call to an unrelated address and did not pay the
   owner;
 - the immutable anonymizer and `FacetAccount` are declared and deployed on mainnet;
 - the Ekubo adapter has completed a shielded STRK-to-ETH rehearsal on Sepolia;
-- the SDK contains the action builder, proof-aware preflight, settlement logic, and
-  operational runbooks;
+- the SDK contains the action builder, proof-aware preflight, settlement logic, guarded lifecycle
+  transitions, a tested compatible-app example, and operational runbooks;
 - the launcher has reviewed Mainnet routes for Ekubo and Endur xSTRK, including the xSTRK exit;
 - the shared ERC-4626 helper class and deterministic Endur helper instance are declared and
   deployed on Mainnet;
 - fork-backed contract tests and source/chain findings document the behavior.
 
-The browser launcher connects Ready X and stores local app/version/status metadata. It does not
-derive or control an on-chain facet from that map. Reviewed Wallet API pages provide narrow Mainnet
+The browser launcher connects Ready X and stores local app/version/status metadata. Its local map
+enforces the five lifecycle transitions and refuses recovery or retirement while a persistent
+position remains; it does not derive or control an on-chain facet from that map. Reviewed Wallet API pages provide narrow Mainnet
 routes for Ekubo and Endur: Ready X signs, proves, screens, and submits the privacy actions, while Facet
 supplies the fixed protocol-bound helper and protocol calldata. The reviewed Ekubo, Endur, and xSTRK
 exit actions have verified Mainnet receipts with pool/protocol evidence and configured helper paths.

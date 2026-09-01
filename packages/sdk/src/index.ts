@@ -40,14 +40,20 @@ export {
 } from "./adapters.js";
 
 export {
+  beginFacetRecovery,
   createOrRetainFacet,
   executeAppIntent,
+  FACET_STATES,
+  FACET_TRANSITIONS,
   facetKey,
+  FacetLifecycleError,
   moveFacet,
   recoveryPlan,
+  retireFacet,
   type AssetKind,
   type FacetExecutor,
   type FacetPosition,
+  type FacetRecoveryPlan,
   type FacetRecord,
   type FacetState,
   type FacetStore,

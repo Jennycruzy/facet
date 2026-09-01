@@ -1,7 +1,16 @@
 import "./theme.js";
 import { createGem } from "./gem.js";
 import { applicationContext, contextLabel } from "./app-context.js";
-import { mapKey, readMap, recordActivity, retain, retireBlockedReason, move } from "./facet-map.js";
+import {
+  beginRecovery,
+  mapKey,
+  readMap,
+  recordActivity,
+  recoveryBlockedReason,
+  retain,
+  retireBlockedReason,
+  move,
+} from "./facet-map.js";
 import { createChain } from "./chain.js";
 import { detectReadyX, errorText, formatUnits } from "./route-runtime.js";
 import { loadPortfolio } from "./portfolio.js";
@@ -73,6 +82,21 @@ function updateFacet(appId, action) {
   const records = readMap();
   const record = records[key(appId)];
   if (!record) return;
+  if (action === "recover") {
+    const blocked = recoveryBlockedReason(record);
+    if (blocked) { setStatus("error", blocked); renderFacetMap(); renderPortfolio(); return; }
+    try { beginRecovery(session.account, appId); }
+    catch (error) {
+      setStatus("error", errorText(error));
+      renderFacetMap();
+      renderPortfolio();
+      return;
+    }
+    setStatus("bound", `${data.apps.find((app) => app.id === appId)?.name ?? "Facet"} recovery recorded locally.`);
+    renderFacetMap();
+    renderPortfolio();
+    return;
+  }
   if (action === "retire") {
     const blocked = retireBlockedReason(record);
     if (blocked) { setStatus("error", blocked); renderFacetMap(); renderPortfolio(); return; }
@@ -225,7 +249,7 @@ const STATE_COPY = {
   launch: "launched · no Mainnet action yet",
   use: "in use · settled back to shielded notes",
   hold: "holding a position that needs an explicit exit",
-  recover: "recovered · position exited into shielded notes",
+  recover: "recovery recorded · ready to retire",
   retire: "retired",
 };
 
@@ -253,11 +277,18 @@ function renderFacetMap() {
       + `<span>version ${record.version} · <em>${record.state}</em> — ${STATE_COPY[record.state] ?? ""}</span>`
       + (held ? `<span class="muted">holds ${held}</span>` : "")
       + (hashes ? `<span class="muted">${hashes}</span>` : "");
-    for (const action of ["rotate", "retire"]) {
+    const actions = [
+      ...(record.state === "use" || record.state === "hold" ? ["recover"] : []),
+      "rotate",
+      "retire",
+    ];
+    for (const action of actions) {
       const button = document.createElement("button");
       button.type = "button";
-      button.textContent = action === "rotate" ? "new local version" : "retire record";
-      const blocked = retireBlockedReason(record);
+      button.textContent = action === "recover"
+        ? "enter recovery"
+        : action === "rotate" ? "new local version" : "retire record";
+      const blocked = action === "recover" ? recoveryBlockedReason(record) : retireBlockedReason(record);
       button.disabled = record.state === "retire" || Boolean(blocked);
       if (blocked) button.title = blocked;
       button.onclick = () => updateFacet(app.id, action);

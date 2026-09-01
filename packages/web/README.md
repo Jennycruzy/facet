@@ -53,8 +53,9 @@ emit `assets/js/facet-sdk.js`; nothing else on the host is reachable through the
 The launcher at `/launch` connects Ready X on Starknet Mainnet and opens the selected Ekubo or
 Endur review route. It stores app/version/lifecycle state, confirmed transaction hashes, and held
 position labels in browser local storage. Its transitions mirror the SDK lifecycle and the Ekubo
-exit clears the Endur xSTRK position in that local record. The map does not create or control an
-on-chain facet, store recovery secrets, or execute recovery. The reviewed Mainnet pages use Ready X's native STRK20 proving/screening API;
+exit clears the Endur xSTRK position in that local record. It exposes guarded local recovery and
+retirement controls: persistent positions must be exited first. The map does not create or control
+an on-chain facet, store recovery secrets, or execute a generic recovery sweep. The reviewed Mainnet pages use Ready X's native STRK20 proving/screening API;
 they request a transaction only after the user checks the exact route and user-selected amount.
 
 The current reviewed execution path is connect Ready X → choose an app → exact route review → Ready X

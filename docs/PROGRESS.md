@@ -87,8 +87,9 @@ new account above, which has completed two independently verified Sepolia facets
 
 ## Extension update — 1 September 2026
 
-The extension work is now deployed from the Jennycruzy checkout and keeps the original evidence
-separate from the new product work:
+The previously shipped extension work is deployed from the Jennycruzy checkout. The two product
+items completed in this pass are recorded below as local source-and-test evidence; no VPS deploy
+or new transaction was requested:
 
 | Extension item | State | Evidence |
 |---|---|---|
@@ -96,7 +97,9 @@ separate from the new product work:
 | Persistent context discovery | **Done where wallet-supported** | `packages/web/assets/js/chain.js` decodes `get_shadow_accounts` for one explicit nonce; unsupported and unregistered wallet capabilities remain visible states. |
 | Local persistence boundary | **Done** | `facet-map.js` stores only activity and public observations; discovery bypasses the `sessionStorage` RPC cache, so the partial commitment is not persisted by the launcher. |
 | SDK as browser engine | **Done** | `packages/sdk/src/index.ts` is bundled at deploy time into `assets/js/facet-sdk.js`; `executor.js` re-exports that generated artifact. |
-| Regression coverage | **Done** | SDK build plus 40 SDK tests and 52 web tests pass on Jennycruzy. |
+| SDK/sample-app integration example | **Done** | `packages/sdk/examples/compatible-app.ts` is a copy-paste Endur integration through the public intent → adapter → executor boundary; `npm run check` typechecks it and `tests/compatible-app.test.ts` asserts the wallet action vector. |
+| Launch → use → hold → recover → retire lifecycle | **Done for local state and confirmed route exits** | SDK and browser lifecycle guards enforce the five transitions, block recovery/retirement while persistent positions remain, expose explicit recovery controls, and record the verified Endur xSTRK → STRK exit before retirement. Generic protocol exits remain adapter-specific. |
+| Regression coverage | **Done** | The deployed baseline was 40 SDK and 52 web tests; the current checkout passes the expanded SDK suite (43) and full web suite (54), including the sample and lifecycle cases. |
 | Live deployment | **Done** | `https://usefacet.xyz` serves the new launcher, bundle, and portfolio reader; all public routes returned HTTP 200 and the headless launcher smoke test completed without module errors. |
 
 No new transaction was requested in this implementation pass. The direct Mainnet identity write still

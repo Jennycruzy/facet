@@ -42,6 +42,22 @@ export function canMove(from, to) {
   return Boolean(TRANSITIONS[from]?.includes(to));
 }
 
+/** Classify browser-held positions with the same recovery boundary as the SDK. */
+export function recoveryPlan(positions = []) {
+  return {
+    automatic: positions.filter((position) => position.kind === "fungible"),
+    exitRequired: positions.filter((position) => position.kind !== "fungible"),
+  };
+}
+
+export function recoveryBlockedReason(record) {
+  if (!record) return null;
+  const exitRequired = recoveryPlan(record.positions).exitRequired;
+  if (!exitRequired.length) return null;
+  const held = exitRequired.map((position) => position.symbol ?? position.asset).join(", ");
+  return `Holding ${held}. Exit the position before recovering this facet.`;
+}
+
 /** Creates the record on first use, or revives a retired one as a new version. */
 export function retain(account, appId) {
   const records = readMap();
@@ -103,9 +119,27 @@ export function move(account, appId, to) {
   if (!canMove(current.state, to)) {
     throw new Error(`Invalid facet lifecycle transition: ${current.state} → ${to}.`);
   }
+  if (to === "recover") {
+    const blocked = recoveryBlockedReason(current);
+    if (blocked) throw new Error(blocked);
+  }
+  if (to === "retire") {
+    const blocked = retireBlockedReason(current);
+    if (blocked) throw new Error(blocked);
+  }
   records[key] = { ...current, state: to, updatedAt: new Date().toISOString() };
   writeMap(records);
   return records[key];
+}
+
+/** Enter local recovery after the chain-side exit has settled or no persistent position exists. */
+export function beginRecovery(account, appId) {
+  const records = readMap();
+  const current = records[mapKey(account, appId)];
+  if (!current) return null;
+  const blocked = recoveryBlockedReason(current);
+  if (blocked) throw new Error(blocked);
+  return move(account, appId, "recover");
 }
 
 /**
@@ -134,7 +168,12 @@ export function recordActivity(account, appId, {
   const transactions = [...current.transactions, { hash, action, at: new Date().toISOString() }];
 
   let state = current.state;
-  const want = action === "exit" ? "recover" : (kind === "exit-required" ? "hold" : "use");
+  // Only call an exit recovered when it closed every persistent position. A partial exit remains
+  // visible in hold, so the next protocol action is still explicit rather than silently terminal.
+  const exitRequired = recoveryPlan(positions).exitRequired;
+  const want = action === "exit"
+    ? (exitRequired.length ? "hold" : "recover")
+    : (kind === "exit-required" ? "hold" : "use");
   // launch → hold is not a legal edge; step through `use`, which is what actually happened.
   const path = state === "launch" && want === "hold" ? ["use", "hold"]
     : state === "launch" && want === "recover" ? ["use", "recover"]
@@ -151,8 +190,9 @@ export function recordActivity(account, appId, {
 /** A facet still holding a persistent position must be exited, not retired. */
 export function retireBlockedReason(record) {
   if (!record) return null;
-  if (record.positions.length) {
-    const held = record.positions.map((position) => position.symbol ?? position.asset).join(", ");
+  const exitRequired = recoveryPlan(record.positions).exitRequired;
+  if (exitRequired.length) {
+    const held = exitRequired.map((position) => position.symbol ?? position.asset).join(", ");
     return `Holding ${held}. Exit the position before retiring this facet.`;
   }
   if (!canMove(record.state, "retire")) {

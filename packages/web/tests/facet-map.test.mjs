@@ -60,6 +60,18 @@ test("a facet holding a position cannot be retired, and says why", () => {
     hash: "0x1", asset: XSTRK, symbol: "xSTRK", kind: "exit-required", action: "stake",
   });
   assert.match(map.retireBlockedReason(held), /Exit the position before retiring/);
+  assert.match(map.recoveryBlockedReason(held), /Exit the position before recovering/);
+  assert.throws(() => map.beginRecovery(ACCOUNT, "endur"), /Exit the position before recovering/);
+});
+
+test("a clean facet can recover and retire through explicit controls", () => {
+  reset();
+  map.retain(ACCOUNT, "swap");
+  map.move(ACCOUNT, "swap", "use");
+  const recovered = map.beginRecovery(ACCOUNT, "swap");
+  assert.equal(recovered.state, "recover");
+  const retired = map.move(ACCOUNT, "swap", "retire");
+  assert.equal(retired.state, "retire");
 });
 
 test("the configured Ekubo exit clears the real Endur position", () => {
@@ -80,6 +92,20 @@ test("the configured Ekubo exit clears the real Endur position", () => {
   assert.equal(map.retireBlockedReason(exited), null);
   assert.equal(map.readMap()[map.mapKey(ACCOUNT, "ekubo-exit")], undefined,
     "the exit route must not create a separate identity record");
+});
+
+test("a partial exit keeps the facet in hold until every position is closed", () => {
+  reset();
+  map.retain(ACCOUNT, "endur");
+  map.recordActivity(ACCOUNT, "endur", {
+    hash: "0x1", asset: XSTRK, symbol: "xSTRK", kind: "exit-required", action: "stake",
+  });
+  const partial = map.recordActivity(ACCOUNT, "endur", {
+    hash: "0x2", asset: STRK, symbol: "STRK", kind: "fungible", action: "exit",
+  });
+  assert.equal(partial.state, "hold");
+  assert.deepEqual(partial.positions, [{ asset: XSTRK, symbol: "xSTRK", kind: "exit-required" }]);
+  assert.match(map.recoveryBlockedReason(partial), /Exit the position before recovering/);
 });
 
 test("a swap that settles a fungible asset leaves the facet in use", () => {
