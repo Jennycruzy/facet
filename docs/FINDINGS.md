@@ -1654,10 +1654,25 @@ because the record is a cache and never the authority for a facet's existence on
 writer in the tree was a test literal. It is now produced by `sealRecoveryRecord` and nowhere
 else: AES-GCM with a fresh IV per write, under a non-extractable AES-256 key derived by HKDF from
 a secret only the user's wallet can reproduce, scoped by the wallet address and domain-separated
-from the pool viewing key. The tests assert the property rather than the call — the plaintext app
-name and asset address do not appear anywhere in the persisted bytes, a tampered envelope fails
-authentication instead of decoding, and a different wallet or secret cannot open the record.
-Facet cannot decrypt a user's records by construction rather than by policy.
+from the pool viewing key. A tampered envelope fails authentication instead of decoding, and a
+different wallet or secret cannot open the record.
+
+**Sealing that one field was not enough, and the first version of this work shipped believing it
+was.** A `FacetRecord` also carries `wallet`, `app`, `strategy` and `address` as ordinary columns,
+and `createStorageFacetStore` keys the persisted map by `wallet:app:strategy`. So the
+wallet-to-application mapping — the single thing this field exists to protect — was written in
+the clear twice while the leaf beside it was encrypted. The test that was supposed to catch this
+asserted only that the *position asset* was absent, so it passed. Encrypting a leaf while the
+index stays readable protects nothing.
+
+The fix is `saveSealedFacets`/`loadSealedFacets`, which persist the whole record set as one
+opaque AES-GCM envelope under a fixed namespace: no wallet, no app id, no address, and no
+per-record key to count or correlate — the number of facets is not observable, only the
+approximate total size. `loadSealedFacets` deliberately distinguishes an absent namespace (a
+first visit, empty) from one that will not open (the wrong wallet, or corruption), because
+reporting the second as "no facets" would let a caller overwrite records it merely could not
+read. `createStorageFacetStore` is kept for callers that do not need this, and both its
+documentation and its test now state plainly that it writes identifying fields in the clear.
 
 **Recovery routing.** `recoveryPlan` classified positions but could not say what to do about
 them. `planFacetRecovery` resolves each persistent position against the deployed exit catalogue,
@@ -1682,7 +1697,7 @@ executor (§6.38), and keeps only storage and the wording the launcher shows. Th
 strengthened accordingly: it asserts the browser and the bundle share the *same object*, which
 equality could never catch and which is what stops the mirror from returning.
 
-Suites after this work: 20 contract, 61 SDK, 60 web.
+Suites after this work: 20 contract, 65 SDK, 61 web.
 
 
 ## 7. Toolchain

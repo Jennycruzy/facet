@@ -151,6 +151,12 @@ export interface KeyValueStorage {
 /**
  * A `FacetStore` backed by a browser storage area, so a facet outlives the tab that created it.
  *
+ * **This store is not private.** It writes `wallet`, `app`, `strategy` and `address` as ordinary
+ * JSON and keys its map by `wallet:app:strategy`, so the wallet-to-application mapping is legible
+ * to anything that can read the storage area — sealing `recovery.encryptedMetadata` does not
+ * change that, because the index sits beside it. When that mapping must not be readable, persist
+ * with `saveSealedFacets`/`loadSealedFacets` instead, which seal the whole record set.
+ *
  * This is what makes a facet more than session metadata: the same wallet returning to the same
  * app resolves the same record, and therefore the same app-scoped identity, rather than starting
  * over. Storage is device-local and is *not* authoritative for balances or for a facet's

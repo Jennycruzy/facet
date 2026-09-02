@@ -123,3 +123,56 @@ export function isSealedRecoveryRecord(value: unknown): boolean {
   return typeof value === "string" && value.startsWith(`${RECOVERY_RECORD_VERSION}.`)
     && value.split(".").length === 3;
 }
+
+/**
+ * Sealing one field is not sealing a record.
+ *
+ * A `FacetRecord` carries `wallet`, `app`, `strategy`, `address` and a `key` built from the first
+ * three. Persisting a map of those with only `recovery.encryptedMetadata` sealed leaves the
+ * wallet-to-application mapping in the clear — twice, because it is also the storage key — which
+ * is precisely the mapping the product exists not to publish. Encrypting the leaf while the index
+ * stays readable protects nothing that matters.
+ *
+ * These two functions persist the whole record set as a single opaque envelope under a fixed
+ * namespace. What lands in storage is one AES-GCM blob: no wallet, no app id, no address, and no
+ * per-record key to count or correlate. The number of facets is not even observable, only the
+ * approximate total size.
+ */
+export const SEALED_FACETS_KEY = "facet-records-sealed-v1";
+
+export interface SealedRecordStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+/** Seal an entire record set. Anything already in `namespace` is replaced. */
+export async function saveSealedFacets<T>(
+  storage: SealedRecordStorage,
+  key: CryptoKey,
+  records: readonly T[],
+  namespace: string = SEALED_FACETS_KEY,
+): Promise<void> {
+  const sealed = await sealRecoveryRecord(key, records);
+  try { storage.setItem(namespace, sealed); }
+  catch { /* private mode or quota: records are a cache, never the authority */ }
+}
+
+/**
+ * Open a sealed record set.
+ *
+ * An absent namespace yields an empty list — a first visit, not an error. A namespace that will
+ * not open is *not* silently discarded: the wrong wallet, or a corrupted value, must be
+ * distinguishable from having no facets, or the caller would happily overwrite records it simply
+ * could not read.
+ */
+export async function loadSealedFacets<T>(
+  storage: SealedRecordStorage,
+  key: CryptoKey,
+  namespace: string = SEALED_FACETS_KEY,
+): Promise<T[]> {
+  let sealed: string | null = null;
+  try { sealed = storage.getItem(namespace); } catch { return []; }
+  if (!sealed) return [];
+  const records = await openRecoveryRecord<T[]>(key, sealed);
+  return Array.isArray(records) ? records : [];
+}

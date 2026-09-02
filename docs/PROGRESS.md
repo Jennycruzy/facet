@@ -99,7 +99,7 @@ new transaction was requested:
 | SDK as browser engine | **Done** | `packages/sdk/src/index.ts` is bundled at deploy time into `assets/js/facet-sdk.js`; `executor.js` re-exports that generated artifact. |
 | SDK/sample-app integration example | **Done** | `packages/sdk/examples/compatible-app.ts` is a copy-paste Endur integration through the public intent → adapter → executor boundary; `npm run check` typechecks it and `tests/compatible-app.test.ts` asserts the wallet action vector. |
 | Launch → use → hold → recover → retire lifecycle | **Done for local state and confirmed route exits** | SDK and browser lifecycle guards enforce the five transitions, block recovery/retirement while persistent positions remain, expose explicit recovery controls, and record the verified Endur xSTRK → STRK exit before retirement. Deployed with commit `5219c25`; generic protocol exits remain adapter-specific. |
-| Regression coverage | **Done** | The deployed baseline was 40 SDK and 52 web tests; the current checkout passes the expanded SDK suite (43) and full web suite (54), including the sample and lifecycle cases. |
+| Regression coverage | **Done** | The deployed baseline was 40 SDK and 52 web tests; the current checkout passes the expanded SDK suite (65) and full web suite (61), including the sample, lifecycle, sealed-record and recovery-routing cases. |
 | Live deployment | **Done** | `https://usefacet.xyz` serves the new launcher, bundle, and portfolio reader; all public routes returned HTTP 200 and the headless launcher smoke test completed without module errors. |
 
 No new transaction was requested in this implementation pass. The direct Mainnet identity write still

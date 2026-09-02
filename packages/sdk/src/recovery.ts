@@ -79,6 +79,16 @@ export interface FacetRecoveryRouting {
   ready: boolean;
 }
 
+/**
+ * Coerce a facet or route name without throwing.
+ *
+ * These helpers run inside launcher render paths, where a record read back from a browser cache
+ * may predate the current shape or have been edited by hand. Classification must degrade to "no
+ * route matched" for such a record, never take the page down with it.
+ */
+const facetName = (value: unknown): string =>
+  (typeof value === "string" ? value : String(value ?? "")).trim().toLowerCase();
+
 const asset = (value: FeltLike, label: string): string => {
   try {
     return toHexFelt(value);
@@ -97,9 +107,9 @@ const asset = (value: FeltLike, label: string): string => {
  */
 function routesFor(appId: string, routes: readonly ExitRoute[]): Map<string, ExitRoute> {
   const index = new Map<string, ExitRoute>();
-  const wanted = appId.trim().toLowerCase();
+  const wanted = facetName(appId);
   for (const route of routes) {
-    if (route.contextApp.trim().toLowerCase() !== wanted) continue;
+    if (facetName(route.contextApp) !== wanted) continue;
     for (const closes of route.closesAssets) {
       const key = asset(closes, "closed asset");
       if (!index.has(key)) index.set(key, route);
@@ -120,8 +130,8 @@ export function planFacetRecovery(
   positions: readonly FacetPosition[],
   routes: readonly ExitRoute[] = [],
 ): FacetRecoveryRouting {
-  const classified = recoveryPlan(positions);
-  const index = routesFor(appId, routes);
+  const classified = recoveryPlan(Array.isArray(positions) ? positions : []);
+  const index = routesFor(appId, Array.isArray(routes) ? routes : []);
 
   const automatic: RecoveryStepAutomatic[] = classified.automatic.map((position) => ({
     status: "automatic", position,

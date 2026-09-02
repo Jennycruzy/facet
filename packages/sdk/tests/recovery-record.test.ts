@@ -6,7 +6,10 @@ import {
   deriveRecoveryKey,
   isSealedRecoveryRecord,
   listFacets,
+  loadSealedFacets,
   openRecoveryRecord,
+  saveSealedFacets,
+  SEALED_FACETS_KEY,
   sealRecoveryRecord,
   type KeyValueStorage,
 } from "../src/index.js";
@@ -95,7 +98,7 @@ describe("persistent facet stores", () => {
     expect(await openRecoveryRecord(key, later.recovery.encryptedMetadata)).toEqual(metadata);
   });
 
-  it("persists only ciphertext, never the wallet-to-app mapping in the clear", async () => {
+  it("leaves identifying fields in the clear, which is why it is not the private store", async () => {
     const storage = memoryStorage();
     const key = await deriveRecoveryKey(SIGNATURE, WALLET);
     createOrRetainFacet(createStorageFacetStore(storage), {
@@ -103,8 +106,43 @@ describe("persistent facet stores", () => {
       recovery: { encryptedMetadata: await sealRecoveryRecord(key, metadata), positions: [] },
     });
     const persisted = [...storage.raw.values()].join("");
+    // The sealed field holds its secret...
     expect(persisted).not.toContain("0x28d7");
     expect(persisted).toMatch(/"encryptedMetadata":"v1\./);
+    // ...but the record's own columns, and the storage key built from them, do not. Sealing one
+    // leaf while the index stays readable protects nothing: use saveSealedFacets for that.
+    expect(persisted).toContain("endur");
+    expect(persisted).toContain(WALLET);
+    expect([...storage.raw.keys()]).toEqual(["facet-records-v1"]);
+  });
+
+  it("saveSealedFacets writes one opaque envelope with no readable index", async () => {
+    const storage = memoryStorage();
+    const key = await deriveRecoveryKey(SIGNATURE, WALLET);
+    const store = createMemoryFacetStore();
+    createOrRetainFacet(store, {
+      wallet: WALLET, app: "endur", strategy: "stake", address: "0x5709",
+      recovery: { encryptedMetadata: "", positions: [] },
+    });
+    await saveSealedFacets(storage, key, store.all());
+
+    const persisted = [...storage.raw.values()].join("");
+    for (const identifying of [WALLET, "endur", "stake", "0x5709"]) {
+      expect(persisted).not.toContain(identifying);
+    }
+    expect([...storage.raw.keys()]).toEqual([SEALED_FACETS_KEY]);
+    expect(await loadSealedFacets(storage, key)).toEqual(store.all());
+  });
+
+  it("distinguishes an unreadable record set from having no facets", async () => {
+    const storage = memoryStorage();
+    const key = await deriveRecoveryKey(SIGNATURE, WALLET);
+    // A first visit is empty, not an error.
+    expect(await loadSealedFacets(storage, key)).toEqual([]);
+    await saveSealedFacets(storage, key, [{ key: "k" }]);
+    // The wrong wallet must throw rather than report zero facets and overwrite them.
+    const intruder = await deriveRecoveryKey(SIGNATURE, "0xintruder");
+    await expect(loadSealedFacets(storage, intruder)).rejects.toThrow();
   });
 
   it("survives a storage area that throws, because a record is a cache and not the truth", () => {

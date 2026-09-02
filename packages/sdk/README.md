@@ -138,6 +138,13 @@ outlives the tab that created it and a returning wallet resolves the identity it
 Storage writes are defensive: a private-browsing mode that throws degrades the launcher rather
 than breaking it, because a record is a cache and never the authority for a facet's existence.
 
+`createStorageFacetStore` writes `wallet`, `app`, `strategy` and `address` in the clear and keys
+its map by `wallet:app:strategy`. That is fine for a caller that does not need the mapping hidden
+and wrong for one that does — sealing `encryptedMetadata` alone does **not** make a record
+private, because the index beside it stays readable. Use `saveSealedFacets` and
+`loadSealedFacets` for that: they persist the entire record set as one opaque envelope, so
+nothing identifying and no per-record key reaches storage at all.
+
 `deriveRecoveryKey`, `sealRecoveryRecord`, and `openRecoveryRecord` make `encryptedMetadata` an
 encrypted field rather than a named one. The key is derived by HKDF from a secret only the user's
 wallet can reproduce, scoped to the wallet address, and is non-extractable; the record is sealed

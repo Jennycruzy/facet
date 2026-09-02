@@ -83,7 +83,11 @@ export {
   openRecoveryRecord,
   RECOVERY_KEY_LABEL,
   RECOVERY_RECORD_VERSION,
+  saveSealedFacets,
   sealRecoveryRecord,
+  loadSealedFacets,
+  SEALED_FACETS_KEY,
+  type SealedRecordStorage,
 } from "./recovery-record.js";
 
 export {

@@ -192,3 +192,19 @@ test("a fungible-only facet is ready to recover with no exit at all", () => {
   assert.equal(map.recoveryBlockedReason(record), null);
   map.configureExitRoutes([]);
 });
+
+test("a malformed cached record degrades instead of taking the render path down", () => {
+  reset();
+  map.configureExitRoutes(facetsData.apps);
+  // Records are read back from a browser cache that may predate the current shape. These helpers
+  // run while rendering the facet map, so they must never throw on one.
+  const legacy = { state: "hold", positions: [{ asset: "0xdead", symbol: "LP", kind: "exit-required" }] };
+  assert.match(map.retireBlockedReason(legacy), /Exit the position before retiring/);
+  // 0xdead has no configured route, so the adapter sentinel is the correct answer here.
+  assert.match(map.recoveryBlockedReason(legacy), /RECOVERY_REQUIRES_ADAPTER/);
+  assert.equal(map.recoveryRouting(legacy).ready, false);
+  assert.equal(map.recoveryRouting({ app: 5, positions: [] }).ready, true);
+  assert.equal(map.retireBlockedReason({ app: "endur", state: "use" }),
+    'A facet in "use" cannot be retired directly.');
+  map.configureExitRoutes([]);
+});
