@@ -12,6 +12,8 @@ globalThis.localStorage = {
 
 const map = await import("../assets/js/facet-map.js");
 const sdk = await import("../../sdk/dist/facets.js");
+// facet-map imports the deployed bundle, so identity has to be checked against that same module.
+const bundle = await import("../assets/js/facet-sdk.js");
 const facetsData = JSON.parse(readFileSync(new URL("../data/facets.json", import.meta.url), "utf8"));
 
 const ACCOUNT = "0xabc";
@@ -19,7 +21,14 @@ const XSTRK = "0x28d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a
 const STRK = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 const reset = () => store.clear();
 
-test("the browser transition table matches the SDK's", () => {
+test("the browser does not keep its own transition table; it uses the SDK's", () => {
+  // Stronger than equality: the launcher must be reading the SDK's object, so the two cannot be
+  // edited apart. This is what stops the old hand-maintained mirror from coming back.
+  assert.equal(map.TRANSITIONS, bundle.FACET_TRANSITIONS);
+  assert.deepEqual(map.TRANSITIONS, sdk.FACET_TRANSITIONS);
+});
+
+test("every browser transition decision agrees with the SDK", () => {
   const states = ["launch", "use", "hold", "recover", "retire"];
   for (const from of states) {
     for (const to of states) {
@@ -32,6 +41,11 @@ test("the browser transition table matches the SDK's", () => {
       assert.equal(map.canMove(from, to), sdkAllows, `${from} → ${to} disagrees`);
     }
   }
+});
+
+test("the browser classifies positions with the SDK's function, not a copy", () => {
+  const positions = [{ asset: STRK, kind: "fungible" }, { asset: XSTRK, kind: "exit-required" }];
+  assert.deepEqual(map.recoveryPlan(positions), sdk.recoveryPlan(positions));
 });
 
 test("a new facet starts in launch and uses all five states", () => {
@@ -122,4 +136,59 @@ test("an illegal transition is refused rather than silently applied", () => {
   reset();
   map.retain(ACCOUNT, "ekubo");
   assert.throws(() => map.move(ACCOUNT, "ekubo", "recover"), /Invalid facet lifecycle transition/);
+});
+
+test("a configured catalogue names the route that closes the position", () => {
+  reset();
+  map.configureExitRoutes(facetsData.apps);
+  map.retain(ACCOUNT, "endur");
+  const held = map.recordActivity(ACCOUNT, "endur", {
+    hash: "0x1", asset: XSTRK, symbol: "xSTRK", kind: "exit-required", action: "stake",
+  });
+  const routing = map.recoveryRouting(held);
+  assert.equal(routing.ready, false);
+  assert.equal(routing.unsupported.length, 0);
+  assert.equal(routing.viaExit[0].route.appId, "ekubo-exit");
+  // The user is told where to go, not just that they are stuck.
+  assert.match(map.recoveryBlockedReason(held), /Use the ekubo-exit route/);
+  map.configureExitRoutes([]);
+});
+
+test("an unroutable position is reported as needing an adapter, not as recoverable", () => {
+  reset();
+  map.configureExitRoutes(facetsData.apps);
+  map.retain(ACCOUNT, "endur");
+  const held = map.recordActivity(ACCOUNT, "endur", {
+    hash: "0x1", asset: "0xdeadbeef", symbol: "LP", kind: "exit-required", action: "stake",
+  });
+  assert.equal(map.recoveryRouting(held).unsupported[0].code, map.RECOVERY_REQUIRES_ADAPTER);
+  assert.match(map.recoveryBlockedReason(held), /RECOVERY_REQUIRES_ADAPTER/);
+  assert.throws(() => map.beginRecovery(ACCOUNT, "endur"), /RECOVERY_REQUIRES_ADAPTER/);
+  map.configureExitRoutes([]);
+});
+
+test("without a catalogue the launcher does not claim a position is unrecoverable", () => {
+  reset();
+  map.configureExitRoutes([]);
+  map.retain(ACCOUNT, "endur");
+  const held = map.recordActivity(ACCOUNT, "endur", {
+    hash: "0x1", asset: XSTRK, symbol: "xSTRK", kind: "exit-required", action: "stake",
+  });
+  // Not knowing the routes is not evidence that none exists.
+  const reason = map.recoveryBlockedReason(held);
+  assert.match(reason, /Exit the position before recovering/);
+  assert.doesNotMatch(reason, /RECOVERY_REQUIRES_ADAPTER/);
+});
+
+test("a fungible-only facet is ready to recover with no exit at all", () => {
+  reset();
+  map.configureExitRoutes(facetsData.apps);
+  map.retain(ACCOUNT, "ekubo");
+  const record = map.recordActivity(ACCOUNT, "ekubo", {
+    hash: "0x2", asset: STRK, symbol: "ETH", kind: "fungible", action: "swap",
+  });
+  const routing = map.recoveryRouting(record);
+  assert.equal(routing.ready, true);
+  assert.equal(map.recoveryBlockedReason(record), null);
+  map.configureExitRoutes([]);
 });

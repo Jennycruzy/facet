@@ -122,3 +122,83 @@ export async function executeAppIntent<TIntent extends import("./adapters.js").A
 }) {
   return options.executor.execute(options.adapter.plan(options.intent, options.context));
 }
+
+/**
+ * A `FacetStore` that keeps records for the life of the process.
+ *
+ * Useful for tests and for a server-side caller that persists elsewhere; the browser wants
+ * {@link createStorageFacetStore}.
+ */
+export function createMemoryFacetStore(seed: readonly FacetRecord[] = []): FacetStore & {
+  all(): FacetRecord[];
+  delete(key: string): void;
+} {
+  const records = new Map<string, FacetRecord>(seed.map((record) => [record.key, record]));
+  return {
+    get: (key) => records.get(key) ?? null,
+    set: (record) => { records.set(record.key, record); },
+    all: () => [...records.values()],
+    delete: (key) => { records.delete(key); },
+  };
+}
+
+/** The `getItem`/`setItem` pair this store needs; `localStorage` and `sessionStorage` satisfy it. */
+export interface KeyValueStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+/**
+ * A `FacetStore` backed by a browser storage area, so a facet outlives the tab that created it.
+ *
+ * This is what makes a facet more than session metadata: the same wallet returning to the same
+ * app resolves the same record, and therefore the same app-scoped identity, rather than starting
+ * over. Storage is device-local and is *not* authoritative for balances or for a facet's
+ * existence on chain — the launcher reconciles those from chain reads and labels stale data.
+ *
+ * Writes are defensive on purpose. Private-browsing modes throw on `setItem`, and a facet record
+ * is a convenience cache: losing it must degrade the launcher, never break it.
+ */
+export function createStorageFacetStore(
+  storage: KeyValueStorage,
+  namespace = "facet-records-v1",
+): FacetStore & { all(): FacetRecord[]; delete(key: string): void } {
+  const readAll = (): Record<string, FacetRecord> => {
+    try {
+      const raw = storage.getItem(namespace);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed as Record<string, FacetRecord> : {};
+    } catch {
+      return {};
+    }
+  };
+  const writeAll = (records: Record<string, FacetRecord>) => {
+    try { storage.setItem(namespace, JSON.stringify(records)); }
+    catch { /* private mode, or the quota is full: the record is a cache, not the truth */ }
+  };
+  return {
+    get: (key) => readAll()[key] ?? null,
+    set: (record) => {
+      const records = readAll();
+      records[record.key] = record;
+      writeAll(records);
+    },
+    all: () => Object.values(readAll()),
+    delete: (key) => {
+      const records = readAll();
+      delete records[key];
+      writeAll(records);
+    },
+  };
+}
+
+/** Every non-retired facet a store holds for one wallet, newest activity first. */
+export function listFacets(
+  store: FacetStore & { all(): FacetRecord[] },
+  wallet?: string,
+): FacetRecord[] {
+  const wanted = wallet?.trim().toLowerCase();
+  return store.all()
+    .filter((record) => (wanted ? record.wallet.trim().toLowerCase() === wanted : true))
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+}

@@ -57,7 +57,34 @@ export {
   type FacetRecord,
   type FacetState,
   type FacetStore,
+  createMemoryFacetStore,
+  createStorageFacetStore,
+  listFacets,
+  type KeyValueStorage,
 } from "./facets.js";
+
+export {
+  assertFacetRecoverable,
+  exitRoutesFromApps,
+  planFacetRecovery,
+  RECOVERY_REQUIRES_ADAPTER,
+  RecoveryRouteError,
+  type ExitRoute,
+  type FacetRecoveryRouting,
+  type RecoveryStep,
+  type RecoveryStepAutomatic,
+  type RecoveryStepUnsupported,
+  type RecoveryStepViaExit,
+} from "./recovery.js";
+
+export {
+  deriveRecoveryKey,
+  isSealedRecoveryRecord,
+  openRecoveryRecord,
+  RECOVERY_KEY_LABEL,
+  RECOVERY_RECORD_VERSION,
+  sealRecoveryRecord,
+} from "./recovery-record.js";
 
 export {
   deriveViewingKeyFromSignature,

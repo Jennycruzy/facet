@@ -6,16 +6,22 @@
 // chain observation — never signatures, private keys, viewing keys, commitments or recovery
 // secrets. The launcher must reconcile chain observations separately and label stale local data.
 //
-// The five states and their legal transitions mirror packages/sdk/src/facets.ts exactly;
-// tests/facet-map.test.mjs pins them to each other.
+// The SDK owns the lifecycle; this module owns storage and the wording the launcher shows. The
+// state table and the recovery classification are imported from the deployed bundle rather than
+// mirrored here, so the two cannot drift — there is only one implementation to keep correct.
 
-export const TRANSITIONS = {
-  launch: ["use", "retire"],
-  use: ["hold", "recover"],
-  hold: ["use", "recover"],
-  recover: ["hold", "retire"],
-  retire: [],
-};
+import {
+  exitRoutesFromApps,
+  FACET_TRANSITIONS,
+  planFacetRecovery,
+  RECOVERY_REQUIRES_ADAPTER,
+  recoveryPlan as sdkRecoveryPlan,
+} from "./facet-sdk.js";
+
+/** The SDK's own table, re-exported rather than copied. */
+export const TRANSITIONS = FACET_TRANSITIONS;
+
+export { RECOVERY_REQUIRES_ADAPTER, exitRoutesFromApps };
 
 const KEY = "facet-wallet-map-v1";
 
@@ -42,20 +48,75 @@ export function canMove(from, to) {
   return Boolean(TRANSITIONS[from]?.includes(to));
 }
 
-/** Classify browser-held positions with the same recovery boundary as the SDK. */
+/** Classify browser-held positions with the SDK's recovery boundary — not a second copy of it. */
 export function recoveryPlan(positions = []) {
-  return {
-    automatic: positions.filter((position) => position.kind === "fungible"),
-    exitRequired: positions.filter((position) => position.kind !== "fungible"),
-  };
+  return sdkRecoveryPlan(positions ?? []);
 }
 
-export function recoveryBlockedReason(record) {
+/**
+ * The deployed exit catalogue, configured once by whichever page loaded data/facets.json.
+ *
+ * Routing has to know the real routes to be useful, but the lifecycle helpers are called from UI
+ * paths that never see the catalogue. Configuring it once here keeps those call sites unchanged
+ * and keeps a single source of routes for the whole page.
+ */
+let configuredRoutes = [];
+
+export function configureExitRoutes(apps = []) {
+  configuredRoutes = exitRoutesFromApps(apps);
+  return configuredRoutes;
+}
+
+const routesFor = (apps) => (apps?.length ? exitRoutesFromApps(apps) : configuredRoutes);
+
+/**
+ * Resolve what this facet would actually have to do to be recovered.
+ *
+ * The result names the exit route for each position that has one and flags anything Facet cannot
+ * close as RECOVERY_REQUIRES_ADAPTER, so the launcher can offer the next step instead of only
+ * refusing.
+ */
+export function recoveryRouting(record, apps = []) {
   if (!record) return null;
-  const exitRequired = recoveryPlan(record.positions).exitRequired;
-  if (!exitRequired.length) return null;
-  const held = exitRequired.map((position) => position.symbol ?? position.asset).join(", ");
-  return `Holding ${held}. Exit the position before recovering this facet.`;
+  return planFacetRecovery(record.app, record.positions ?? [], routesFor(apps));
+}
+
+/**
+ * The user-facing sentence for why recovery is blocked, including where to go next.
+ *
+ * When no catalogue has been configured we say only that an exit is required. Not knowing the
+ * routes is not evidence that none exists, and claiming a position is unrecoverable is a much
+ * stronger statement than the caller has earned.
+ */
+export function recoveryBlockedReason(record, apps = []) {
+  if (!record) return null;
+  const routing = recoveryRouting(record, apps);
+  if (!routing || routing.ready) return null;
+  const known = routesFor(apps).length > 0;
+  const name = (step) => step.position.symbol ?? step.position.asset;
+  if (known && routing.unsupported.length) {
+    return `Holding ${routing.unsupported.map(name).join(", ")}, which no configured route can ` +
+      `close. Recovering it needs a new adapter (${RECOVERY_REQUIRES_ADAPTER}).`;
+  }
+  const held = [...routing.viaExit, ...routing.unsupported].map(name);
+  const route = routing.viaExit[0]?.route;
+  const via = known && route ? ` Use the ${route.appId} route.` : "";
+  return `Holding ${held.join(", ")}. Exit the position before recovering this facet.${via}`;
+}
+
+/** A facet still holding a persistent position must be exited, not retired. */
+export function retireBlockedReason(record, apps = []) {
+  if (!record) return null;
+  const routing = recoveryRouting(record, apps);
+  if (routing && !routing.ready) {
+    const held = [...routing.viaExit, ...routing.unsupported]
+      .map((step) => step.position.symbol ?? step.position.asset);
+    return `Holding ${held.join(", ")}. Exit the position before retiring this facet.`;
+  }
+  if (!canMove(record.state, "retire")) {
+    return `A facet in "${record.state}" cannot be retired directly.`;
+  }
+  return null;
 }
 
 /** Creates the record on first use, or revives a retired one as a new version. */
@@ -111,7 +172,7 @@ export function reconcile(account, appId, observation) {
   return fresh[key];
 }
 
-export function move(account, appId, to) {
+export function move(account, appId, to, apps = []) {
   const records = readMap();
   const key = mapKey(account, appId);
   const current = records[key];
@@ -120,11 +181,11 @@ export function move(account, appId, to) {
     throw new Error(`Invalid facet lifecycle transition: ${current.state} → ${to}.`);
   }
   if (to === "recover") {
-    const blocked = recoveryBlockedReason(current);
+    const blocked = recoveryBlockedReason(current, apps);
     if (blocked) throw new Error(blocked);
   }
   if (to === "retire") {
-    const blocked = retireBlockedReason(current);
+    const blocked = retireBlockedReason(current, apps);
     if (blocked) throw new Error(blocked);
   }
   records[key] = { ...current, state: to, updatedAt: new Date().toISOString() };
@@ -133,13 +194,13 @@ export function move(account, appId, to) {
 }
 
 /** Enter local recovery after the chain-side exit has settled or no persistent position exists. */
-export function beginRecovery(account, appId) {
+export function beginRecovery(account, appId, apps = []) {
   const records = readMap();
   const current = records[mapKey(account, appId)];
   if (!current) return null;
-  const blocked = recoveryBlockedReason(current);
+  const blocked = recoveryBlockedReason(current, apps);
   if (blocked) throw new Error(blocked);
-  return move(account, appId, "recover");
+  return move(account, appId, "recover", apps);
 }
 
 /**
@@ -185,18 +246,4 @@ export function recordActivity(account, appId, {
   fresh[key] = { ...current, state, positions, transactions, updatedAt: new Date().toISOString() };
   writeMap(fresh);
   return fresh[key];
-}
-
-/** A facet still holding a persistent position must be exited, not retired. */
-export function retireBlockedReason(record) {
-  if (!record) return null;
-  const exitRequired = recoveryPlan(record.positions).exitRequired;
-  if (exitRequired.length) {
-    const held = exitRequired.map((position) => position.symbol ?? position.asset).join(", ");
-    return `Holding ${held}. Exit the position before retiring this facet.`;
-  }
-  if (!canMove(record.state, "retire")) {
-    return `A facet in "${record.state}" cannot be retired directly.`;
-  }
-  return null;
 }

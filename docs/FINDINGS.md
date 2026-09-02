@@ -1637,6 +1637,54 @@ the build output remains dependency-free at runtime. The direct Mainnet identity
 blocked by the external screening attestation described in §§6.27 and 6.33.
 
 
+### 6.39 Facet persistence, encryption, and recovery routing — 2 September 2026
+
+Four gaps between the launcher and a complete facet product closed together, because they are the
+same gap seen from different sides: a facet existed for one visit, its record was plaintext, its
+recovery had no route, and the browser kept a second copy of the lifecycle.
+
+**Persistence.** `createStorageFacetStore` backs a `FacetStore` with any `getItem`/`setItem`
+pair, so a record outlives the tab. A returning wallet resolves the facet it already had rather
+than starting over — `createOrRetainFacet` over the same storage returns the original record and
+its original address, which is the property the test pins. Writes are defensive: a
+private-browsing area that throws on `setItem` degrades the launcher rather than breaking it,
+because the record is a cache and never the authority for a facet's existence on chain.
+
+**Encryption.** `recovery.encryptedMetadata` was a typed field that nothing encrypted; every
+writer in the tree was a test literal. It is now produced by `sealRecoveryRecord` and nowhere
+else: AES-GCM with a fresh IV per write, under a non-extractable AES-256 key derived by HKDF from
+a secret only the user's wallet can reproduce, scoped by the wallet address and domain-separated
+from the pool viewing key. The tests assert the property rather than the call — the plaintext app
+name and asset address do not appear anywhere in the persisted bytes, a tampered envelope fails
+authentication instead of decoding, and a different wallet or secret cannot open the record.
+Facet cannot decrypt a user's records by construction rather than by policy.
+
+**Recovery routing.** `recoveryPlan` classified positions but could not say what to do about
+them. `planFacetRecovery` resolves each persistent position against the deployed exit catalogue,
+which `exitRoutesFromApps` reads straight out of the same `data/facets.json` the execution pages
+use — so a real xSTRK position routes to the real `ekubo-exit`, verified against the shipped file
+rather than a fixture. Assets are compared numerically, because the catalogue writes
+`0x028d70…` and the browser record writes `0x28d70…`. A route counts only for the facet named in
+its `contextApp`, so one facet's exit never appears to rescue another's identical position.
+Anything no configured route closes returns `RECOVERY_REQUIRES_ADAPTER` rather than being treated
+as recoverable.
+
+One distinction is load-bearing and was found by the tests: **an unconfigured catalogue is not an
+empty one.** A caller that has not loaded `facets.json` knows of no routes, and reporting that as
+"no route can close this" would state something much stronger than it has established. The
+launcher configures the catalogue once at startup (`configureExitRoutes`); without it the wording
+falls back to "exit the position before recovering", which stays true either way.
+
+**One lifecycle, not two.** `facet-map.js` previously restated the transition table and the
+recovery classification in plain JavaScript, kept in step with the SDK by hand and by a parity
+test. It now imports both from the deployed bundle, exactly as `executor.js` already did for the
+executor (§6.38), and keeps only storage and the wording the launcher shows. The parity test was
+strengthened accordingly: it asserts the browser and the bundle share the *same object*, which
+equality could never catch and which is what stops the mirror from returning.
+
+Suites after this work: 20 contract, 61 SDK, 60 web.
+
+
 ## 7. Toolchain
 
 Upstream pins disagree and must be chosen between deliberately:

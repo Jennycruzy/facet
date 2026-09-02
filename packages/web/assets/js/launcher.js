@@ -3,6 +3,7 @@ import { createGem } from "./gem.js";
 import { applicationContext, contextLabel } from "./app-context.js";
 import {
   beginRecovery,
+  configureExitRoutes,
   mapKey,
   readMap,
   recordActivity,
@@ -21,6 +22,10 @@ const data = await fetch("data/facets.json").then((response) => {
   if (!response.ok) throw new Error(`Facet configuration unavailable (${response.status}).`);
   return response.json();
 });
+
+// Give the lifecycle helpers the real exit catalogue, so a blocked recovery can name the route
+// that closes the position instead of only refusing.
+configureExitRoutes(data.apps);
 
 function selectNetwork(network) {
   document.querySelectorAll("[data-network-tab]").forEach((tab) => {

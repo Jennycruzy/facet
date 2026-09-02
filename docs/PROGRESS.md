@@ -252,6 +252,19 @@ Established by reading the source against the SDK's proving path; pure adapter b
 implemented and unit-tested, but the browser composition and adapter path have not been
 exercised end to end.
 
+**Persistence, encryption, and recovery routing landed on 2 September 2026** — see
+`FINDINGS.md` §6.39. A facet now survives the visit (`createStorageFacetStore`), its recovery
+metadata is sealed with AES-GCM under a wallet-derived key rather than merely being called
+encrypted, and `planFacetRecovery` resolves each persistent position against the deployed exit
+catalogue, returning `RECOVERY_REQUIRES_ADAPTER` for anything no route closes. The browser no
+longer keeps its own copy of the lifecycle: `facet-map.js` imports the state table and the
+recovery classification from the deployed SDK bundle and keeps only storage and UI wording.
+
+The one deliberate stop: the launcher's device-local cache is still written in the clear. Sealing
+it needs a key the wallet holds, which means a signature prompt on a page that today never asks
+for one — a product decision rather than a missing capability. Encrypting under a key stored
+beside the data would be theatre and is not shipped as though it were protection.
+
 ---
 
 ## Open questions

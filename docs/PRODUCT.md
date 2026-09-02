@@ -159,9 +159,10 @@ and lifecycle-changing writes remain wallet-mediated.
 4. The privacy pool spends the note and withdraws the requested asset to that address.
 5. The shadow account is deployed if necessary and executes the application call.
 6. The adapter clears or settles application balances into output notes.
-7. The client records the result locally without publishing the user's context map. A
-   future encrypted backup may replicate recovery state, but it must not turn the service
-   into a deanonymising registry.
+7. The client records the result locally without publishing the user's context map. The
+   record's metadata is sealed with AES-GCM under a key derived from a wallet-held secret,
+   so replicating recovery state to a backup would move ciphertext and could not turn the
+   service into a deanonymising registry.
 
 The ordering is not cosmetic. Withdrawal occurs before invocation, which allows a new
 account to be funded and used in the same transaction. A failed application call reverts
@@ -195,7 +196,11 @@ the relevant path enforces them in code and has a test or receipt behind the cla
 
 The same rule applies to discovery. A backend must not be the sole database mapping a
 wallet to its facets. Deterministic derivation plus client-side or encrypted-local state
-keeps that mapping recoverable without making it a public service record.
+keeps that mapping recoverable without making it a public service record. The encrypted
+half now exists in code: `sealRecoveryRecord` writes only ciphertext, and the key is
+derived from a wallet secret that Facet never sees. The launcher's own device-local cache
+is still written in the clear, because a key stored beside the data it protects would be
+theatre; sealing it end to end waits on a deliberate wallet-signature step.
 
 ### Why not use several wallets?
 

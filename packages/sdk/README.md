@@ -130,12 +130,32 @@ output can decay during the proving window.
 
 `createOrRetainFacet` keeps one deterministic record per wallet, app, and strategy. Its explicit
 state machine is `launch → use → hold → recover → retire`; a held facet can be used again, and a
-recovering facet can return to hold when an explicit protocol exit remains. The user supplies the
-store, so recovery metadata can remain local or be encrypted before persistence.
+recovering facet can return to hold when an explicit protocol exit remains.
+
+The store is supplied by the caller. `createMemoryFacetStore` keeps records for the life of the
+process; `createStorageFacetStore` persists them through any `getItem`/`setItem` pair, so a facet
+outlives the tab that created it and a returning wallet resolves the identity it already had.
+Storage writes are defensive: a private-browsing mode that throws degrades the launcher rather
+than breaking it, because a record is a cache and never the authority for a facet's existence.
+
+`deriveRecoveryKey`, `sealRecoveryRecord`, and `openRecoveryRecord` make `encryptedMetadata` an
+encrypted field rather than a named one. The key is derived by HKDF from a secret only the user's
+wallet can reproduce, scoped to the wallet address, and is non-extractable; the record is sealed
+with AES-GCM under a fresh IV per write. Whatever holds the ciphertext learns the record's
+existence and size and nothing else, and Facet cannot decrypt a user's records by construction
+rather than by policy.
 
 `recoveryPlan` classifies ordinary fungible-token deltas as automatically recoverable. xSTRK, LP
 positions, debt, NFTs, and receipts are persistent positions: they require the protocol's explicit
 exit path and are never silently swept or described as recovered.
+
+`planFacetRecovery` answers the next question — through *what*. It resolves each persistent
+position against the deployed exit catalogue (`exitRoutesFromApps` reads it straight out of the
+app list the execution pages use) and returns the route that closes it. A route only counts for
+the facet named in its `contextApp`, so one facet's exit never appears to rescue another's
+position. Anything no configured route closes is reported as `RECOVERY_REQUIRES_ADAPTER` instead
+of being treated as recoverable: the honest answer is that Facet cannot return it without a new
+adapter. `assertFacetRecoverable` is the same routing as a throw.
 
 `beginFacetRecovery` and `retireFacet` are the guarded lifecycle entry points. They enforce the
 state transitions and refuse recovery or retirement while a persistent position remains. A route
