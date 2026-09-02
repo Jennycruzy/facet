@@ -132,7 +132,7 @@ Facet combines the following layers:
 | Shadow account / `FacetAccount` | Acts as the public Starknet caller for the selected application context. |
 | Application adapter | Encodes a protocol-specific call, quote, slippage policy, and output-note policy. |
 | Relayer or paymaster | Submits the proof-bearing transaction and pays network execution costs where supported. |
-| Portfolio view | Ready X supplies live private balances; the launcher optionally resolves each deterministic app account and reads its public positions from Mainnet. LocalStorage is a replaceable activity cache, never the authority for existence or balances. |
+| Portfolio view | Ready X supplies live private balances; the launcher optionally resolves each deterministic app account and reads its public positions from Mainnet. The launcher's session activity context is replaceable and never the authority for existence, balances, or cross-session lifecycle state. |
 
 The identity commitment is scoped in two steps:
 
@@ -160,9 +160,9 @@ and lifecycle-changing writes remain wallet-mediated.
 5. The shadow account is deployed if necessary and executes the application call.
 6. The adapter clears or settles application balances into output notes.
 7. The client records the result locally without publishing the user's context map. The
-   record's metadata is sealed with AES-GCM under a key derived from a wallet-held secret,
-   so replicating recovery state to a backup would move ciphertext and could not turn the
-   service into a deanonymising registry.
+    record set can be sealed with AES-GCM under a non-extractable key derived from a verified
+    wallet-native secret or an explicit user-chosen recovery passphrase; the passphrase/key never
+    enters storage, so a backup moves ciphertext rather than a deanonymising registry.
 
 The ordering is not cosmetic. Withdrawal occurs before invocation, which allows a new
 account to be funded and used in the same transaction. A failed application call reverts
@@ -196,11 +196,26 @@ the relevant path enforces them in code and has a test or receipt behind the cla
 
 The same rule applies to discovery. A backend must not be the sole database mapping a
 wallet to its facets. Deterministic derivation plus client-side or encrypted-local state
-keeps that mapping recoverable without making it a public service record. The encrypted
-half now exists in code: `sealRecoveryRecord` writes only ciphertext, and the key is
-derived from a wallet secret that Facet never sees. The launcher's own device-local cache
-is still written in the clear, because a key stored beside the data it protects would be
-theatre; sealing it end to end waits on a deliberate wallet-signature step.
+keeps that mapping recoverable without making it a public service record. The SDK provides
+the sealing primitive, and the launcher now wires it through the explicit passphrase path:
+`sealRecoveryRecord` writes only ciphertext, and the key is derived locally from a secret that
+Facet never sees.
+
+The launcher uses a two-level boundary. Temporary activity stays in `sessionStorage`, and the old
+persistent plaintext key is purged on load. That session data is still plaintext while the tab is
+live and is not protection from an extension, injected script, or browser session restoration. For
+cross-session recovery, the user may explicitly unlock a whole-record AES-GCM envelope with a
+unique passphrase of at least 16 characters. PBKDF2 derives the non-extractable key locally; the
+fixed storage namespace contains only a random salt and ciphertext, never a wallet/app index,
+per-record key, or passphrase. Facet cannot reset a lost passphrase. A route offers the same
+optional encrypted save only after its transaction is accepted.
+
+The optional shadow-account read can rediscover a public address, but the current Mainnet
+wallet-mediated Endur route does not prove that the wallet used Endur or reconstruct its lifecycle.
+After a tab ends, missing state is treated as unknown: the portfolio remains read-only and
+lifecycle controls stay disabled until the encrypted record is unlocked. A wrong passphrase or
+malformed envelope is an error, never an empty vault, and cannot overwrite the existing envelope.
+The explicit passphrase is a user-held recovery secret, not an unverified Ready X signature.
 
 ### Why not use several wallets?
 
@@ -235,9 +250,11 @@ product:
   deployed on Mainnet;
 - fork-backed contract tests and source/chain findings document the behavior.
 
-The browser launcher connects Ready X and stores local app/version/status metadata. Its local map
-enforces the five lifecycle transitions and refuses recovery or retirement while a persistent
-position remains; it does not derive or control an on-chain facet from that map. Reviewed Wallet API pages provide narrow Mainnet
+The browser launcher connects Ready X and stores session-scoped app/version/status metadata. Its
+session map enforces the five lifecycle transitions for state established in the current session
+and refuses recovery or retirement while a persistent position remains; unknown state is read-only
+and does not get an empty replacement record. It does not derive or control an on-chain facet from
+that map. Reviewed Wallet API pages provide narrow Mainnet
 routes for Ekubo and Endur: Ready X signs, proves, screens, and submits the privacy actions, while Facet
 supplies the fixed protocol-bound helper and protocol calldata. The reviewed Ekubo, Endur, and xSTRK
 exit actions have verified Mainnet receipts with pool/protocol evidence and configured helper paths.
@@ -260,7 +277,8 @@ The product execution contract is documented in [`ASYNC_PROVING.md`](ASYNC_PROVI
 
 - **Private by default:** do not require a public approval from the user's primary wallet.
 - **One portfolio, many contexts:** separation should not force users to manage many wallets.
-- **Deterministic recovery:** a lost browser session must not mean a lost account namespace.
+- **Deterministic identity, explicit recovery:** a lost browser session must not change the derived
+  account namespace, but lifecycle management waits for the private record to be restored.
 - **Application-agnostic core:** protocol adapters should add calls and policies, not new identity logic.
 - **Evidence over optimism:** every privacy or settlement claim is backed by source, fork tests,
   or a receipt; unfinished product work is labelled unfinished.

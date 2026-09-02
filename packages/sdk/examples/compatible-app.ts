@@ -15,6 +15,7 @@ import {
   executeAppIntent,
   exitRoutesFromApps,
   loadSealedFacets,
+  moveFacet,
   planFacetRecovery,
   saveSealedFacets,
   WalletFacetExecutor,
@@ -37,17 +38,24 @@ export interface CompatibleAppConfig {
 }
 
 export interface PersistentAppConfig extends CompatibleAppConfig {
-  /** Where facet records live between visits — `localStorage` in a browser. */
+  /** Where the opaque sealed record envelope lives between visits. */
   storage: SealedRecordStorage;
   /**
-   * A secret only the user's wallet can reproduce (a signature, a passphrase). It is used to
-   * derive the record key and is never stored, logged, or returned.
+   * A verified secret only the user can reproduce (for example a Starknet-native wallet result or
+   * a recovery passphrase). An EOA-shaped personal_sign result is not assumed to work with a
+   * Starknet smart-contract wallet. It is used to derive the record key and is never stored,
+   * logged, or returned.
    */
   walletSecret: string;
   /** The app's own identifier, so one wallet can hold a separate facet per application. */
   appId: string;
   /** The deployed exit catalogue, as published in `data/facets.json`. */
   exitRoutes?: readonly ExitRoute[];
+}
+
+function sameAsset(left: string, right: string): boolean {
+  try { return BigInt(left) === BigInt(right); }
+  catch { return left.toLowerCase() === right.toLowerCase(); }
 }
 
 /** Run one reviewed, delay-tolerant application action through the public Facet SDK surface. */
@@ -88,10 +96,10 @@ export function runCompatibleApp(config: CompatibleAppConfig) {
  * The same action, but as a facet that survives the visit.
  *
  * This is the shape a third-party integration actually wants, and it exercises the full public
- * surface rather than the execution half of it: the facet is retained in a persistent store, its
- * recovery metadata is sealed under a wallet-derived key before it is written, the protocol action
- * runs through the same adapter/executor boundary, and the caller is handed a concrete recovery
- * plan for whatever the action left behind.
+ * surface rather than the execution half of it: the facet is retained in memory, the complete
+ * record set is sealed under a wallet-derived key only after the protocol action succeeds, the
+ * action runs through the same adapter/executor boundary, and the caller is handed a concrete
+ * recovery plan for whatever the action left behind.
  *
  * Nothing here needs a Facet backend. The store is the caller's, the key is the wallet's, and the
  * routing is computed from the published catalogue.
@@ -116,16 +124,32 @@ export async function runPersistentApp(config: PersistentAppConfig): Promise<{
     app: config.appId,
     strategy: "stake",
     address: config.helper,
-    recovery: { encryptedMetadata: "", positions },
+    recovery: { positions: [] },
   });
-  await saveSealedFacets(config.storage, key, store.all());
 
   const { transactionHash } = await runCompatibleApp(config);
+
+  // Do not persist a held position before the wallet action is accepted. If the wallet rejects,
+  // the prior sealed record remains untouched; a failed attempt cannot manufacture recovery state.
+  const nextPositions = [
+    ...facet.recovery.positions.filter((position) => !sameAsset(position.asset, config.applicationToken)),
+    ...positions,
+  ];
+  let updated = { ...facet, recovery: { positions: nextPositions } };
+  store.set(updated);
+  if (updated.state === "launch") updated = moveFacet(store, updated, "use");
+  if (updated.state === "use") updated = moveFacet(store, updated, "hold");
+  const persisted = await saveSealedFacets(config.storage, key, store.all());
+  if (!persisted) {
+    throw new Error(
+      "The transaction succeeded, but the encrypted recovery record could not be persisted.",
+    );
+  }
 
   return {
     transactionHash,
     facetKey: facet.key,
-    recovery: planFacetRecovery(config.appId, positions, config.exitRoutes ?? []),
+    recovery: planFacetRecovery(config.appId, updated.recovery.positions, config.exitRoutes ?? []),
   };
 }
 

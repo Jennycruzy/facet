@@ -7,10 +7,10 @@
  *   2. the anonymizer's public view, which is authoritative for a discovered shadow account and
  *      its public token balances.
  *
- * localStorage is only updated as a convenience cache after those reads succeed. A wallet that
- * does not expose the optional shadow-account commitment is still useful: the launcher shows the
- * private portfolio and explains that direct facet discovery is unavailable instead of inventing
- * an address from local metadata.
+ * The session activity context is only updated as a convenience cache after those reads succeed.
+ * A wallet that does not expose the optional shadow-account commitment is still useful: the
+ * launcher shows the private portfolio and explains that direct facet discovery is unavailable
+ * instead of inventing an address from local metadata. Discovery never creates lifecycle state.
  */
 
 import { applicationContext } from "./app-context.js";
@@ -199,8 +199,11 @@ export async function loadPortfolio({ wallet, chain, anonymizer, apps, strk, acc
           observedAt: new Date().toISOString(),
           errors,
         };
-        if (account) {
-          entry.cached = reconcile(account, app.id, entry.chain);
+        if (account && entry.cached) {
+          // Reconcile only a record already established in this tab (or later restored). A chain
+          // observation cannot prove that this wallet used this application and must never create
+          // an empty record whose lifecycle controls would be mistaken for authority.
+          entry.cached = reconcile(account, app.id, entry.chain) ?? entry.cached;
         }
       } catch (error) {
         entry.error = `On-chain facet read: ${errorText(error)}`;

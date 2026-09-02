@@ -56,7 +56,10 @@ STAGE="$(mktemp -d "$DEST_PARENT/.${DEST_NAME}.stage.XXXXXX")"
 cleanup() { [[ ! -d "$STAGE" ]] || rm -r -- "$STAGE"; }
 trap cleanup EXIT
 
-rsync -a \
+# Do not copy source ownership into the staging tree. The deploy account may be privileged while
+# the checkout is mounted with synthetic ownership (as in the verification sandbox); ownership is
+# set explicitly below when requested.
+rsync -a --no-owner --no-group \
   --exclude ".*" \
   --exclude "tests/" \
   --exclude "package.json" \

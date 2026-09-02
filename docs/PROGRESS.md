@@ -95,12 +95,12 @@ new transaction was requested:
 |---|---|---|
 | Unified portfolio read model | **Done** | `packages/web/assets/js/portfolio.js` reads the connected private asset set from Ready X and optionally reconciles each app context against the Mainnet anonymizer and token contracts. |
 | Persistent context discovery | **Done where wallet-supported** | `packages/web/assets/js/chain.js` decodes `get_shadow_accounts` for one explicit nonce; unsupported and unregistered wallet capabilities remain visible states. |
-| Local persistence boundary | **Done** | `facet-map.js` stores only activity and public observations; discovery bypasses the `sessionStorage` RPC cache, so the partial commitment is not persisted by the launcher. |
+| Local persistence boundary | **Done — sealed envelope + session fallback** | `facet-map.js` keeps temporary activity in sessionStorage, purges the legacy plaintext key, and persists only an opaque whole-record AES-GCM envelope after an explicit PBKDF2 passphrase unlock/save. No wallet/app index or key is stored. |
 | SDK as browser engine | **Done** | `packages/sdk/src/index.ts` is bundled at deploy time into `assets/js/facet-sdk.js`; `executor.js` re-exports that generated artifact. |
 | SDK/sample-app integration example | **Done** | `packages/sdk/examples/compatible-app.ts` is a copy-paste Endur integration through the public intent → adapter → executor boundary; `npm run check` typechecks it and `tests/compatible-app.test.ts` asserts the wallet action vector. |
-| Launch → use → hold → recover → retire lifecycle | **Done for local state and confirmed route exits** | SDK and browser lifecycle guards enforce the five transitions, block recovery/retirement while persistent positions remain, expose explicit recovery controls, and record the verified Endur xSTRK → STRK exit before retirement. Deployed with commit `5219c25`; generic protocol exits remain adapter-specific. |
-| Regression coverage | **Done** | The deployed baseline was 40 SDK and 52 web tests; the current checkout passes the expanded SDK suite (65) and full web suite (61), including the sample, lifecycle, sealed-record and recovery-routing cases. |
-| Live deployment | **Done** | `https://usefacet.xyz` serves the new launcher, bundle, and portfolio reader; all public routes returned HTTP 200 and the headless launcher smoke test completed without module errors. |
+| Launch → use → hold → recover → retire lifecycle | **Done — fail-closed with explicit restore** | Known records use the SDK transition table and block persistent positions; unknown state is read-only, chain discovery cannot create an empty record, and restored records remain blocked by unresolved chain observations. |
+| Regression coverage | **Done locally** | SDK, full web, encrypted-vault merge, deploy-script, and browser smoke checks are green in this checkout; live publication remains separate. |
+| Live deployment | **Unchanged baseline** | `https://usefacet.xyz` remains on the clean deployed release at `origin/main`/`63d9224`; this privacy and fail-closed patch is still uncommitted and has not been published. |
 
 No new transaction was requested in this implementation pass. The direct Mainnet identity write still
 requires the external screening attestation documented in `FINDINGS.md` §6.33; the app does not
@@ -252,18 +252,12 @@ Established by reading the source against the SDK's proving path; pure adapter b
 implemented and unit-tested, but the browser composition and adapter path have not been
 exercised end to end.
 
-**Persistence, encryption, and recovery routing landed on 2 September 2026** — see
-`FINDINGS.md` §6.39. A facet now survives the visit (`createStorageFacetStore`), its recovery
-metadata is sealed with AES-GCM under a wallet-derived key rather than merely being called
-encrypted, and `planFacetRecovery` resolves each persistent position against the deployed exit
-catalogue, returning `RECOVERY_REQUIRES_ADAPTER` for anything no route closes. The browser no
-longer keeps its own copy of the lifecycle: `facet-map.js` imports the state table and the
-recovery classification from the deployed SDK bundle and keeps only storage and UI wording.
-
-The one deliberate stop: the launcher's device-local cache is still written in the clear. Sealing
-it needs a key the wallet holds, which means a signature prompt on a page that today never asks
-for one — a product decision rather than a missing capability. Encrypting under a key stored
-beside the data would be theatre and is not shipped as though it were protection.
+The launcher now wires the SDK's passphrase-backed sealed-record capability without assuming an
+EOA-shaped Ready X signature. An explicit 16-character-or-longer passphrase derives a PBKDF2/AES-GCM
+key in memory; only one opaque envelope is stored persistently. The launcher restores only records
+for the connected wallet, and a failed unlock leaves the session untouched. Confirmed route pages
+offer the same one-shot save after receipt. Session data remains plaintext while the tab is open,
+so this protects persistent storage, not an actively compromised page or extension.
 
 ---
 

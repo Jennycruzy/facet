@@ -76,6 +76,10 @@ describe("persistent third-party integration", () => {
     const key = await deriveRecoveryKey("0xsignature", OWNER);
     const [record] = await loadSealedFacets<FacetRecord>(storage, key);
     expect(record).toMatchObject({ wallet: OWNER, app: "endur", address: HELPER });
+    expect(record?.state).toBe("hold");
+    expect(record?.recovery.positions).toEqual([
+      { asset: MAINNET_XSTRK, kind: "xstrk" },
+    ]);
     const wrongWallet = await deriveRecoveryKey("0xsignature", "0xintruder");
     await expect(loadSealedFacets(storage, wrongWallet)).rejects.toThrow();
   });
@@ -89,5 +93,33 @@ describe("persistent third-party integration", () => {
     const key = await deriveRecoveryKey("0xsignature", OWNER);
     const [record] = await loadSealedFacets<FacetRecord>(storage, key);
     expect(record!.address).toBe(HELPER);
+  });
+
+  it("does not persist a held position when the protocol action fails", async () => {
+    const storage = memoryStorage();
+    const wallet = {
+      request: vi.fn().mockRejectedValue(new Error("user rejected")),
+    };
+    await expect(runPersistentApp({
+      wallet, owner: OWNER, token: STRK, applicationToken: MAINNET_XSTRK, helper: HELPER,
+      amount: 9n, maxAmount: 100n, storage, walletSecret: "0xsignature", appId: "endur",
+      exitRoutes: exitRoutesFromCatalogue(catalogue),
+    })).rejects.toThrow("user rejected");
+    expect([...storage.raw.keys()]).toEqual([]);
+  });
+
+  it("leaves the prior sealed record untouched when a later action fails", async () => {
+    const storage = memoryStorage();
+    await runPersistentApp(config(storage));
+    const wallet = { request: vi.fn().mockRejectedValue(new Error("user rejected")) };
+    await expect(runPersistentApp({
+      wallet, owner: OWNER, token: STRK, applicationToken: MAINNET_XSTRK, helper: "0x999",
+      amount: 9n, maxAmount: 100n, storage, walletSecret: "0xsignature", appId: "endur",
+      exitRoutes: exitRoutesFromCatalogue(catalogue),
+    })).rejects.toThrow("user rejected");
+    const key = await deriveRecoveryKey("0xsignature", OWNER);
+    const [record] = await loadSealedFacets<FacetRecord>(storage, key);
+    expect(record?.address).toBe(HELPER);
+    expect(record?.state).toBe("hold");
   });
 });

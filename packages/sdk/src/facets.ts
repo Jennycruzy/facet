@@ -30,7 +30,8 @@ export interface FacetRecord {
   state: FacetState;
   createdAt: string;
   updatedAt: string;
-  recovery: { encryptedMetadata: string; positions: FacetPosition[] };
+  /** Application positions; the complete record set is sealed by saveSealedFacets when persisted. */
+  recovery: { positions: FacetPosition[] };
 }
 
 export interface FacetStore {
@@ -153,9 +154,8 @@ export interface KeyValueStorage {
  *
  * **This store is not private.** It writes `wallet`, `app`, `strategy` and `address` as ordinary
  * JSON and keys its map by `wallet:app:strategy`, so the wallet-to-application mapping is legible
- * to anything that can read the storage area — sealing `recovery.encryptedMetadata` does not
- * change that, because the index sits beside it. When that mapping must not be readable, persist
- * with `saveSealedFacets`/`loadSealedFacets` instead, which seal the whole record set.
+ * to anything that can read the storage area. When that mapping must not be readable, persist with
+ * `saveSealedFacets`/`loadSealedFacets` instead, which seal the whole record set.
  *
  * This is what makes a facet more than session metadata: the same wallet returning to the same
  * app resolves the same record, and therefore the same app-scoped identity, rather than starting
@@ -173,7 +173,8 @@ export function createStorageFacetStore(
     try {
       const raw = storage.getItem(namespace);
       const parsed = raw ? JSON.parse(raw) : {};
-      return parsed && typeof parsed === "object" ? parsed as Record<string, FacetRecord> : {};
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? parsed as Record<string, FacetRecord> : {};
     } catch {
       return {};
     }
@@ -205,6 +206,7 @@ export function listFacets(
 ): FacetRecord[] {
   const wanted = wallet?.trim().toLowerCase();
   return store.all()
+    .filter((record) => record.state !== "retire")
     .filter((record) => (wanted ? record.wallet.trim().toLowerCase() === wanted : true))
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }

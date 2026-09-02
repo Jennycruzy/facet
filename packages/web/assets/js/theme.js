@@ -1,5 +1,6 @@
 const root = document.documentElement;
-const saved = localStorage.getItem("facet-theme");
+let saved = null;
+try { saved = localStorage.getItem("facet-theme"); } catch { /* private mode */ }
 if (saved === "light" || saved === "dark") root.dataset.theme = saved;
 else if (window.matchMedia?.("(prefers-color-scheme: light)").matches) root.dataset.theme = "light";
 
@@ -18,7 +19,7 @@ function render() {
 }
 if (toggle) toggle.onclick = () => {
   root.dataset.theme = root.dataset.theme === "light" ? "dark" : "light";
-  localStorage.setItem("facet-theme", root.dataset.theme);
+  try { localStorage.setItem("facet-theme", root.dataset.theme); } catch { /* private mode */ }
   render();
 };
 render();

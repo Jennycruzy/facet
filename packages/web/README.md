@@ -51,12 +51,17 @@ Starknet RPC from the visitor's browser. Deployment performs the one local SDK b
 emit `assets/js/facet-sdk.js`; nothing else on the host is reachable through the site.
 
 The launcher at `/launch` connects Ready X on Starknet Mainnet and opens the selected Ekubo or
-Endur review route. It stores app/version/lifecycle state, confirmed transaction hashes, and held
-position labels in browser local storage. Its transitions mirror the SDK lifecycle and the Ekubo
-exit clears the Endur xSTRK position in that local record. It exposes guarded local recovery and
-retirement controls: persistent positions must be exited first. The map does not create or control
-an on-chain facet, store recovery secrets, or execute a generic recovery sweep. The reviewed Mainnet pages use Ready X's native STRK20 proving/screening API;
-they request a transaction only after the user checks the exact route and user-selected amount.
+Endur review route. Temporary app/version/lifecycle state, confirmed transaction hashes, and held
+position labels live in a session activity context. The user can explicitly unlock a whole-record
+AES-GCM envelope with a 16-character-or-longer passphrase; the passphrase and non-extractable key
+never enter storage, and the envelope has no wallet/app index. Confirmed Mainnet route pages offer
+the same encrypted save after receipt. Its transitions mirror the SDK lifecycle and the Ekubo exit
+clears the Endur xSTRK position in that local record. If state is absent or malformed, the portfolio
+remains read-only and lifecycle controls are disabled. The map does not create or control an
+on-chain facet, or execute a generic recovery sweep. Session data is still readable by the live
+page or an active extension; the envelope protects persistence at rest. The reviewed Mainnet pages
+use Ready X's native STRK20 proving/screening API and request a transaction only after the user
+checks the exact route and user-selected amount.
 
 The current reviewed execution path is connect Ready X → choose an app → exact route review → Ready X
 wallet approval → receipt. A future direct Facet queue may add resumable job polling around the
@@ -84,7 +89,7 @@ wallet's read and action capabilities before relying on optional shadow-account 
 | `assets/js/gem.js` | The stone: a procedural brilliant cut rendered with canvas 2D — painter's algorithm, flat shading, exact face picking. 49 faces at 8 segments; the count is a parameter |
 | `assets/js/chain.js` | Homepage chain reader with a `sessionStorage` cache and five-minute TTL; reviewed route modules use their own guarded RPC reads |
 | `assets/js/app-ui.js` | The app: live strip, identity cards, app tiles, and dated RPC fallbacks |
-| `assets/js/launcher.js` | Ready X connection, chain-backed portfolio reconciliation, local activity cache, route selection, and in-memory session state |
+| `assets/js/launcher.js` | Ready X connection, chain-backed portfolio reconciliation, session activity, explicit encrypted recovery unlock, route selection, and in-memory state |
 | `assets/js/portfolio.js` | Private balance reads, optional shadow-account discovery, public position reads, and cache reconciliation |
 | `assets/js/chain.js` | Cached Starknet RPC reads, shadow-account view decoding, receipts, and token balances |
 | `assets/js/ready-probe.js` | Read-only Ready X account, chain, STRK20 balance, and API capability check |

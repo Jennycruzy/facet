@@ -140,17 +140,25 @@ than breaking it, because a record is a cache and never the authority for a face
 
 `createStorageFacetStore` writes `wallet`, `app`, `strategy` and `address` in the clear and keys
 its map by `wallet:app:strategy`. That is fine for a caller that does not need the mapping hidden
-and wrong for one that does — sealing `encryptedMetadata` alone does **not** make a record
-private, because the index beside it stays readable. Use `saveSealedFacets` and
+and wrong for one that does — sealing one field alone does **not** make a record private, because
+the index beside it stays readable. Use `saveSealedFacets` and
 `loadSealedFacets` for that: they persist the entire record set as one opaque envelope, so
 nothing identifying and no per-record key reaches storage at all.
 
-`deriveRecoveryKey`, `sealRecoveryRecord`, and `openRecoveryRecord` make `encryptedMetadata` an
-encrypted field rather than a named one. The key is derived by HKDF from a secret only the user's
-wallet can reproduce, scoped to the wallet address, and is non-extractable; the record is sealed
-with AES-GCM under a fresh IV per write. Whatever holds the ciphertext learns the record's
-existence and size and nothing else, and Facet cannot decrypt a user's records by construction
-rather than by policy.
+`deriveRecoveryKey`, `sealRecoveryRecord`, and `openRecoveryRecord` seal arbitrary record data.
+`FacetRecord.recovery` contains positions only; the whole record set is what must be encrypted.
+The key is derived by HKDF from a verified secret only the user can reproduce, scoped to the wallet
+address, and is non-extractable; the record is sealed with AES-GCM under a fresh IV per write.
+Whatever holds the ciphertext learns the envelope's existence and approximate size and nothing
+else, and Facet cannot decrypt a user's records by construction rather than by policy. An
+EOA-shaped `personal_sign` result must not be assumed to be a valid Ready X Starknet secret.
+
+For a caller that needs a user-facing fallback before a verified wallet-native secret exists,
+`unlockPassphraseSealedFacets` and `saveUnlockedPassphraseSealedFacets` use a fresh random salt and
+PBKDF2 to derive the same non-extractable AES-GCM key from an explicit recovery passphrase of at
+least 16 characters. The passphrase is never stored or returned, and Facet cannot reset it.
+`saveSealedFacets` returns `false` when the storage write fails, so callers cannot report persistence
+that did not happen.
 
 `recoveryPlan` classifies ordinary fungible-token deltas as automatically recoverable. xSTRK, LP
 positions, debt, NFTs, and receipts are persistent positions: they require the protocol's explicit

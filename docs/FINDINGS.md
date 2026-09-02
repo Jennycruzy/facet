@@ -1650,11 +1650,11 @@ its original address, which is the property the test pins. Writes are defensive:
 private-browsing area that throws on `setItem` degrades the launcher rather than breaking it,
 because the record is a cache and never the authority for a facet's existence on chain.
 
-**Encryption.** `recovery.encryptedMetadata` was a typed field that nothing encrypted; every
-writer in the tree was a test literal. It is now produced by `sealRecoveryRecord` and nowhere
-else: AES-GCM with a fresh IV per write, under a non-extractable AES-256 key derived by HKDF from
-a secret only the user's wallet can reproduce, scoped by the wallet address and domain-separated
-from the pool viewing key. A tampered envelope fails authentication instead of decoding, and a
+**Encryption.** The interim `recovery.encryptedMetadata` field was typed but did not make a record
+private; it has now been removed. The actual capability is generic whole-record sealing via
+`sealRecoveryRecord`: AES-GCM with a fresh IV per write, under a non-extractable AES-256 key derived
+by HKDF from a verified user-held secret, scoped by the wallet address and domain-separated from
+the pool viewing key. A tampered envelope fails authentication instead of decoding, and a
 different wallet or secret cannot open the record.
 
 **Sealing that one field was not enough, and the first version of this work shipped believing it
@@ -1697,7 +1697,61 @@ executor (§6.38), and keeps only storage and the wording the launcher shows. Th
 strengthened accordingly: it asserts the browser and the bundle share the *same object*, which
 equality could never catch and which is what stops the mirror from returning.
 
-Suites after this work: 20 contract, 65 SDK, 61 web.
+Suites after §6.39: 20 contract, 65 SDK, 61 web.
+
+
+### 6.40 The launcher stops storing the mapping rather than encrypting it — 2 September 2026
+
+§6.39 sealed the SDK's facet record and left an honest gap: the launcher's own browser cache was
+still written to `localStorage` keyed by `wallet:app:strategy`, which is the wallet-to-application
+mapping in the clear on the visitor's disk — the exact relationship the product exists not to
+publish.
+
+The obvious fix, encrypting that cache, does not work. Separating two wallets' records on disk
+requires a label derived from the wallet, and an attacker with access to the browser profile
+already holds both inputs: the wallet address, from the extension, and the app list, which is
+public and three entries long. Any such label falls to a handful of guesses. Only a secret the
+wallet holds would resist it, and obtaining one means a signature prompt on every visit — with the
+further problem that the available derivation is EOA-shaped while Starknet wallets are
+smart-contract accounts whose signatures are not.
+
+**The first session-only explanation overclaimed what discovery provides.** The partial commitment
+and deterministic `dappName`/`nonce` can rediscover an optional public shadow account, but the live
+Mainnet routes use Ready X's wallet-mediated helper path. In particular, an Endur xSTRK association
+and its lifecycle can exist only in the app-specific activity record; discovery cannot reliably
+recreate them. A new tab must therefore treat the lifecycle as unknown, not as an empty record.
+
+The safe fallback still moves new activity writes to `sessionStorage`, and
+`purgeLegacyDeviceCache` deletes the pre-v2 `localStorage` record on load. This removes ordinary
+persistent plaintext storage but is not cryptographic protection: session data remains readable to
+the live page, extensions, injected scripts, and possibly browser session restoration. The cache is
+not used to enable lifecycle controls after it disappears. `reconcile` now updates only an existing
+session record, and the launcher renders unknown state read-only with recovery, retirement, and new
+version controls disabled. A chain observation can block a transition when it exposes an
+unaccounted position, but it cannot create authority or enable one.
+
+The SDK's whole-record sealed envelope remains the only persistent privacy-preserving path. At this
+point in the finding it was not wired into Ready X: a real Starknet-compatible or user-approved
+unlock method was still required. A key stored beside the ciphertext, or an unverified EOA
+signature route, would weaken the identity boundary rather than solve it. §6.41 records the later
+explicit passphrase integration.
+
+### 6.41 The launcher wires explicit passphrase recovery without weakening the identity boundary — 2 September 2026
+
+The unresolved product choice in §6.40 is now implemented with the user-approved passphrase path,
+not with an unverified Ready X signature. `facet-map.js` uses the SDK's PBKDF2-derived,
+non-extractable AES-GCM key and stores one fixed-namespace envelope containing only a random KDF
+salt and ciphertext. The wallet-to-app mapping, lifecycle positions, transaction history, and
+recovery key are absent from persistent plaintext storage; the passphrase is cleared from the input
+and is not retained by the page after an unlock or route save.
+
+Unlocking restores only the connected wallet's records into the tab. A wrong passphrase, malformed
+payload, unavailable storage area, or failed write is an error rather than an empty state. The
+session record remains the active-page view and is intentionally plaintext while the tab is open;
+this feature protects persistence at rest, not a compromised page or extension. If no record is
+restored, or a chain observation contains an unaccounted position, recovery and retirement remain
+disabled. Confirmed Mainnet route pages offer the optional encrypted save only after receipt, so a
+failed transaction cannot manufacture recovery metadata.
 
 
 ## 7. Toolchain

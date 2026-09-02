@@ -42,11 +42,18 @@ test("decodes only requested private assets and defaults missing balances to zer
   assert.deepEqual(assetCatalog(apps, STRK).map(({ symbol }) => symbol), ["STRK", "xSTRK", "ETH"]);
 });
 
-test("loads private balances, resolves public facets, and writes only a chain observation to cache", async () => {
+test("loads private balances and resolves public facets without creating lifecycle state", async () => {
   const storage = new Map();
-  globalThis.localStorage = {
+  // The activity cache is session-scoped; nothing identifying may reach localStorage.
+  globalThis.sessionStorage = {
     getItem: (key) => storage.get(key) ?? null,
     setItem: (key, value) => storage.set(key, value),
+  };
+  const disk = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => disk.get(key) ?? null,
+    setItem: (key, value) => disk.set(key, value),
+    removeItem: (key) => disk.delete(key),
   };
   const wallet = {
     async request(message) {
@@ -78,7 +85,7 @@ test("loads private balances, resolves public facets, and writes only a chain ob
   assert.equal(result.facets.length, 2);
   assert.equal(result.facets[0].chain.address, "0xdef");
   assert.equal(result.facets[0].chain.positions[0].symbol, "xSTRK");
-  const cached = JSON.parse(storage.get("facet-wallet-map-v1"));
-  assert.equal(cached["0xowner:endur:default"].chain.address, "0xdef");
-  assert.equal(cached["0xowner:ekubo:default"].chain.address, "0xdef");
+  assert.equal(storage.get("facet-activity-session-v2"), undefined,
+    "portfolio discovery created a wallet-to-app lifecycle record");
+  assert.equal(disk.size, 0, "the portfolio refresh wrote a wallet-to-app record to disk");
 });

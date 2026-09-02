@@ -1,5 +1,5 @@
 import "./theme.js";
-import { recordActivity } from "./facet-map.js";
+import { offerPersistentActivitySave, recordActivity } from "./facet-map.js";
 import { parseTokenAmount } from "./amount.js";
 import {
   $, candidateWallets, chainLabel, checkHelper, copyToClipboard, createRpc, errorText, escapeHtml,
@@ -344,11 +344,29 @@ async function execute() {
     showTransactionResult("Submitted", transactionHash);
     const receipt = await waitForReceipt(rpc, transactionHash);
     if (receipt) {
-      // Local activity record only: this notes what this browser did, and controls nothing on chain.
-      recordActivity(state.account, app.id, {
-        hash: transactionHash, asset: felt(TOKEN_OUT), symbol: OUTPUT_SYMBOL,
-        kind: POLICY.assetKinds[felt(TOKEN_OUT)] ?? "fungible", action: "stake",
-      });
+      try {
+        const account = state.account;
+        recordActivity(account, app.id, {
+          hash: transactionHash, asset: felt(TOKEN_OUT), symbol: OUTPUT_SYMBOL,
+          kind: POLICY.assetKinds[felt(TOKEN_OUT)] ?? "fungible", action: "stake",
+        });
+        const recovery = await offerPersistentActivitySave(account, app.name,
+          () => state.account === account);
+        if (recovery.saved) {
+          setStatus("bound", "Mainnet accepted. Encrypted recovery was saved locally.");
+          showTransactionResult("Accepted · encrypted recovery saved", transactionHash);
+        } else if (recovery.error) {
+          setStatus("error", "Mainnet accepted, but encrypted recovery was not saved.");
+          showTransactionResult("Accepted · tab activity only", transactionHash);
+        } else {
+          setStatus("bound", "Mainnet accepted. Activity remains in this tab only.");
+          showTransactionResult("Accepted · tab activity only", transactionHash);
+        }
+      } catch (error) {
+        setStatus("error", "Mainnet accepted, but this tab could not retain lifecycle state safely.");
+        showTransactionResult("Accepted · lifecycle state needs restore", transactionHash);
+        state.errors = [errorText(error)];
+      }
     }
   } catch (error) {
     state.errors = [errorText(error)];

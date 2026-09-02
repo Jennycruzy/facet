@@ -3,14 +3,17 @@ import { createGem } from "./gem.js";
 import { applicationContext, contextLabel } from "./app-context.js";
 import {
   beginRecovery,
+  clearSessionActivity,
   configureExitRoutes,
+  LIFECYCLE_STATE_UNAVAILABLE,
   mapKey,
   readMap,
-  recordActivity,
   recoveryBlockedReason,
   retain,
   retireBlockedReason,
   move,
+  savePersistentActivity,
+  unlockPersistentActivity,
 } from "./facet-map.js";
 import { createChain } from "./chain.js";
 import { detectReadyX, errorText, formatUnits } from "./route-runtime.js";
@@ -64,40 +67,81 @@ const mark = createGem($("mark"), { segments: 6 });
 mark.setFacets(data.facets);
 mark.start();
 
-// The connected Ready X account is held only for this page session. The local activity map stores
-// app/version metadata and confirmed activity, never wallet signatures, commitments, private keys,
-// viewing keys or recovery secrets. The portfolio reader below obtains live values independently.
+// The connected Ready X account is held only for this page session. The session activity context
+// stores app/version metadata and confirmed activity, never wallet signatures, commitments, private
+// keys, viewing keys or recovery secrets. It is not authoritative after the tab ends; the portfolio
+// reader obtains live observations independently and lifecycle controls fail closed without a record.
 const session = {
   provider: detectReadyX(),
   account: null,
   selectedApp: null,
   portfolio: null,
   state: "idle",
+  recovery: { vault: null, busy: false },
 };
 
 const key = (appId) => mapKey(session.account, appId);
 
-function retainFacet(appId) {
-  retain(session.account, appId);
+async function persistUnlockedActivity(account = session.account) {
+  const vault = session.recovery.vault;
+  if (!account || session.account !== account || !vault) return true;
+  const canCommit = () => session.account === account && session.recovery.vault === vault;
+  try {
+    const result = await savePersistentActivity(account, vault, canCommit);
+    if (!canCommit()) return false;
+    if (!result.saved) throw new Error("The browser rejected the encrypted recovery write.");
+    vault.records = result.records;
+    return true;
+  } catch (error) {
+    if (session.account === account) {
+      setStatus("error", `Encrypted recovery was not updated: ${errorText(error)}`);
+    }
+    return false;
+  }
+}
+
+async function retainFacet(appId) {
+  const account = session.account;
+  retain(account, appId);
+  if (session.account !== account) {
+    throw new Error("The connected wallet changed before the activity record was retained.");
+  }
+  if (!readMap()[key(appId)]) {
+    throw new Error("This tab cannot retain lifecycle state safely; the route was not opened.");
+  }
+  await persistUnlockedActivity(account);
+  if (session.account !== account) {
+    throw new Error("The connected wallet changed before the activity record was retained.");
+  }
   renderFacetMap();
   renderPortfolio();
 }
 
-function updateFacet(appId, action) {
+async function updateFacet(appId, action) {
+  const account = session.account;
   const records = readMap();
   const record = records[key(appId)];
-  if (!record) return;
+  if (!record) {
+    setStatus("error", LIFECYCLE_STATE_UNAVAILABLE);
+    renderFacetMap();
+    renderPortfolio();
+    return;
+  }
   if (action === "recover") {
     const blocked = recoveryBlockedReason(record);
     if (blocked) { setStatus("error", blocked); renderFacetMap(); renderPortfolio(); return; }
-    try { beginRecovery(session.account, appId); }
+    try { beginRecovery(account, appId, data.apps); }
     catch (error) {
       setStatus("error", errorText(error));
       renderFacetMap();
       renderPortfolio();
       return;
     }
-    setStatus("bound", `${data.apps.find((app) => app.id === appId)?.name ?? "Facet"} recovery recorded locally.`);
+    const persisted = await persistUnlockedActivity(account);
+    if (session.account !== account) return;
+    if (persisted) {
+      setStatus("bound", `${data.apps.find((app) => app.id === appId)?.name ?? "Facet"} recovery recorded.`);
+    }
     renderFacetMap();
     renderPortfolio();
     return;
@@ -105,13 +149,15 @@ function updateFacet(appId, action) {
   if (action === "retire") {
     const blocked = retireBlockedReason(record);
     if (blocked) { setStatus("error", blocked); renderFacetMap(); renderPortfolio(); return; }
-    move(session.account, appId, "retire");
+    move(account, appId, "retire", data.apps);
   } else {
     // A new local version retires the old record, then retains the same app again.
-    if (!retireBlockedReason(record)) move(session.account, appId, "retire");
+    if (!retireBlockedReason(record)) move(account, appId, "retire", data.apps);
     else { setStatus("error", retireBlockedReason(record)); renderFacetMap(); renderPortfolio(); return; }
-    retain(session.account, appId);
+    retain(account, appId);
   }
+  await persistUnlockedActivity(account);
+  if (session.account !== account) return;
   renderFacetMap();
   renderPortfolio();
 }
@@ -141,8 +187,33 @@ function portfolioPositionText(entry, app) {
   return "No direct facet account discovered";
 }
 
+function sameAsset(left, right) {
+  try { return BigInt(left) === BigInt(right); }
+  catch { return String(left).toLowerCase() === String(right).toLowerCase(); }
+}
+
+function hasUnresolvedObservedPosition(entry) {
+  const observed = entry.chain?.positions;
+  const local = entry.cached?.positions;
+  if (!Array.isArray(observed) || !Array.isArray(local)) return false;
+  return observed.some((position) => {
+    const observedAsset = position?.asset ?? position?.token;
+    if (observedAsset == null) return true;
+    return !local.some((candidate) => sameAsset(observedAsset, candidate.asset));
+  });
+}
+
 function portfolioRecoveryText(entry) {
-  const positions = entry.chain?.positions ?? entry.cached?.chain?.positions ?? entry.cached?.positions ?? [];
+  if (!entry.cached || !Array.isArray(entry.cached.positions)) {
+    return "Lifecycle state unavailable · restore or unlock the private record";
+  }
+  if (!session.recovery.vault) {
+    return "Lifecycle controls unavailable · unlock encrypted recovery";
+  }
+  if (hasUnresolvedObservedPosition(entry)) {
+    return "Chain position is not represented in lifecycle state · restore or unlock the private record";
+  }
+  const positions = entry.cached.positions;
   const hasPersistent = positions.some((position) =>
     position.kind === "exit-required" || position.symbol === "xSTRK",
   );
@@ -215,7 +286,8 @@ function renderPortfolio() {
     title.textContent = app.name;
     const state = document.createElement("span");
     state.className = "pill";
-    state.textContent = entry.cached?.state ?? "not started";
+    state.textContent = entry.cached?.state ?? "state unavailable";
+    if (!entry.cached) state.className = "pill portfolio-stale";
     head.append(title, state);
     card.append(head);
     const details = document.createElement("div");
@@ -261,40 +333,45 @@ const STATE_COPY = {
 function renderFacetMap() {
   const target = $("facet-map");
   if (!session.account) {
-    target.innerHTML = '<span class="muted">Connect a wallet to view this device\'s activity record.</span>';
+    target.innerHTML = '<span class="muted">Connect a wallet to view this tab\'s activity context.</span>';
     return;
   }
   const records = readMap();
-  const rows = data.apps.map((app) => ({ app, record: records[key(app.id)] })).filter(({ record }) => record);
+  const rows = data.apps
+    .filter((app) => !app.lifecycle?.contextApp)
+    .map((app) => ({ app, record: records[key(app.id)] ?? null }));
   target.replaceChildren();
-  if (!rows.length) {
-    target.innerHTML = '<span class="muted">Choose an app to create its local activity record.</span>';
-    return;
-  }
   for (const { app, record } of rows) {
     const row = document.createElement("div");
     row.className = "facet-map-row";
-    const held = record.positions.map((position) => position.symbol ?? position.asset).join(", ");
-    const hashes = record.transactions.slice(-3).map((entry) =>
-      `<a href="https://voyager.online/tx/${encodeURIComponent(entry.hash)}" target="_blank" rel="noreferrer">${entry.action} ${entry.hash.slice(0, 10)}…</a>`,
-    ).join(" ");
-    row.innerHTML = `<strong>${app.name}</strong>`
-      + `<span>version ${record.version} · <em>${record.state}</em> — ${STATE_COPY[record.state] ?? ""}</span>`
-      + (held ? `<span class="muted">holds ${held}</span>` : "")
-      + (hashes ? `<span class="muted">${hashes}</span>` : "");
-    const actions = [
-      ...(record.state === "use" || record.state === "hold" ? ["recover"] : []),
-      "rotate",
-      "retire",
-    ];
+    if (!record) {
+      row.innerHTML = `<strong>${app.name}</strong>`
+        + `<span class="muted">lifecycle state unavailable in this tab</span>`
+        + `<span class="muted">restore or unlock the private record to manage it</span>`;
+    } else {
+      const held = record.positions.map((position) => position.symbol ?? position.asset).join(", ");
+      const hashes = record.transactions.slice(-3).map((entry) =>
+        `<a href="https://voyager.online/tx/${encodeURIComponent(entry.hash)}" target="_blank" rel="noreferrer">${entry.action} ${entry.hash.slice(0, 10)}…</a>`,
+      ).join(" ");
+      row.innerHTML = `<strong>${app.name}</strong>`
+        + `<span>version ${record.version} · <em>${record.state}</em> — ${STATE_COPY[record.state] ?? ""}</span>`
+        + (held ? `<span class="muted">holds ${held}</span>` : "")
+        + (hashes ? `<span class="muted">${hashes}</span>` : "");
+    }
+    const actions = record
+      ? [...(record.state === "use" || record.state === "hold" ? ["recover"] : []), "rotate", "retire"]
+      : ["recover", "rotate", "retire"];
+    const recoveryUnlocked = Boolean(session.recovery.vault);
     for (const action of actions) {
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = action === "recover"
         ? "enter recovery"
         : action === "rotate" ? "new local version" : "retire record";
-      const blocked = action === "recover" ? recoveryBlockedReason(record) : retireBlockedReason(record);
-      button.disabled = record.state === "retire" || Boolean(blocked);
+      const blocked = !record || !recoveryUnlocked
+        ? LIFECYCLE_STATE_UNAVAILABLE
+        : action === "recover" ? recoveryBlockedReason(record) : retireBlockedReason(record);
+      button.disabled = !record || !recoveryUnlocked || record.state === "retire" || Boolean(blocked);
       if (blocked) button.title = blocked;
       button.onclick = () => updateFacet(app.id, action);
       row.append(button);
@@ -337,6 +414,98 @@ function setStatus(state, text) {
   $("wallet-status-text").textContent = text;
 }
 
+function recoveryMessage() {
+  if (session.recovery.busy) return "Opening the encrypted recovery envelope…";
+  if (session.recovery.vault) {
+    return session.recovery.vault.configured
+      ? "Encrypted recovery is unlocked for this tab. The key is held only in memory."
+      : "Recovery is ready, but no record has been sealed yet. Save it after a confirmed action.";
+  }
+  return session.account
+    ? "Locked. Enter the passphrase to restore persistent lifecycle state; without it, controls remain tab-only."
+    : "Connect Ready X before unlocking encrypted recovery.";
+}
+
+function recoveryErrorText(error) {
+  const detail = errorText(error);
+  // WebCrypto reports a wrong AES-GCM key as a DOMException with no enumerable fields, which the
+  // generic route formatter represents as "{}". Give the user a useful failure without revealing
+  // whether the envelope exists or which part of the key derivation failed.
+  return detail === "{}" ? "The passphrase did not open the encrypted recovery envelope." : detail;
+}
+
+function renderRecoveryControls() {
+  const input = $("recovery-secret");
+  const unlock = $("recovery-unlock");
+  const lock = $("recovery-lock");
+  const status = $("recovery-status");
+  if (!input || !unlock || !lock || !status) return;
+  const unlocked = Boolean(session.recovery.vault);
+  input.disabled = !session.account || session.recovery.busy || unlocked;
+  unlock.hidden = unlocked;
+  unlock.disabled = !session.account || session.recovery.busy || !input.value.trim();
+  lock.hidden = !unlocked;
+  lock.disabled = session.recovery.busy;
+  status.textContent = recoveryMessage();
+}
+
+async function unlockRecovery() {
+  if (!session.account || session.recovery.busy) return;
+  const account = session.account;
+  const input = $("recovery-secret");
+  const passphrase = input?.value ?? "";
+  if (passphrase.trim().length < 16) {
+    setStatus("error", "Use a recovery passphrase of at least 16 characters.");
+    renderRecoveryControls();
+    return;
+  }
+  session.recovery.busy = true;
+  setStatus("signing", "Deriving the recovery key locally; nothing is sent to Facet or Ready X…");
+  renderRecoveryControls();
+  try {
+    const vault = await unlockPersistentActivity(account, passphrase,
+      () => session.account === account);
+    if (session.account !== account) return;
+    session.recovery.vault = vault;
+    const hasCurrentActivity = Object.values(readMap()).some((record) =>
+      typeof record.wallet === "string" && record.wallet.toLowerCase() === account.toLowerCase());
+    if (!vault.configured && hasCurrentActivity) {
+      const saved = await savePersistentActivity(account, vault,
+        () => session.account === account && session.recovery.vault === vault);
+      if (session.account !== account) return;
+      if (!saved.saved) throw new Error("Encrypted recovery could not be written in this browser.");
+      vault.records = saved.records;
+      vault.configured = true;
+    }
+    setStatus(
+      "bound",
+      vault.configured
+        ? "Encrypted recovery unlocked. Restored lifecycle state is now available."
+        : "Encrypted recovery prepared. No saved records exist for this passphrase yet.",
+    );
+    await refreshPortfolio();
+  } catch (error) {
+    if (session.account === account) {
+      session.recovery.vault = null;
+      setStatus("error", `Encrypted recovery stayed locked: ${recoveryErrorText(error)}`);
+    }
+  } finally {
+    // Do not leave the passphrase in an input, autofill value, or page-visible DOM state.
+    if (input) input.value = "";
+    session.recovery.busy = false;
+    render();
+  }
+}
+
+function lockRecovery() {
+  if (!session.account) return;
+  clearSessionActivity(session.account);
+  session.recovery.vault = null;
+  session.recovery.busy = false;
+  setStatus("bound", "Encrypted recovery locked. Lifecycle state is unavailable until it is unlocked again.");
+  render();
+}
+
 function short(address) {
   return address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "not connected";
 }
@@ -351,12 +520,15 @@ function render() {
   $("connect").textContent = connected ? "Ready X connected" : "Connect Ready X";
   $("sign").hidden = true;
   $("binding-message").textContent = bound
-    ? "Local activity ready. Choose an app to open its reviewed route."
-    : "Connect Ready X to open your local activity record.";
+    ? session.recovery.vault
+      ? "Private portfolio ready. Encrypted recovery is unlocked for this tab; controls still fail closed on unresolved chain observations."
+      : "Private portfolio ready. Activity is tab-only until you unlock encrypted recovery; lifecycle controls stay disabled until it is unlocked."
+    : "Connect Ready X to open the tab activity context or unlock encrypted recovery.";
   $("copy-message").disabled = true;
   $("bound-pill").textContent = bound ? "session ready" : "not bound";
   $("bound-pill").className = `pill ${bound ? "pill-good" : ""}`;
   $("reset").hidden = !connected;
+  renderRecoveryControls();
   const selected = data.apps.find((app) => app.id === session.selectedApp) ?? null;
   const context = selected ? applicationContext(selected) : null;
   const activeLaunchStep = selected ? "review" : "context";
@@ -387,9 +559,12 @@ function render() {
 }
 
 function clearSession(text = "Wallet disconnected from this launcher.") {
+  if (session.account) clearSessionActivity(session.account);
   session.account = null;
   session.selectedApp = null;
   session.portfolio = null;
+  session.recovery.vault = null;
+  session.recovery.busy = false;
   $("copy-message-status").textContent = "";
   setStatus("idle", text);
   render();
@@ -417,11 +592,18 @@ async function connect() {
   }
 }
 
-function selectApp(id) {
+async function selectApp(id) {
   const app = data.apps.find((candidate) => candidate.id === id);
   if (!app) return;
   session.selectedApp = app.id;
-  if (session.account && session.state === "bound") retainFacet(app.id);
+  if (session.account && session.state === "bound") {
+    try { await retainFacet(app.id); }
+    catch (error) {
+      setStatus("error", errorText(error));
+      render();
+      return;
+    }
+  }
   setStatus("selected", `${app.name} selected. Opening its Mainnet route…`);
   render();
   if (app.executionPage) window.location.assign(app.executionPage);
@@ -430,8 +612,11 @@ function selectApp(id) {
 $("connect").onclick = connect;
 $("reset").onclick = () => clearSession();
 if ($("refresh-portfolio")) $("refresh-portfolio").onclick = () => { void refreshPortfolio(); };
+if ($("recovery-secret")) $("recovery-secret").oninput = () => renderRecoveryControls();
+if ($("recovery-unlock")) $("recovery-unlock").onclick = () => { void unlockRecovery(); };
+if ($("recovery-lock")) $("recovery-lock").onclick = () => lockRecovery();
 document.querySelectorAll("[data-launch-action]").forEach((button) => {
-  button.onclick = () => selectApp(button.dataset.appId);
+  button.onclick = () => { void selectApp(button.dataset.appId); };
 });
 
 if (!session.provider) {

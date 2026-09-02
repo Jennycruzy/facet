@@ -84,14 +84,29 @@
         <div class="launch-card-head">
           <div>
             <div class="mono-badge">02</div>
-          <h2>Your app identity record</h2>
+          <h2>Your private app activity</h2>
           </div>
-          <span class="pill">stored on this device</span>
+          <span class="pill">session + sealed recovery</span>
         </div>
-        <p class="launch-copy">This device keeps one versioned activity cache per app and strategy.
-        The live portfolio below is read from Ready X and Mainnet independently.</p>
+        <p class="launch-copy">This tab keeps temporary activity context per app and strategy.
+        For cross-session lifecycle recovery, unlock the optional encrypted record below. The live
+        portfolio is still read from Ready X and Mainnet independently.</p>
         <div class="identity-status" id="binding-message">Connect Ready X to open your chain-backed portfolio.</div>
-        <div id="facet-map" class="facet-map"><span class="muted">Connect Ready X to view this device&#39;s activity record.</span></div>
+        <div class="recovery-box">
+          <div class="recovery-head"><strong>Persistent encrypted recovery</strong><span class="pill">optional</span></div>
+          <p>Choose a long, unique passphrase you can reproduce. Facet cannot reset a lost passphrase.
+          It is used locally to open one encrypted record envelope; Facet never receives or stores the
+          passphrase or its key.</p>
+          <div class="recovery-form">
+            <label for="recovery-secret">recovery passphrase</label>
+            <input id="recovery-secret" type="password" minlength="16" autocomplete="off" autocapitalize="none"
+              spellcheck="false" placeholder="16+ characters" disabled>
+            <button class="text-button" id="recovery-unlock" type="button" disabled>Unlock / create encrypted recovery</button>
+            <button class="text-button" id="recovery-lock" type="button" hidden>Lock recovery</button>
+          </div>
+          <small class="recovery-status" id="recovery-status" role="status" aria-live="polite">Connect Ready X before unlocking encrypted recovery.</small>
+        </div>
+        <div id="facet-map" class="facet-map"><span class="muted">Connect Ready X to view this tab&#39;s activity context.</span></div>
         <div class="message-actions">
           <button class="text-button" id="copy-message" type="button" disabled hidden>Copy message</button>
           <span class="copy-status" id="copy-message-status" role="status" aria-live="polite"></span>
@@ -107,7 +122,9 @@
     </div>
     <p class="note">The private balance comes from Ready X. If the wallet exposes the optional shadow-account
     commitment, Facet also resolves each app context from the Mainnet anonymizer and reads its public positions.
-    LocalStorage keeps history only; it never invents an account or balance.</p>
+    Session activity keeps temporary display context only; it never invents an account, balance, or
+    lifecycle state. If state is unavailable after the tab ends, lifecycle controls stay disabled
+    until the private record is restored.</p>
     <div class="portfolio-status" id="portfolio-status" role="status" aria-live="polite">Connect Ready X to read the private portfolio.</div>
     <div class="portfolio-list" id="portfolio-list"><span class="muted">No wallet-connected portfolio is loaded.</span></div>
     <button class="text-button" id="refresh-portfolio" type="button">Refresh portfolio</button>

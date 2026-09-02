@@ -3,14 +3,21 @@ import {
   createMemoryFacetStore,
   createOrRetainFacet,
   createStorageFacetStore,
+  derivePassphraseRecoveryKey,
   deriveRecoveryKey,
   isSealedRecoveryRecord,
   listFacets,
+  loadPassphraseSealedFacets,
   loadSealedFacets,
+  moveFacet,
   openRecoveryRecord,
+  RECOVERY_PASSPHRASE_ITERATIONS,
+  savePassphraseSealedFacets,
   saveSealedFacets,
+  saveUnlockedPassphraseSealedFacets,
   SEALED_FACETS_KEY,
   sealRecoveryRecord,
+  unlockPassphraseSealedFacets,
   type KeyValueStorage,
 } from "../src/index.js";
 
@@ -78,39 +85,83 @@ describe("encrypted recovery record", () => {
     const revisit = await deriveRecoveryKey(SIGNATURE, WALLET.toLowerCase());
     expect(await openRecoveryRecord(revisit, sealed)).toEqual(metadata);
   });
+
+  it("supports an explicit passphrase vault without a plaintext index", async () => {
+    expect(RECOVERY_PASSPHRASE_ITERATIONS).toBeGreaterThan(100_000);
+    const storage = memoryStorage();
+    const passphrase = "a deliberately long recovery passphrase";
+    const records = [{ wallet: WALLET, app: "endur", state: "hold", positions: metadata.positions }];
+    expect(await savePassphraseSealedFacets(storage, passphrase, records)).toBe(true);
+    const persisted = [...storage.raw.values()].join("");
+    for (const identifying of [WALLET, "endur", "0x28d7"]) expect(persisted).not.toContain(identifying);
+    expect([...storage.raw.keys()]).toEqual([SEALED_FACETS_KEY]);
+    expect(await loadPassphraseSealedFacets(storage, passphrase)).toEqual(records);
+    await expect(loadPassphraseSealedFacets(storage, "a different recovery passphrase")).rejects.toThrow();
+  });
+
+  it("prepares a new vault in memory and only marks it configured after a successful write", async () => {
+    const storage = memoryStorage();
+    const passphrase = "another deliberately long recovery passphrase";
+    const first = await unlockPassphraseSealedFacets(storage, passphrase);
+    expect(first.configured).toBe(false);
+    expect(first.records).toEqual([]);
+    expect(await saveUnlockedPassphraseSealedFacets(storage, first, [{ wallet: WALLET }])).toBe(true);
+    const later = await unlockPassphraseSealedFacets(storage, passphrase);
+    expect(later.configured).toBe(true);
+    expect(later.records).toEqual([{ wallet: WALLET }]);
+    const otherSaltKey = await derivePassphraseRecoveryKey(passphrase, new Uint8Array(16));
+    expect(otherSaltKey).toBeTruthy();
+  });
+
+  it("reports a persistent write failure instead of claiming it was saved", async () => {
+    const key = await deriveRecoveryKey(SIGNATURE, WALLET);
+    const hostile: KeyValueStorage = {
+      getItem: () => null,
+      setItem: () => { throw new Error("quota exceeded"); },
+    };
+    expect(await saveSealedFacets(hostile, key, [{ wallet: WALLET }])).toBe(false);
+  });
+
+  it("can cancel an in-flight passphrase write before it reaches storage", async () => {
+    const storage = memoryStorage();
+    const vault = await unlockPassphraseSealedFacets(storage, "a deliberately long recovery passphrase");
+    expect(await saveUnlockedPassphraseSealedFacets(
+      storage,
+      vault,
+      [{ wallet: WALLET }],
+      SEALED_FACETS_KEY,
+      () => false,
+    )).toBe(false);
+    expect(storage.raw.size).toBe(0);
+  });
 });
 
 describe("persistent facet stores", () => {
   it("keeps a facet across sessions, so a returning wallet resolves the same identity", async () => {
     const storage = memoryStorage();
-    const key = await deriveRecoveryKey(SIGNATURE, WALLET);
     const first = createOrRetainFacet(createStorageFacetStore(storage), {
       wallet: WALLET, app: "endur", strategy: "stake", address: "0x5709",
-      recovery: { encryptedMetadata: await sealRecoveryRecord(key, metadata), positions: [] },
+      recovery: { positions: [] },
     });
     // A brand new store over the same storage is what a later visit actually looks like.
     const later = createOrRetainFacet(createStorageFacetStore(storage), {
       wallet: WALLET, app: "endur", strategy: "stake", address: "0xdifferent",
-      recovery: { encryptedMetadata: "", positions: [] },
+      recovery: { positions: [] },
     });
     expect(later).toEqual(first);
     expect(later.address).toBe("0x5709");
-    expect(await openRecoveryRecord(key, later.recovery.encryptedMetadata)).toEqual(metadata);
   });
 
   it("leaves identifying fields in the clear, which is why it is not the private store", async () => {
     const storage = memoryStorage();
-    const key = await deriveRecoveryKey(SIGNATURE, WALLET);
     createOrRetainFacet(createStorageFacetStore(storage), {
       wallet: WALLET, app: "endur", strategy: "stake", address: "0x5709",
-      recovery: { encryptedMetadata: await sealRecoveryRecord(key, metadata), positions: [] },
+      recovery: { positions: metadata.positions },
     });
     const persisted = [...storage.raw.values()].join("");
-    // The sealed field holds its secret...
-    expect(persisted).not.toContain("0x28d7");
-    expect(persisted).toMatch(/"encryptedMetadata":"v1\./);
-    // ...but the record's own columns, and the storage key built from them, do not. Sealing one
-    // leaf while the index stays readable protects nothing: use saveSealedFacets for that.
+    // The entire record, including its recovery positions, is readable here. Sealing the whole
+    // record set is required when this mapping must remain private.
+    expect(persisted).toContain("0x28d7");
     expect(persisted).toContain("endur");
     expect(persisted).toContain(WALLET);
     expect([...storage.raw.keys()]).toEqual(["facet-records-v1"]);
@@ -122,7 +173,7 @@ describe("persistent facet stores", () => {
     const store = createMemoryFacetStore();
     createOrRetainFacet(store, {
       wallet: WALLET, app: "endur", strategy: "stake", address: "0x5709",
-      recovery: { encryptedMetadata: "", positions: [] },
+      recovery: { positions: [] },
     });
     await saveSealedFacets(storage, key, store.all());
 
@@ -145,6 +196,22 @@ describe("persistent facet stores", () => {
     await expect(loadSealedFacets(storage, intruder)).rejects.toThrow();
   });
 
+  it("does not turn an unavailable storage area into an empty record set", async () => {
+    const key = await deriveRecoveryKey(SIGNATURE, WALLET);
+    const hostile: SealedRecordStorage = {
+      getItem: () => { throw new Error("storage denied"); },
+      setItem: () => {},
+    };
+    await expect(loadSealedFacets(hostile, key)).rejects.toThrow(/storage denied/);
+  });
+
+  it("rejects an authenticated but malformed record-set payload", async () => {
+    const storage = memoryStorage();
+    const key = await deriveRecoveryKey(SIGNATURE, WALLET);
+    storage.setItem(SEALED_FACETS_KEY, await sealRecoveryRecord(key, { not: "an array" }));
+    await expect(loadSealedFacets(storage, key)).rejects.toThrow(/Malformed sealed facet record set/);
+  });
+
   it("survives a storage area that throws, because a record is a cache and not the truth", () => {
     const hostile: KeyValueStorage = {
       getItem: () => { throw new Error("private mode"); },
@@ -153,7 +220,7 @@ describe("persistent facet stores", () => {
     const store = createStorageFacetStore(hostile);
     expect(() => createOrRetainFacet(store, {
       wallet: WALLET, app: "ekubo", strategy: "swap", address: "0x1",
-      recovery: { encryptedMetadata: "", positions: [] },
+      recovery: { positions: [] },
     })).not.toThrow();
     expect(store.all()).toEqual([]);
   });
@@ -161,10 +228,12 @@ describe("persistent facet stores", () => {
   it("lists a wallet's facets without leaking another wallet's", () => {
     const store = createMemoryFacetStore();
     const base = { strategy: "default", address: "0x1",
-      recovery: { encryptedMetadata: "", positions: [] } };
+      recovery: { positions: [] } };
     createOrRetainFacet(store, { ...base, wallet: WALLET, app: "endur" });
     createOrRetainFacet(store, { ...base, wallet: WALLET, app: "ekubo" });
     createOrRetainFacet(store, { ...base, wallet: "0xother", app: "endur" });
+    const retired = createOrRetainFacet(store, { ...base, wallet: WALLET, app: "retired" });
+    moveFacet(store, retired, "retire");
     expect(listFacets(store, WALLET).map((record) => record.app).sort()).toEqual(["ekubo", "endur"]);
     expect(listFacets(store)).toHaveLength(3);
   });
