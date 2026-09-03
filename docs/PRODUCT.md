@@ -234,42 +234,45 @@ into the proving path, so the current prover must remain authenticated infrastru
 
 ## Current implementation status
 
-The repository contains working protocol integrations, tested SDK integration primitives, and a
-complete local lifecycle for the supported route scope. It is not a generic on-chain recovery
-product:
+The current release is a working wallet-mediated Mainnet product with a tested SDK boundary,
+receipt-backed route suite, chain-backed portfolio view, and guarded local lifecycle. Its scope is
+deliberate: transport independence and broader protocol coverage are the next expansion tracks.
 
 - the private funding and settlement sequence has succeeded twice on Sepolia;
-- a second clean context sent its smoke call to an unrelated address and did not pay the
-  owner;
-- the immutable anonymizer and `FacetAccount` are declared and deployed on mainnet;
-- the Ekubo adapter has completed a shielded STRK-to-ETH rehearsal on Sepolia;
+- the immutable anonymizer and `FacetAccount` are declared and deployed on Mainnet;
+- the Ekubo and Endur adapters have completed their rehearsals and the reviewed Mainnet route
+  compositions have six successful Facet protocol receipts;
 - the SDK contains the action builder, proof-aware preflight, settlement logic, guarded lifecycle
-  transitions, a tested compatible-app example, and operational runbooks;
-- the launcher has reviewed Mainnet routes for Ekubo and Endur xSTRK, including the xSTRK exit;
-- the shared ERC-4626 helper class and deterministic Endur helper instance are declared and
+  transitions, encrypted recovery primitives, a tested compatible-app example, and operational
+  runbooks;
+- the launcher reads the Ready X private portfolio, reconciles supported deterministic contexts,
+  records route receipts, and exposes explicit passphrase-backed recovery;
+- the shared ERC-4626 helper class, deterministic Endur helper, and Ekubo helper are declared and
   deployed on Mainnet;
-- fork-backed contract tests and source/chain findings document the behavior.
+- fork-backed contract tests, browser tests, and source/chain findings document the behavior.
 
-The browser launcher connects Ready X and stores session-scoped app/version/status metadata. Its
-session map enforces the five lifecycle transitions for state established in the current session
-and refuses recovery or retirement while a persistent position remains; unknown state is read-only
-and does not get an empty replacement record. It does not derive or control an on-chain facet from
-that map. Reviewed Wallet API pages provide narrow Mainnet
-routes for Ekubo and Endur: Ready X signs, proves, screens, and submits the privacy actions, while Facet
-supplies the fixed protocol-bound helper and protocol calldata. The reviewed Ekubo, Endur, and xSTRK
-exit actions have verified Mainnet receipts with pool/protocol evidence and configured helper paths.
-These are not direct `FacetAccount`-signer flows. The existing eligibility shield is a successful
-Mainnet STRK20 transaction, but it was
-made through the Ready X wallet and is not being relabeled as Facet DeFi activity. The retired
-Vesu experiment is retained in `FINDINGS.md` as failure analysis, not as a product route.
+The browser launcher connects Ready X and combines a live private balance with chain observations.
+Its session map enforces the five lifecycle transitions for state established in the current
+session, while the optional sealed envelope restores that state across sessions without a
+wallet-to-app index in persistent plaintext. Unknown state is read-only and does not get an empty
+replacement record. Reviewed Wallet API pages provide narrow Mainnet routes for Ekubo and Endur:
+Ready X signs, proves, screens, and submits the privacy actions, while Facet supplies the fixed
+protocol-bound helper and protocol calldata. The reviewed Ekubo, Endur, and xSTRK exit routes have
+verified Mainnet receipts with pool/protocol evidence and configured helper paths. These are the
+current transport boundary, not a placeholder for the product. The direct `FacetAccount` transport
+and a long-running browser queue are the next transport-independence track. The existing eligibility
+shield is a successful Mainnet STRK20 transaction, but it was made through Ready X and is not being
+relabeled as Facet DeFi activity. The retired Vesu experiment is retained in `FINDINGS.md` as
+failure analysis, not as a product route.
 
 The development prover currently takes roughly five to seven minutes on the small reference
-host. That is an infrastructure measurement, not the intended user experience. The intended
-direct-Facet launcher would submit an allowlisted job, return immediately with a job id, keep a warm worker
-proving asynchronously, lets the user leave the page, and resumes by polling. This improves
-the visible wait and avoids duplicate work; it does not make the cryptographic proof faster.
-Only faster hardware or a supported hosted/client-side proving implementation changes the
-raw proof wall time. This queue and its polling UI are design work, not implemented product code.
+host. That is an infrastructure measurement, not the intended user experience. The next direct-
+Facet transport can submit an allowlisted job, return immediately with a job id, keep a warm worker
+proving asynchronously, let the user leave the page, and resume by polling. This improves the
+visible wait and avoids duplicate work; it does not make the cryptographic proof faster. Only
+faster hardware or a supported hosted/client-side proving implementation changes the raw proof wall
+time. The reviewed wallet-mediated route is live today; the queue and its polling UI are the next
+service layer around that proven action path.
 
 The product execution contract is documented in [`ASYNC_PROVING.md`](ASYNC_PROVING.md).
 

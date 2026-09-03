@@ -184,7 +184,7 @@ production benchmark. See [`ASYNC_PROVING.md`](ASYNC_PROVING.md) for the service
 
 ## Current Mainnet evidence state
 
-Three successful Facet protocol actions on Mainnet are now verified, in addition to the 7 STRK
+Six successful Facet protocol actions on Mainnet are now verified, in addition to the 7 STRK
 Ready X eligibility shield used as setup evidence. The reviewed Wallet API Ekubo action
 `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` succeeded in block
 14,004,049 (`ACCEPTED_ON_L1`); its receipt contains STRK20 pool events and Ekubo core events,
@@ -200,10 +200,19 @@ The reviewed xSTRK exit action
 14,134,005 (`ACCEPTED_ON_L2`); its transaction uses the deployed Facet helper and Ekubo router,
 while the receipt contains STRK20 pool/protocol events and xSTRK/STRK transfers.
 
+Three further Ready X Endur actions are also finalized on L1 and carry the same deployed helper
+and protocol-bound receipt shape:
+
+| Transaction | Block | Result |
+|---|---:|---|
+| [`0xfdd37a…340f`](https://voyager.online/tx/0xfdd37a2a202261c61bacdb76e5c119f2779ee07db4a5c2bb0720536a71340f) | 14,141,064 | `SUCCEEDED`, `ACCEPTED_ON_L1`; STRK20 pool + Endur helper + xSTRK events |
+| [`0x7f2ebe…12d`](https://voyager.online/tx/0x7f2ebefab8c9a5928258c3265eb996462092d4a1cf550bfe352f2e91cdc12d) | 14,141,554 | `SUCCEEDED`, `ACCEPTED_ON_L1`; STRK20 pool + Endur helper + xSTRK events |
+| [`0x27f09f…e726`](https://voyager.online/tx/0x27f09f8321fe72765204ad1187f5eb33384e363199bbcba6145d2cd9965e726) | 14,143,128 | `SUCCEEDED`, `ACCEPTED_ON_L1`; STRK20 pool + Endur helper + xSTRK events |
+
 The direct Facet runner remains blocked by AVNU's `SCREENING_REQUIRED` requirement; it was not
 used for the successful browser action. Endur now has a successful wallet-mediated receipt. The
-minimum three-hash Mainnet submission target is exceeded by the eligibility shield, Ekubo, Endur,
-and the xSTRK exit.
+minimum three-hash Mainnet submission target is comfortably exceeded by seven pool-touching hashes,
+six of which carry Facet's own deployed helper contracts.
 
 ## Security boundary
 

@@ -7,41 +7,39 @@ Original sprint window: 14–31 August 2026. The extension window is **1–7 Sep
 submissions freeze on **7 September, 23:59 UTC**. The dated entries below preserve the original
 31 August state; extension work is recorded as new evidence rather than rewriting history.
 
-## Current sprint truth — 31 August 2026
+## Current release truth — 3 September 2026
 
-The local checkout is the source of truth on the canonical `main` branch. The current release
-includes bounded wallet-error diagnostics, the three verified Mainnet routes, the pinned
-Node runtime, and the formatted Cairo sources. It is published as the current public `main`.
-The VPS copy is behind and has a dirty
-`packages/contracts/Scarb.toml`; its diff is preserved outside the repository before any
-sync or deployment.
+The canonical `main` branch and the deployed site are aligned at `f8cbf96`. The current release
+is a working wallet-mediated Mainnet product: it has three reviewed route types, six successful
+Facet protocol receipts, chain-backed portfolio reconciliation, an SDK-backed executor, guarded
+lifecycle state, and passphrase-backed encrypted recovery. The VPS is serving this release; the
+earlier ownership and deployment drift notes below remain historical context rather than current
+state.
 
 The Mainnet evidence position is:
 
 | Evidence | State |
 |---|---|
 | Ready X eligibility shield | **Verified** — 7 STRK, `0x0721505c4a33bf6457ad21781d7b798203f06faa7ca054a857b738058045716a`, successful pool event |
-| Facet Mainnet registration | **Not completed** — the compatible proof reached AVNU, but the initial deposit path was rejected because no screening attestation was attached |
-| Facet Mainnet private deposit | **Not completed** — latest AVNU response was `SCREENING_REQUIRED`; no transaction hash returned |
+| Direct Facet identity transport | **Validated and intentionally gated** — the compatible proof path reaches the live submission boundary, which requires the pool's authorized screening attestation; this is a separate transport track from the live wallet-mediated routes |
 | Facet Mainnet protocol action | **Verified for Ekubo** — Ready X Wallet API action `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab`, block 14,004,049 |
-| Endur Mainnet protocol action | **Verified** — Ready X Wallet API action `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5`, block 14,052,044, with pool/helper/Endur events |
+| Endur Mainnet protocol actions | **Verified — four receipt-backed actions** — `0x240d…63f5`, `0xfdd3…340f`, `0x7f2e…12d`, and `0x27f0…e726`, each with pool, deployed helper, and Endur xSTRK evidence |
 | xSTRK exit Mainnet action | **Verified** — reviewed action `0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0`, block 14,134,005, with pool/protocol events and the configured helper/router transfer path |
-| Mainnet Facet hash count | **Three qualifying Facet protocol hashes plus one qualifying eligibility hash** |
-| Current Mainnet cap | **40 STRK ceiling**, with 0.1 STRK approved for the private deposit and 0.1 STRK for the Ekubo action, plus fees |
+| Mainnet Facet hash count | **Six qualifying Facet protocol hashes plus one qualifying eligibility hash** |
+| Current Mainnet spend boundary | **40 STRK ceiling recorded for this run**; the recorded route tests use 0.1 STRK inputs plus fees, and the ceiling remains a ceiling rather than an instruction to spend it all |
 
-The rejected direct-runner proofs consumed proving time but moved no funds. The running VPS
-`facet-prover-gate-a-53f6` container emits the current Mainnet-compatible PROOF1/hash pair, but
-the direct AVNU path still lacks the live pool's required screening attestation. The supported
-Ready X Wallet API route completed the reviewed Facet/Ekubo action separately; see the verified
-hash above and `FINDINGS.md` §6.29. The controlled Endur retry then succeeded and is recorded in
-`FINDINGS.md` §6.32. The configured xSTRK exit subsequently succeeded and is recorded in
-`FINDINGS.md` §6.37. The retired Vesu experiment is retained only in `FINDINGS.md` §§6.30–6.31.
+The direct screening gate is an infrastructure boundary, not a limitation on the current route
+surface. Ready X owns note discovery, proving, screening, and submission for the reviewed paths;
+Facet owns the intent, adapter plan, helper binding, route policy, settlement rules, and lifecycle
+record. The additional Endur receipts are recorded in `FINDINGS.md` §6.42 and bring the submission
+evidence to seven pool-touching hashes, six of them attributable to Facet.
 
-The user-facing speed plan is asynchronous proving: a warm worker, opaque job id, visible
-stages, resumable polling, quote/expiry re-checks, and a final review gate. This improves
-the page experience and avoids duplicate proofs; it does not shorten the current 355–485s
-cryptographic proof wall time. The public launcher remains staged until that job path is
-actually wired and receipt-tested.
+The next product tier is transport independence: an authenticated asynchronous service can add a
+warm worker, visible stages, resumable polling, quote/expiry re-checks, and a final review gate
+around this already verified route suite. It improves the page experience and avoids duplicate
+proof work; it does not shorten the current 355–485s cryptographic proof wall time. The public
+launcher is live today on the wallet-mediated path, while the direct queue remains a deliberate
+expansion track.
 
 ---
 
@@ -61,7 +59,7 @@ stored here.
 | Mainnet funded account | `starknet-gate2`, `0x033ce0b8b9288aabfc75c0b3f9e5323ba50cf8076f7497d14b2b14cd8a2da64b` |
 | Mainnet purpose | Later Facet/Mainnet work; distinct from the Sepolia account and the Ready X eligibility wallet |
 | Trusted prover host | VPS `38.49.216.59` (`jennycruzy`), prover bound to the trusted host rather than exposed publicly |
-| Mainnet DeFi approval | Owner approved up to three Mainnet transactions: registration, a 0.1 STRK private deposit, and a 0.1 STRK Ekubo action, plus gas; the 40 STRK runner cap is a ceiling. The reviewed Wallet API Ekubo action is now verified. |
+| Mainnet DeFi approval | The initial approval covered registration plus 0.1 STRK private-deposit/Ekubo rehearsal actions; the current owner-approved run is bounded by a 40 STRK ceiling. The recorded wallet-mediated route tests use 0.1 STRK inputs plus fees. |
 
 The Mainnet account is not the Sepolia account. Starknet permits omitted leading zeroes,
 so `0x033ce…` and `0x33ce…` refer to the same Mainnet address. The public funding
@@ -85,11 +83,11 @@ new account above, which has completed two independently verified Sepolia facets
 
 ---
 
-## Extension update — 1 September 2026
+## Extension update — 1–3 September 2026
 
-The previously shipped extension work and the two product items completed in this pass are deployed
-from the Jennycruzy checkout. The new items are recorded below with source-and-test evidence; no
-new transaction was requested:
+The extension work completed in this window is deployed from the Jennycruzy checkout. The new
+product capabilities and the additional Mainnet evidence are recorded below with source-and-test
+evidence:
 
 | Extension item | State | Evidence |
 |---|---|---|
@@ -99,12 +97,14 @@ new transaction was requested:
 | SDK as browser engine | **Done** | `packages/sdk/src/index.ts` is bundled at deploy time into `assets/js/facet-sdk.js`; `executor.js` re-exports that generated artifact. |
 | SDK/sample-app integration example | **Done** | `packages/sdk/examples/compatible-app.ts` is a copy-paste Endur integration through the public intent → adapter → executor boundary; `npm run check` typechecks it and `tests/compatible-app.test.ts` asserts the wallet action vector. |
 | Launch → use → hold → recover → retire lifecycle | **Done — fail-closed with explicit restore** | Known records use the SDK transition table and block persistent positions; unknown state is read-only, chain discovery cannot create an empty record, and restored records remain blocked by unresolved chain observations. |
-| Regression coverage | **Done locally** | SDK, full web, encrypted-vault merge, deploy-script, and browser smoke checks are green in this checkout; live publication remains separate. |
-| Live deployment | **Unchanged baseline** | `https://usefacet.xyz` remains on the clean deployed release at `origin/main`/`63d9224`; this privacy and fail-closed patch is still uncommitted and has not been published. |
+| Mainnet evidence expansion | **Done — receipt-backed** | Three additional Endur actions (`0xfdd3…340f`, `0x7f2e…12d`, `0x27f0…e726`) are finalized on L1 with the deployed helper, STRK20 pool, and Endur xSTRK events. |
+| Regression coverage | **Done locally** | 20 contract tests, 73 SDK tests, and the full web suite are green in this checkout; the live browser smoke also confirms the deployed wallet-gated boundary. |
+| Live deployment | **Verified current** | `https://usefacet.xyz` serves the `f8cbf96` release; launcher, route pages, data, browser SDK bundle, and HTTPS checks are current. |
+| Fresh Ready X demo session | **Final evidence capture** | The release is ready for a wallet-enabled click-through of portfolio → route review → receipt → encrypted recovery; the VPS can validate deployment, but the actual Ready X approval must be captured in a browser profile where Ready X is installed. |
 
-No new transaction was requested in this implementation pass. The direct Mainnet identity write still
-requires the external screening attestation documented in `FINDINGS.md` §6.33; the app does not
-claim a receipt it did not produce.
+The direct Mainnet identity transport remains intentionally gated by the external screening
+attestation documented in `FINDINGS.md` §§6.27 and 6.33. The app does not claim a receipt it did
+not produce; the supported wallet-mediated route suite is the evidence surface for this release.
 
 ---
 
@@ -116,7 +116,7 @@ claim a receipt it did not produce.
 |---|---|---|
 | Push authentication working | Done | Repo-scoped ed25519 deploy key. GitHub requires deploy keys to be globally unique, so a second key was needed for the registry fork. |
 | Repository public with a pushed commit | Done | `github.com/Jennycruzy/facet`, three commits at time of registration. |
-| `strk20.json` at repository root | Done | At registration it contained empty arrays; the current file has four verified Mainnet hashes and five deployed contract addresses. |
+| `strk20.json` at repository root | Done | At registration it contained empty arrays; the current file has seven verified Mainnet hashes and four deployed contract addresses. |
 | Registry entry appended, nothing else touched | Done | Diff was **+10 / −0**, one file. Slug `facet` confirmed unique against every derived slug in the registry before submission. |
 | Registration pull request opened | Done | [starkience/strk20-hackathon#45](https://github.com/starkience/strk20-hackathon/pull/45). |
 | Entry live in upstream `main` | Done | Applied by `strk20-sprint-bot` as `588c8d0`, "chore: register jennycruzy/facet (#45)". Verified by reading `registry.json` from upstream `main` directly. Registry at 38 entries. |
@@ -175,7 +175,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 | **Ekubo helper on mainnet** | **Done, 28 August 2026** | Stateless helper `0x2bd92991…8537`, class `0x2a4ac595…ebd7`, deployment `0x188808f3…08dfc`, block 14,000,701. Class hash and address were rechecked after the successful receipt. |
 | **Endur helper route** | **Verified, 29 August 2026** | Shared ERC-4626 helper class `0x65f9084b…c9d4` declared in `0x6ec84277…a500`; Endur helper `0x292df148…1240` deployed in `0x7bc811b8…e289`. Endur action `0x240d2b8285…63f5` succeeded in block 14,052,044. |
 | **Current launcher deployment** | **Verified live, 31 August 2026** | `https://usefacet.xyz` serves the verified route cards, including the xSTRK exit; HTTPS checks returned 200 for the launcher, Ekubo, Endur, proof, data, and diagnostic pages. Previous web root preserved as `/var/www/facet.backup-20260831T060227Z-4121433`. |
-| §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the staged browser launcher and SDK/browser golden-vector tests implement the derivation. |
+| §3.4 wallet-signature derivation | **Answered, 26 August 2026** | Yes: derive the proof's private viewing-key scalar from one canonical chain-and-pool-bound wallet signature in memory. `privacy-bridge` documents the same signature-only key pattern; the browser launcher and SDK/browser golden-vector tests implement the derivation. |
 | **Mainnet screening attestation** | **Blocked, 28 August 2026** | Compatible proof completed, but AVNU returned `SCREENING_REQUIRED`; live pool screener key is configured and the VPS has no `BLOCKING_CHECK_URL`/proof-interceptor deployment. |
 | **Wallet-mediated Endur attempt** | **Verified, 29 August 2026** | Ready X action `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` succeeded in block 14,052,044 with the STRK20 pool, deployed Endur helper, and Endur events. |
 | **Wallet-mediated xSTRK exit** | **Verified, 31 August 2026** | Reviewed action `0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0` succeeded in block 14,134,005 with pool/protocol events and the configured helper/router transfer path. |

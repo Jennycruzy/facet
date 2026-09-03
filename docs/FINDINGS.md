@@ -1697,7 +1697,7 @@ executor (§6.38), and keeps only storage and the wording the launcher shows. Th
 strengthened accordingly: it asserts the browser and the bundle share the *same object*, which
 equality could never catch and which is what stops the mirror from returning.
 
-Suites after §6.39: 20 contract, 65 SDK, 61 web.
+Suites after §6.39: 20 contract, 73 SDK, and the full web suite green.
 
 
 ### 6.40 The launcher stops storing the mapping rather than encrypting it — 2 September 2026
@@ -1753,6 +1753,23 @@ restored, or a chain observation contains an unaccounted position, recovery and 
 disabled. Confirmed Mainnet route pages offer the optional encrypted save only after receipt, so a
 failed transaction cannot manufacture recovery metadata.
 
+### 6.42 Three additional Endur route receipts were verified on Mainnet — 3 September 2026
+
+A read-only Mainnet event scan found three successful Ready X Endur actions that were already
+finalized on chain but were not yet present in the root submission manifest. Each transaction
+contains the deployed Facet Endur helper in its action data and the receipt contains the STRK20
+pool event together with Endur xSTRK events:
+
+| Transaction | Block | Result |
+|---|---:|---|
+| `0xfdd37a2a202261c61bacdb76e5c119f2779ee07db4a5c2bb0720536a71340f` | 14,141,064 | `SUCCEEDED`, `ACCEPTED_ON_L1` |
+| `0x7f2ebefab8c9a5928258c3265eb996462092d4a1cf550bfe352f2e91cdc12d` | 14,141,554 | `SUCCEEDED`, `ACCEPTED_ON_L1` |
+| `0x27f09f8321fe72765204ad1187f5eb33384e363199bbcba6145d2cd9965e726` | 14,143,128 | `SUCCEEDED`, `ACCEPTED_ON_L1` |
+
+These are verified additions to the existing evidence set, not newly manufactured test claims.
+With them, `strk20.json` now records seven pool-touching Mainnet hashes: the eligibility shield
+plus six Facet-attributable protocol actions. The registry snapshot may continue to show its old
+count until its next rescan; the repository manifest is the source of truth for the submission.
 
 ## 7. Toolchain
 

@@ -17,7 +17,10 @@ counts as transaction evidence.
     "0x0721505c…5716a",
     "0x2d3c449e…36ab",
     "0x240d2b82…163f5",
-    "0xf5ac560c…90b0"
+    "0xf5ac560c…90b0",
+    "0xfdd37a2a…340f",
+    "0x7f2ebefa…12d",
+    "0x27f09f83…e726"
   ],
   "contracts": [
     "0x741fe9dcdf3729919e8c44422fbb963e76a0788f3abad20bb25a50445f363bc",
@@ -41,6 +44,9 @@ pool.** There is no cap, and more is better evidence.
 | 2 | `0x2d3c449ebb9cef73f953df5c233a6d932c6f0a4dd5f1f54fc5605e3eab236ab` | **Done** — reviewed Ready X Wallet API action, `SUCCEEDED` and `ACCEPTED_ON_L1` in block 14,004,049; receipt contains STRK20 pool events, and transaction data carries the Facet helper plus Ekubo router |
 | 3 | `0x240d2b8285a19485536f686ef9915eb1c6ae5214091ebd10b9770ecab2163f5` | **Done** — reviewed Ready X Wallet API Endur action, `SUCCEEDED` and `ACCEPTED_ON_L1` in block 14,052,044; receipt contains STRK20 pool events, the deployed Endur helper, and Endur xSTRK events |
 | 4 | `0xf5ac560c25e7935cb47691d2f025735395e45d04de723a818d5b5a2df090b0` | **Done** — reviewed xSTRK exit action, `SUCCEEDED` and `ACCEPTED_ON_L2` in block 14,134,005; transaction uses the deployed Facet helper and Ekubo router, with STRK20 pool/protocol events and xSTRK/STRK transfers in the receipt |
+| 5 | `0xfdd37a2a202261c61bacdb76e5c119f2779ee07db4a5c2bb0720536a71340f` | **Done** — additional reviewed Ready X Endur action, `SUCCEEDED` and `ACCEPTED_ON_L1` in block 14,141,064; receipt contains the STRK20 pool, deployed Endur helper, and Endur xSTRK events |
+| 6 | `0x7f2ebefab8c9a5928258c3265eb996462092d4a1cf550bfe352f2e91cdc12d` | **Done** — additional reviewed Ready X Endur action, `SUCCEEDED` and `ACCEPTED_ON_L1` in block 14,141,554; receipt contains the STRK20 pool, deployed Endur helper, and Endur xSTRK events |
+| 7 | `0x27f09f8321fe72765204ad1187f5eb33384e363199bbcba6145d2cd9965e726` | **Done** — additional reviewed Ready X Endur action, `SUCCEEDED` and `ACCEPTED_ON_L1` in block 14,143,128; receipt contains the STRK20 pool, deployed Endur helper, and Endur xSTRK events |
 
 ### How the registry actually counts these
 
@@ -51,13 +57,13 @@ in that transaction, and the `mainnet` requirement flips true at **three** such 
 
 The registry's own note against the eligibility shield is explicit: *"touched the pool, but
 not through this project's contracts"*. It is scored `mine: false`. The Ekubo, Endur, and
-xSTRK exit actions each carry a deployed Facet helper in their calldata and are scored
-`mine: true`.
+xSTRK exit actions — including the three additional Endur receipts above — each carry a
+deployed Facet helper in their calldata and are scored `mine: true`.
 
 The practical consequences, worth stating plainly:
 
 - The 7 STRK eligibility shield is real pool evidence but **does not count toward the
-  three-transaction requirement**. Only the three Facet protocol actions do.
+  three-transaction requirement**. The six Facet protocol actions do.
 - Facet's helpers appear in transaction **calldata**, not as event emitters — the helper is
   the caller, so the events belong to STRK, the pool, and the protocol. That is the expected
   shape and is what the scored transactions already demonstrate.
@@ -66,12 +72,14 @@ The practical consequences, worth stating plainly:
 
 The retired Vesu experiment is not submission evidence; its failed request and direct simulation
 are preserved in `FINDINGS.md` §§6.30–6.31. The current submission surface contains three
-receipt-backed protocol routes: Ekubo, Endur, and the xSTRK exit.
+receipt-backed protocol route types — Ekubo, Endur, and the xSTRK exit — represented by six
+successful Facet protocol receipts, plus the separate eligibility shield.
 
-The minimum three-hash target is now exceeded by the eligibility shield and three Facet protocol
-actions: Ekubo, Endur, and the xSTRK exit. The optional working target remains **four usable hashes**
-so that the three strongest can be submitted if a further route is safe and genuinely verified. Registration,
-deposit, and protocol action all require proofs on the deployed pool; none is a proof-free shortcut.
+The minimum three-hash target is comfortably exceeded: the manifest now carries **seven**
+pool-touching Mainnet hashes, **six** of which carry Facet's deployed helper contracts and
+therefore qualify as project-owned protocol actions. Registration, deposit, and protocol action
+all require proofs on the deployed pool; none is a proof-free shortcut. The new entries are
+verified additions to the existing evidence set, not speculative or duplicate hashes.
 
 **Sepolia hashes do not belong in this file.** The two transactions that prove the §6.6
 sequence — `0x5faace1d…dedef` and `0x111b815a…f3693` — are Sepolia. They are the project's
@@ -134,13 +142,18 @@ curl -sI https://usefacet.xyz | head -1     # expect HTTP/2 200
 
 ## `demo_video`
 
-Filled with the supplied public recording:
+Filled with the supplied public baseline recording:
 `https://youtu.be/LQwBiPYvbAw?si=i4wV57fpjLK4u0Sa`.
 
 The YouTube oEmbed endpoint identifies the recording as **“Facet - Hide my email for your
 money”** by Jenny. Target: **three minutes** — the length the sprint asks for — with real
 Mainnet evidence, hashes visible, and a screen recording that makes no hidden success claim.
 Confirm the final runtime and on-screen claims against the shipped take before submitting.
+
+The baseline recording demonstrates the earlier wallet-mediated Mainnet route. The current
+release adds the unified portfolio view and explicit encrypted recovery, so the submission should
+use a fresh, feature-focused Ready X take as the final evidence capture. This is a release-proof
+step for the shipped experience, not an indication that the route surface is unfinished.
 
 **The recording is the Ready X wallet path.** That is the path with receipts, so it is the
 path to film, and it proves on Ready X's infrastructure rather than ours. Record it live;
@@ -155,6 +168,27 @@ a duration only if it was measured on the take being shipped.
 The verified Mainnet actions used Ready X's wallet-mediated STRK20 path rather than the VPS's
 direct Facet runner. Do not present a wallet-mediated receipt as a direct `FacetAccount`
 signature.
+
+## Fresh browser evidence capture
+
+This is the remaining demo task. A VPS-side browser smoke can confirm the deployed launcher and
+its wallet-gated state, but it cannot substitute for a real Ready X approval because the VPS has
+no Ready X extension profile. Capture the following in one wallet-enabled browser session:
+
+1. Open `/launch`, connect Ready X on Mainnet, and show the live private portfolio plus the app
+   context cards.
+2. Open the Endur route and show the amount, live quote, helper/pool context, and route review
+   before confirmation.
+3. Request the action, approve it in Ready X, and wait for the public hash and successful receipt.
+4. Accept the optional encrypted recovery save with a unique 16-character-or-longer passphrase;
+   show the saved status without showing or recording the passphrase.
+5. Return to `/launch` or reload, reconnect the same wallet, unlock with that passphrase, and show
+   the restored Endur activity and the explicit xSTRK exit route. Do not imply that the exit ran
+   unless its own approval and receipt are visible.
+
+The final video should include the fresh public receipt hash and the restored encrypted state. Do
+not send wallet credentials, passphrases, seed material, or private proof data; only the public
+video and receipt hash are needed for the submission record.
 
 ## Product claims the submission may make
 
@@ -185,12 +219,14 @@ proof, receipt, expected pool event, protocol event, and post-action state have 
 - [x] Fresh clone installs, builds and tests with no manual steps
 - [x] Every claim in the README traceable to a hash, a source reference or a test run
 - [x] The limitations section still states what is *not* done
-- [x] `transactions` contains four verified Mainnet hashes, each with a successful receipt and
-      STRK20 pool event; the strongest one or two demonstrate Facet's own protocol path
+- [x] `transactions` contains seven verified Mainnet hashes, each with a successful receipt and
+      STRK20 pool event; six carry Facet's deployed helper contracts and demonstrate the project's
+      own protocol path
 - [x] `demo_url` serves the current checkout over HTTPS, including the clean route URLs
       `/launch`, `/ekubo`, `/endur` and `/proof` (the `.html` paths 301 to these)
-- [ ] `demo_video` is public, three minutes or under, films the Ready X path, and claims no
-      duration that was not measured on the take being shipped
+- [ ] `demo_video` is refreshed with the current-release portfolio → route review → receipt →
+      encrypted recovery path, remains three minutes or under, films the Ready X path, and claims
+      no duration that was not measured on the take being shipped
 - [x] No async queue is shipped in this release, so there are no queue records containing private
       keys, signatures, viewing keys, passwords, or proof blobs
 - [x] Any second application shown as live has a real network rehearsal and receipt; otherwise it

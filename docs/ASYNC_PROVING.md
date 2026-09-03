@@ -160,15 +160,15 @@ Ekubo remains enabled only with a fresh quote and minimum-output floor.
 
 | Capability | Current state | Acceptance evidence |
 |---|---|---|
-| EOA binding and in-memory derivation | Staged in `packages/web` | Browser/unit tests |
-| Persistent app-context metadata | Previewed by the launcher | `app-context` tests and data file |
+| EOA binding and in-memory derivation | Available as the direct-transport identity primitive | Browser/unit tests |
+| Persistent app-context metadata | Shipped in the launcher's guarded local lifecycle | `app-context` tests and data file |
 | SDK adapters | Built and unit-tested | Endur and Ekubo serializer tests |
 | Self-hosted warm prover | Running on the trusted VPS, one proof at a time | `starknet_specVersion` plus full proof results |
 | Reviewed wallet-mediated routes | Ekubo, Endur, and xSTRK exit verified | Mainnet receipts and route-specific preflight |
-| Queue API and worker supervisor | Not wired to the public site | Must return a job id and persist no secrets |
-| Note discovery in browser | Not wired | Real note count and selected note |
-| Browser proving/submission | Not wired | Mainnet receipt through an allowlisted route |
-| Receipt/unified-view update | Static chain reads exist | Receipt and expected event verification |
+| Queue API and worker supervisor | Next service layer around the verified routes | Must return a job id and persist no secrets |
+| Note discovery in browser | Ready X owns discovery for the live wallet-mediated path | Direct transport requires a real note count and selected note |
+| Browser proving/submission | Ready X path is live; direct queue transport is next | Mainnet receipt through an allowlisted route |
+| Receipt/unified-view update | Shipped for route receipts and portfolio reads | Receipt and expected event verification |
 
 The existing CLI is an operational runner, not the browser queue. It intentionally prompts
 for a local encrypted keystore password and keeps the Mainnet broadcast gate explicit. The
@@ -177,18 +177,20 @@ the frontend.
 
 ## Post-sprint roadmap
 
-The current wallet-mediated scope has receipt-backed Mainnet actions for Ekubo, Endur, and the
-xSTRK exit. The remaining product work is
-deliberately narrower:
+The current release already has a receipt-backed wallet-mediated route suite for Ekubo, Endur, and
+the xSTRK exit, plus portfolio reconciliation and encrypted local recovery. The roadmap broadens
+transport independence and coverage around that foundation:
 
-1. Add the authenticated two-endpoint job service and warm-worker supervisor. No universal wallet
-   SDK, portfolio indexer, or arbitrary transaction relay.
-2. Wire browser note discovery, job polling, receipt verification, and a unified portfolio view.
+1. Add the authenticated two-endpoint job service and warm-worker supervisor around the reviewed
+   action boundary. No universal wallet SDK, portfolio indexer, or arbitrary transaction relay.
+2. Connect direct note discovery, job polling, receipt verification, and the unified portfolio
+   view to that transport while preserving the same policy and settlement checks.
 3. Enforce fixed funding denominations, quote expiry, and timing policy in code and tests before
    describing them as guarantees.
-4. Revisit the direct Facet runner only when an authorized Mainnet screening attestation exists.
-5. Add another adapter only when it uses the same public interface, passes the compatibility
-   checks, and has a real receipt; do not increase route count for marketing.
+4. Revisit direct Facet Mainnet submission when an authorized screening-attestation source is
+   available; the current wallet-mediated Mainnet route remains the supported production boundary.
+5. Add another adapter only when it uses the same public interface, passes compatibility checks,
+   and has a real receipt. Coverage should grow by verified capability, not by route count.
 
-This ordering makes the queue a product improvement around a proven transaction path. It
-does not hide the current prover limitation or substitute a demo spinner for Mainnet evidence.
+This ordering adds service depth and transport independence around a proven transaction path. It
+keeps the current release easy to demonstrate and the evidence boundary explicit.
