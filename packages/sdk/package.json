@@ -1,5 +1,5 @@
 {
-  "name": "@facet/sdk",
+  "name": "@usefacet/sdk",
   "version": "0.1.0",
   "description": "Facet's dapp-facing action builder over the Starknet privacy SDK",
   "license": "MIT",

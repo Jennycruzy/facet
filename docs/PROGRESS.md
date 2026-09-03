@@ -128,7 +128,7 @@ The PR closed rather than merged. That is the designed flow: the bot rebuilds th
 
 **Name availability, checked 15 August 2026:**
 
-- `@facet/sdk` on npm — available (`@facet/sdk` returns `{"error":"Not found"}`).
+- `@usefacet/sdk` on npm — package metadata is prepared and the first public release is pending npm publication.
 - `Jennycruzy/facet` on GitHub — available (API returns `Not Found`).
 - Unscoped `facet` on npm and the GitHub org `facet` are both taken; neither is needed.
 

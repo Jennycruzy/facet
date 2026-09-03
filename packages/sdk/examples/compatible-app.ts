@@ -24,7 +24,7 @@ import {
   type FacetRecord,
   type SealedRecordStorage,
   type Strk20WalletLike,
-} from "@facet/sdk";
+} from "@usefacet/sdk";
 
 export interface CompatibleAppConfig {
   wallet: Strk20WalletLike;

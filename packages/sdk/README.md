@@ -1,4 +1,4 @@
-# `@facet/sdk`
+# `@usefacet/sdk`
 
 This package contains Facet's adapter, policy, lifecycle, and private-transaction primitives.
 Its reference executor turns a reviewed protocol plan into a Ready X Wallet API action and settles
@@ -59,7 +59,7 @@ import {
   endurAdapter,
   erc4626HelperBinding,
   executeAppIntent,
-} from "@facet/sdk";
+} from "@usefacet/sdk";
 
 const linkedAddresses = [connectedWallet, fundingWallet, recoveryWallet];
 const executor = new WalletFacetExecutor({
