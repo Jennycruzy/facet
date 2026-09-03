@@ -5,6 +5,12 @@ Its reference executor turns a reviewed protocol plan into a Ready X Wallet API 
 the result into the wallet's shielded balance. A lower-level builder separately supports the direct
 shadow-account path used in the Sepolia rehearsals.
 
+Install the published package:
+
+```bash
+npm install @usefacet/sdk
+```
+
 Use Node 22.23.0 from the repository's `.nvmrc`; the pinned `starknet` dependency declares
 Node 22 or newer.
 

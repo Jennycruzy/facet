@@ -5,6 +5,7 @@
 ## Demo
 
 - **Live demo:** [usefacet.xyz](https://usefacet.xyz)
+- **SDK:** [`@usefacet/sdk`](https://www.npmjs.com/package/@usefacet/sdk)
 - **Demo video:** [Watch the Facet walkthrough](https://youtu.be/LQwBiPYvbAw?si=i4wV57fpjLK4u0Sa)
 
 The recording shows the reviewed wallet-mediated Mainnet path. Receipt-backed transactions,
