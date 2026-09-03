@@ -2,6 +2,17 @@
   "name": "@facet/sdk",
   "version": "0.1.0",
   "description": "Facet's dapp-facing action builder over the Starknet privacy SDK",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jennycruzy/facet.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/Jennycruzy/facet/tree/main/packages/sdk#readme",
+  "bugs": {
+    "url": "https://github.com/Jennycruzy/facet/issues"
+  },
+  "keywords": ["starknet", "privacy", "defi", "wallet", "sdk"],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,6 +23,9 @@
     }
   },
   "files": ["dist", "examples"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "build:browser": "npm run build && node scripts/build-browser-bundle.mjs",
