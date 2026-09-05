@@ -462,10 +462,21 @@ async function refreshPortfolio() {
     });
     const chainCount = session.portfolio.facets.filter((entry) => entry.chain).length;
     const privateReadOk = !session.portfolio.privateBalanceError;
+    const capabilityStates = new Set(session.portfolio.facets.map((entry) => entry.capability?.status));
+    let successMessage = `Private balances refreshed; ${chainCount}/${session.portfolio.facets.length} direct app accounts refreshed.`;
+    if (chainCount === session.portfolio.facets.length) {
+      successMessage = `Private balances and ${chainCount} direct app accounts refreshed from Mainnet.`;
+    } else if (capabilityStates.size === 1 && capabilityStates.has("unavailable")) {
+      successMessage = "Private balances refreshed. Ready X does not expose optional direct app-account discovery.";
+    } else if (capabilityStates.size === 1 && capabilityStates.has("not-registered")) {
+      successMessage = "Private balances refreshed. Private app identities are not registered for direct discovery.";
+    } else if (capabilityStates.has("available")) {
+      successMessage = "Private balances refreshed, but direct app-account discovery needs attention.";
+    }
     setStatus(
       privateReadOk ? "bound" : "error",
       privateReadOk
-        ? `Portfolio refreshed: ${chainCount} app context${chainCount === 1 ? "" : "s"} reconciled from Mainnet.`
+        ? successMessage
         : "Portfolio refreshed, but the private balance read needs attention.",
     );
   } catch (error) {
@@ -508,14 +519,18 @@ function recoveryErrorText(error) {
 
 function renderRecoveryControls() {
   const input = $("recovery-secret");
+  const label = $("recovery-label");
   const unlock = $("recovery-unlock");
   const lock = $("recovery-lock");
   const status = $("recovery-status");
   const requirement = $("recovery-requirement");
-  if (!input || !unlock || !lock || !status) return;
+  if (!input || !label || !unlock || !lock || !status) return;
   const unlocked = Boolean(session.recovery.vault);
   const passphraseLength = input.value.trim().length;
   input.disabled = !session.account || session.recovery.busy || unlocked;
+  input.hidden = unlocked;
+  label.hidden = unlocked;
+  if (requirement) requirement.hidden = unlocked;
   unlock.hidden = unlocked;
   unlock.disabled = !session.account || session.recovery.busy || passphraseLength < 16;
   lock.hidden = !unlocked;

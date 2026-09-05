@@ -85,6 +85,7 @@
 .accent-amber    { --a-rgb: 255, 180, 92;  --accent: var(--amber); }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 html { background: var(--bg); }
 body {
@@ -514,7 +515,6 @@ pre .c { color: var(--text-3); }
 .recovery-submit { min-width: 210px; padding: 10px 14px; }
 .recovery-submit:disabled { opacity: .5; cursor: not-allowed; }
 .recovery-form .text-button { grid-column: 2; margin: 0; }
-.recovery-form [hidden] { display: none !important; }
 .recovery-status { display: block; margin-top: 12px; color: var(--text-3); font-size: .7rem; line-height: 1.45; }
 .noscript { margin: 24px auto; padding: 14px 16px; border: 1px solid var(--amber); color: var(--amber); }
 code { color: var(--sapphire-2); font-family: var(--mono); font-size: .9em; }

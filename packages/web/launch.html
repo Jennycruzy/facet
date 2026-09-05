@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css?v=20260905-2">
+<link rel="stylesheet" href="assets/css/app.css?v=20260905-3">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/favicon-180.png">
@@ -98,7 +98,7 @@
           It is used locally to open one encrypted record envelope; Facet never receives or stores the
           passphrase or its key.</p>
           <form class="recovery-form" id="recovery-form">
-            <label for="recovery-secret">recovery passphrase</label>
+            <label id="recovery-label" for="recovery-secret">recovery passphrase</label>
             <span class="recovery-requirement" id="recovery-requirement">16 characters minimum</span>
             <input id="recovery-secret" type="password" minlength="16" autocomplete="off" autocapitalize="none"
               spellcheck="false" placeholder="16+ characters" disabled>
@@ -124,8 +124,8 @@
     <p class="note">The private balance comes from Ready X. If the wallet exposes the optional shadow-account
     commitment, Facet also resolves each app context from the Mainnet anonymizer and reads its public positions.
     Session activity keeps temporary display context only; it never invents an account, balance, or
-    lifecycle state. If state is unavailable after the tab ends, lifecycle controls stay disabled
-    until the private record is restored.</p>
+    lifecycle state. When encrypted activity is locked, unlock it above to restore cross-session
+    lifecycle controls.</p>
     <div class="portfolio-status" id="portfolio-status" role="status" aria-live="polite">Connect Ready X to read the private portfolio.</div>
     <div class="portfolio-list" id="portfolio-list"><span class="muted">No wallet-connected portfolio is loaded.</span></div>
     <button class="text-button" id="refresh-portfolio" type="button">Refresh portfolio</button>
@@ -194,6 +194,6 @@
 
 <noscript><p class="noscript">JavaScript is required to inspect wallet state. The evidence page remains available without a wallet.</p></noscript>
 
-<script type="module" src="assets/js/launcher.js?v=20260905-1"></script>
+<script type="module" src="assets/js/launcher.js?v=20260905-3"></script>
 </body>
 </html>
