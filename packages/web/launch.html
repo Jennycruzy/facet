@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css?v=20260830-3">
+<link rel="stylesheet" href="assets/css/app.css?v=20260905-1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/favicon-180.png">
@@ -92,18 +92,19 @@
         For cross-session lifecycle recovery, unlock the optional encrypted record below. The live
         portfolio is still read from Ready X and Mainnet independently.</p>
         <div class="identity-status" id="binding-message">Connect Ready X to open your chain-backed portfolio.</div>
-        <div class="recovery-box">
+        <div class="recovery-box" id="recovery-box">
           <div class="recovery-head"><strong>Persistent encrypted recovery</strong><span class="pill">optional</span></div>
           <p>Choose a long, unique passphrase you can reproduce. Facet cannot reset a lost passphrase.
           It is used locally to open one encrypted record envelope; Facet never receives or stores the
           passphrase or its key.</p>
-          <div class="recovery-form">
+          <form class="recovery-form" id="recovery-form">
             <label for="recovery-secret">recovery passphrase</label>
+            <span class="recovery-requirement" id="recovery-requirement">16 characters minimum</span>
             <input id="recovery-secret" type="password" minlength="16" autocomplete="off" autocapitalize="none"
               spellcheck="false" placeholder="16+ characters" disabled>
-            <button class="text-button" id="recovery-unlock" type="button" disabled>Unlock / create encrypted recovery</button>
+            <button class="btn ghost recovery-submit" id="recovery-unlock" type="submit" disabled>Unlock or create recovery</button>
             <button class="text-button" id="recovery-lock" type="button" hidden>Lock recovery</button>
-          </div>
+          </form>
           <small class="recovery-status" id="recovery-status" role="status" aria-live="polite">Connect Ready X before unlocking encrypted recovery.</small>
         </div>
         <div id="facet-map" class="facet-map"><span class="muted">Connect Ready X to view this tab&#39;s activity context.</span></div>
@@ -193,6 +194,6 @@
 
 <noscript><p class="noscript">JavaScript is required to inspect wallet state. The evidence page remains available without a wallet.</p></noscript>
 
-<script type="module" src="assets/js/launcher.js?v=20260830-4"></script>
+<script type="module" src="assets/js/launcher.js?v=20260905-1"></script>
 </body>
 </html>

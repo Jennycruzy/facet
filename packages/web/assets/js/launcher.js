@@ -205,10 +205,12 @@ function hasUnresolvedObservedPosition(entry) {
 
 function portfolioRecoveryText(entry) {
   if (!entry.cached || !Array.isArray(entry.cached.positions)) {
-    return "Lifecycle state unavailable · restore or unlock the private record";
+    return session.recovery.vault
+      ? "No lifecycle activity has been recorded for this app"
+      : "Encrypted activity locked · unlock above to restore it";
   }
   if (!session.recovery.vault) {
-    return "Lifecycle controls unavailable · unlock encrypted recovery";
+    return "Tab activity only · unlock recovery to save it across sessions";
   }
   if (hasUnresolvedObservedPosition(entry)) {
     return "Chain position is not represented in lifecycle state · restore or unlock the private record";
@@ -286,7 +288,7 @@ function renderPortfolio() {
     title.textContent = app.name;
     const state = document.createElement("span");
     state.className = "pill";
-    state.textContent = entry.cached?.state ?? "state unavailable";
+    state.textContent = entry.cached?.state ?? (session.recovery.vault ? "not started" : "activity locked");
     if (!entry.cached) state.className = "pill portfolio-stale";
     head.append(title, state);
     card.append(head);
@@ -302,7 +304,9 @@ function renderPortfolio() {
       appendKv(details, "public balances", portfolioPositionText(entry, app), "portfolio-stale");
       appendKv(details, "observation", "cached · refresh unavailable", "portfolio-stale");
     } else {
-      appendKv(details, "account", entry.capability?.status === "available" ? "discovery available" : "wallet-managed route");
+      appendKv(details, "account", entry.capability?.status === "available"
+        ? "direct account discovery available"
+        : "direct account not discoverable");
       appendKv(details, "public balances", portfolioPositionText(entry, app));
       appendKv(details, "observation", entry.capability?.reason ?? "No direct account observation");
     }
@@ -319,7 +323,19 @@ function renderPortfolio() {
   }
   target.replaceChildren(...parts);
   const chainCount = portfolio.facets.filter((entry) => entry.chain).length;
-  status.textContent = `${chainCount}/${portfolio.facets.length} app contexts reconciled from chain · refreshed ${new Date(portfolio.refreshedAt).toLocaleTimeString()}`;
+  const refreshed = new Date(portfolio.refreshedAt).toLocaleTimeString();
+  const capabilityStates = new Set(portfolio.facets.map((entry) => entry.capability?.status));
+  let directAccountStatus = `${chainCount}/${portfolio.facets.length} direct app accounts refreshed`;
+  if (chainCount === portfolio.facets.length) {
+    directAccountStatus = `${chainCount} direct app accounts refreshed`;
+  } else if (capabilityStates.size === 1 && capabilityStates.has("unavailable")) {
+    directAccountStatus = "optional direct app-account discovery is not exposed by Ready X";
+  } else if (capabilityStates.size === 1 && capabilityStates.has("not-registered")) {
+    directAccountStatus = "private app identities are not registered for direct discovery";
+  } else if (capabilityStates.has("available")) {
+    directAccountStatus = "direct app-account discovery needs attention";
+  }
+  status.textContent = `Private balances refreshed · ${directAccountStatus} · ${refreshed}`;
 }
 
 const STATE_COPY = {
@@ -344,38 +360,89 @@ function renderFacetMap() {
   for (const { app, record } of rows) {
     const row = document.createElement("div");
     row.className = "facet-map-row";
+    const summary = document.createElement("div");
+    summary.className = "facet-map-summary";
+    const title = document.createElement("strong");
+    title.textContent = app.name;
+    const state = document.createElement("span");
+    state.className = "facet-map-state";
+    summary.append(title, state);
+    const details = document.createElement("div");
+    details.className = "facet-map-details";
     if (!record) {
-      row.innerHTML = `<strong>${app.name}</strong>`
-        + `<span class="muted">lifecycle state unavailable in this tab</span>`
-        + `<span class="muted">restore or unlock the private record to manage it</span>`;
+      state.textContent = session.recovery.vault ? "not started" : "encrypted activity locked";
+      const explanation = document.createElement("span");
+      explanation.textContent = session.recovery.vault
+        ? "No lifecycle activity has been recorded for this app yet."
+        : "Unlock recovery above to restore cross-session lifecycle activity.";
+      details.append(explanation);
     } else {
       const held = record.positions.map((position) => position.symbol ?? position.asset).join(", ");
-      const hashes = record.transactions.slice(-3).map((entry) =>
-        `<a href="https://voyager.online/tx/${encodeURIComponent(entry.hash)}" target="_blank" rel="noreferrer">${entry.action} ${entry.hash.slice(0, 10)}…</a>`,
-      ).join(" ");
-      row.innerHTML = `<strong>${app.name}</strong>`
-        + `<span>version ${record.version} · <em>${record.state}</em> — ${STATE_COPY[record.state] ?? ""}</span>`
-        + (held ? `<span class="muted">holds ${held}</span>` : "")
-        + (hashes ? `<span class="muted">${hashes}</span>` : "");
+      state.textContent = `${record.state} · version ${record.version}`;
+      const explanation = document.createElement("span");
+      explanation.textContent = STATE_COPY[record.state] ?? "";
+      details.append(explanation);
+      if (held) {
+        const positions = document.createElement("span");
+        positions.textContent = `Holds ${held}`;
+        details.append(positions);
+      }
+      if (record.transactions.length) {
+        const transactions = document.createElement("span");
+        transactions.className = "facet-map-transactions";
+        for (const entry of record.transactions.slice(-3)) {
+          const link = document.createElement("a");
+          link.href = `https://voyager.online/tx/${encodeURIComponent(entry.hash)}`;
+          link.target = "_blank";
+          link.rel = "noreferrer";
+          link.textContent = `${entry.action} ${entry.hash.slice(0, 10)}…`;
+          transactions.append(link);
+        }
+        details.append(transactions);
+      }
     }
-    const actions = record
-      ? [...(record.state === "use" || record.state === "hold" ? ["recover"] : []), "rotate", "retire"]
-      : ["recover", "rotate", "retire"];
-    const recoveryUnlocked = Boolean(session.recovery.vault);
+    row.append(summary, details);
+    const actionGroup = document.createElement("div");
+    actionGroup.className = "facet-map-actions";
+    if (!session.recovery.vault) {
+      const unlock = document.createElement("button");
+      unlock.type = "button";
+      unlock.textContent = "Unlock encrypted activity";
+      unlock.onclick = () => {
+        $("recovery-secret")?.focus();
+        $("recovery-box")?.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
+      };
+      actionGroup.append(unlock);
+      row.append(actionGroup);
+      target.append(row);
+      continue;
+    }
+    if (!record) {
+      const note = document.createElement("span");
+      note.textContent = "Created automatically after your first confirmed app action.";
+      actionGroup.append(note);
+      row.append(actionGroup);
+      target.append(row);
+      continue;
+    }
+    const actions = [
+      ...(record.state === "use" || record.state === "hold" ? ["recover"] : []),
+      "rotate",
+      "retire",
+    ];
     for (const action of actions) {
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = action === "recover"
         ? "enter recovery"
         : action === "rotate" ? "new local version" : "retire record";
-      const blocked = !record || !recoveryUnlocked
-        ? LIFECYCLE_STATE_UNAVAILABLE
-        : action === "recover" ? recoveryBlockedReason(record) : retireBlockedReason(record);
-      button.disabled = !record || !recoveryUnlocked || record.state === "retire" || Boolean(blocked);
+      const blocked = action === "recover" ? recoveryBlockedReason(record) : retireBlockedReason(record);
+      button.disabled = record.state === "retire" || Boolean(blocked);
       if (blocked) button.title = blocked;
       button.onclick = () => updateFacet(app.id, action);
-      row.append(button);
+      actionGroup.append(button);
     }
+    row.append(actionGroup);
     target.append(row);
   }
 }
@@ -421,8 +488,13 @@ function recoveryMessage() {
       ? "Encrypted recovery is unlocked for this tab. The key is held only in memory."
       : "Recovery is ready, but no record has been sealed yet. Save it after a confirmed action.";
   }
+  const passphraseLength = $("recovery-secret")?.value.trim().length ?? 0;
   return session.account
-    ? "Locked. Enter the passphrase to restore persistent lifecycle state; without it, controls remain tab-only."
+    ? passphraseLength > 0 && passphraseLength < 16
+      ? `${16 - passphraseLength} more character${16 - passphraseLength === 1 ? "" : "s"} required.`
+      : passphraseLength >= 16
+        ? "Ready to unlock an existing record or create encrypted recovery on this device."
+        : "Locked. Enter a passphrase of at least 16 characters to unlock or create recovery."
     : "Connect Ready X before unlocking encrypted recovery.";
 }
 
@@ -439,13 +511,19 @@ function renderRecoveryControls() {
   const unlock = $("recovery-unlock");
   const lock = $("recovery-lock");
   const status = $("recovery-status");
+  const requirement = $("recovery-requirement");
   if (!input || !unlock || !lock || !status) return;
   const unlocked = Boolean(session.recovery.vault);
+  const passphraseLength = input.value.trim().length;
   input.disabled = !session.account || session.recovery.busy || unlocked;
   unlock.hidden = unlocked;
-  unlock.disabled = !session.account || session.recovery.busy || !input.value.trim();
+  unlock.disabled = !session.account || session.recovery.busy || passphraseLength < 16;
   lock.hidden = !unlocked;
   lock.disabled = session.recovery.busy;
+  if (requirement) {
+    requirement.textContent = unlocked ? "unlocked for this tab"
+      : passphraseLength ? `${Math.min(passphraseLength, 16)} / 16 minimum` : "16 characters minimum";
+  }
   status.textContent = recoveryMessage();
 }
 
@@ -613,7 +691,10 @@ $("connect").onclick = connect;
 $("reset").onclick = () => clearSession();
 if ($("refresh-portfolio")) $("refresh-portfolio").onclick = () => { void refreshPortfolio(); };
 if ($("recovery-secret")) $("recovery-secret").oninput = () => renderRecoveryControls();
-if ($("recovery-unlock")) $("recovery-unlock").onclick = () => { void unlockRecovery(); };
+if ($("recovery-form")) $("recovery-form").onsubmit = (event) => {
+  event.preventDefault();
+  if (!$("recovery-unlock")?.disabled) void unlockRecovery();
+};
 if ($("recovery-lock")) $("recovery-lock").onclick = () => lockRecovery();
 document.querySelectorAll("[data-launch-action]").forEach((button) => {
   button.onclick = () => { void selectApp(button.dataset.appId); };
